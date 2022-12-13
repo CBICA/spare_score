@@ -7,12 +7,12 @@ Alternatively, you may want to find the spatial pattern related to brain aging (
 ## References
 - SPARE-AD
 
-  Davatzikos, C., Xu, F., An, Y., Fan, Y. & Resnick, S. M. Longitudinal progression of Alzheimer's-like patterns of atrophy in normal older adults: the SPARE-AD index. Brain 132, 2026-2035, doi:[10.1093/brain/awp091](doi.org/10.1093/brain/awp091) (2009).
+  Davatzikos, C., Xu, F., An, Y., Fan, Y. & Resnick, S. M. Longitudinal progression of Alzheimer's-like patterns of atrophy in normal older adults: the SPARE-AD index. Brain 132, 2026-2035, [doi:10.1093/brain/awp091](doi.org/10.1093/brain/awp091) (2009).
 
 - SPARE-BA
 
-  Habes, M. et al. Advanced brain aging: relationship with epidemiologic and genetic risk factors, and overlap with Alzheimer disease atrophy patterns. Transl Psychiatry 6, e775, doi:[10.1038/tp.2016.39](doi.org/10.1038/tp.2016.39) (2016).
+  Habes, M. et al. Advanced brain aging: relationship with epidemiologic and genetic risk factors, and overlap with Alzheimer disease atrophy patterns. Transl Psychiatry 6, e775, [doi:10.1038/tp.2016.39](doi.org/10.1038/tp.2016.39) (2016).
 
 - diSPARE-AD
 
-  Hwang, G. et al. Disentangling Alzheimer's disease neurodegeneration from typical brain ageing using machine learning. Brain Commun 4, fcac117, doi:10.1093/braincomms/fcac117 (2022). [LINK](doi.org/10.1093/braincomms/fcac117)
+  Hwang, G. et al. Disentangling Alzheimer's disease neurodegeneration from typical brain ageing using machine learning. Brain Commun 4, fcac117, [doi:10.1093/braincomms/fcac117](doi.org/10.1093/braincomms/fcac117) (2022).
