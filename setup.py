@@ -1,13 +1,14 @@
 from setuptools import setup
+from pathlib import Path
 
-def readme():
-    with open('README.md') as f:
-        return f.read()
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
 
 setup(name='spare_scores',
       version='0.0.1',
       description='Train SPARE classification or regression models and calculate SPARE scores.',
-      long_description=readme(),
+      long_description=long_description,
+      long_description_content_type='text/markdown',
       author='Gyujoon Hwang',
       author_email='ghwang1106@gmail.com',
       license='MIT',
