@@ -1,0 +1,12 @@
+LICENSE
+README.md
+pyproject.toml
+setup.py
+spare_scores/__init__.py
+spare_scores/spare_scores.py
+spare_scores/svm.py
+spare_scores.egg-info/PKG-INFO
+spare_scores.egg-info/SOURCES.txt
+spare_scores.egg-info/dependency_links.txt
+spare_scores.egg-info/requires.txt
+spare_scores.egg-info/top_level.txt
