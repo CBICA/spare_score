@@ -106,6 +106,8 @@ def spare_train(df, predictors, to_predict, pos_group='', kernel='linear', save_
     if mdl_name == '':
       to_predict_ = to_predict.replace('.','_')
       mdl_name = f'SPARE_{spare_type}_{to_predict_}'
+    if not os.path.exists(out_path):
+      os.makedirs(out_path)
     with gzip.open(f'{out_path}/mdl_{mdl_name}.pkl.gz', 'wb') as f:
       pickle.dump((mdl, metaData), f)
 

@@ -20,7 +20,7 @@ def prepare_sample(df_train, fold, predictors, scaler):
 @ignore_warnings(category=ConvergenceWarning)
 def run_SVC(df, predictors, to_predict, classify, param_grid, kernel='linear', k=5, n_repeats=5, verbose=1):
 
-  folds = [(train, test) for (train, test) in RepeatedKFold(n_splits=k, n_repeats=n_repeats, random_state=2022).split(df['MRID'])]
+  folds = [(train, test) for (train, test) in RepeatedKFold(n_splits=k, n_repeats=n_repeats, random_state=2022).split(df['PTID'])]
   if kernel=='linear':
     mdl = [LinearSVC(max_iter=100000)] * len(folds)
   elif kernel=='rbf':
@@ -63,7 +63,7 @@ def run_SVC(df, predictors, to_predict, classify, param_grid, kernel='linear', k
 @ignore_warnings(category=ConvergenceWarning)
 def run_SVR(df, predictors, to_predict, param_grid, score='neg_mean_absolute_error', k=5, verbose=1):
   
-  folds = [(train, test) for (train, test) in KFold(n_splits=k, shuffle=True, random_state=2022).split(df['MRID'])]
+  folds = [(train, test) for (train, test) in KFold(n_splits=k, shuffle=True, random_state=2022).split(df['PTID'])]
   mdl = [LinearSVR(max_iter=100000)] * len(folds)
   scaler = [StandardScaler()] * len(folds)
 
