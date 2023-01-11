@@ -133,11 +133,27 @@ def spare_test(df,
 
   # Load trained SPARE model
   mdl, metaData = load_model(mdl_path)
+  df = df.copy()
 
   ################ FILTERS ################
   if not set(metaData['predictors']).issubset(df.columns):
-    print(set(metaData['predictors']) - set(df.columns))
-    return logging.error('Not all predictors exist in the input dataframe.')
+    cols_not_found = sorted(set(metaData['predictors']) - set(df.columns))
+    if len([a for a in cols_not_found if '_' not in a]) > 0:
+      return logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
+    try:
+      roi_name = [a for a in metaData['predictors'] if '_' in a]
+      for roi_alter in [[int(a.split('_')[-1]) for a in roi_name],
+                        [a.split('_')[-1] for a in roi_name],
+                        ['R'+a.split('_')[-1] for a in roi_name]]:  
+        if set(roi_alter).issubset(df.columns):
+          df = df.rename(columns=dict(zip(roi_alter, roi_name)))
+          logging.info(f'ROI names changed to match the model (e.g. {roi_alter[0]} to {roi_name[0]}).')
+          continue
+    except Exception:
+      return logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
+    cols_not_found = sorted(set(metaData['predictors']) - set(df.columns))
+    if len(cols_not_found) > 0:
+      return logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
 
   if (np.min(df['Age']) < metaData['age_range'][0]) or (np.max(df['Age']) > metaData['age_range'][1]):
     logging.warn('Some participants fall outside of the age range of the SPARE model.')
@@ -146,20 +162,23 @@ def spare_test(df,
     logging.warn('Some participants have invalid predictor variables.')
   #########################################
 
-  # Output model description
-  print('Trained on', metaData['n'], 'individuals ', end='/ ')
-  print('Ages from', int(metaData['age_range'][0]), 'and', int(metaData['age_range'][1]), end=' / ')
-  if metaData['spare_type'] == 'classification':
-    print('Expected AUC =', np.round(np.mean(metaData['auc']), 3))
-  elif metaData['spare_type'] == 'regression':
-    print('Expected MAE =', np.round(np.mean(metaData['mae']), 3))
-
   # Convert categorical variables
-  df = df.copy()
   if 'categorical_var_map' in metaData.keys():
     for var in metaData['categorical_var_map'].keys():
       if isinstance(metaData['categorical_var_map'][var], dict):
-        df[var] = df[var].map(metaData['categorical_var_map'][var])
+        if np.all(df[var].isin(metaData['categorical_var_map'][var].keys())):
+          df[var] = df[var].map(metaData['categorical_var_map'][var])
+        else:
+          expected_var = list(metaData['categorical_var_map'][var].keys())
+          return logging.error(f'Column "{var}" contains value(s) other than expected: {expected_var}')
+
+  # Output model description
+  print('Model Info: training N =', metaData['n'], end=' / ')
+  print('ages =', int(metaData['age_range'][0]), '-', int(metaData['age_range'][1]), end=' / ')
+  if metaData['spare_type'] == 'classification':
+    print('expected AUC =', np.round(np.mean(metaData['auc']), 3))
+  elif metaData['spare_type'] == 'regression':
+    print('expected MAE =', np.round(np.mean(metaData['mae']), 3))
 
   # Calculate SPARE scores
   n_ensemble = len(mdl['scaler'])
