@@ -1,1 +1,1 @@
-from spare_scores import spare_train, spare_test
+from .spare_scores import load_model, spare_train, spare_test
