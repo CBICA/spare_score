@@ -22,7 +22,7 @@ def spare_train(df,
                 mdl_name: str = ''):
 
   def _expspace(span: list):
-    return np.exp(np.linspace(span[0], span[1], num=span[1]-span[0]+1))
+    return np.exp(np.linspace(span[0], span[1], num=int(span[1])-int(span[0])+1))
 
   ################ FILTERS ################
   if not set(predictors).issubset(df.columns):
@@ -67,14 +67,11 @@ def spare_train(df,
 
   # Initiate SPARE model
   metaData = {'spare_type': spare_type,
+              'kernel':kernel,
               'n': len(df.index),
               'age_range': np.floor([np.min(df['Age']), np.max(df['Age'])]),
               'to_predict': to_predict,
               'predictors': predictors}
-
-  mdl = {'mdl': None,
-         'scaler': None,
-         'kernel': kernel}
 
   # Convert categorical variables
   var_categorical = df[predictors].dtypes == np.object
@@ -88,31 +85,28 @@ def spare_train(df,
   # SPARE classification
   if spare_type == 'classification':
     if kernel == 'linear':
-      metaData['C_search'], metaData['pos_group'] = [-9, 5], pos_group
-      if len(df.index) > 1000:
-        _, _, _, _, C = run_SVC(df.sample(n=500, random_state=2022).reset_index(drop=True), predictors, to_predict, groups_to_classify,
-                                param_grid={'C': _expspace(metaData['C_search'])}, kernel=kernel, n_repeats=1, verbose=0)
-        metaData['C_search'] = [int(np.min(C)), int(np.max(C))]
-      df['predicted'], mdl['mdl'], mdl['scaler'], metaData['auc'], metaData['C_collect'] = run_SVC(
-                  df, predictors, to_predict, groups_to_classify, param_grid={'C': _expspace(metaData['C_search'])}, kernel=kernel)
+      metaData['pos_group'] = pos_group
+      param_grid = {'C': _expspace([-9, 5])}
     elif kernel == 'rbf':
-      metaData['C_search'], metaData['g_search'] = [-9, 5], [-5, 5]
-      if len(df.index) > 1000:
-        _, _, _, _, (C, g) = run_SVC(df.sample(n=500, random_state=2022).reset_index(drop=True), predictors, to_predict, groups_to_classify,
-                                     param_grid={'C': _expspace(metaData['C_search']), 'gamma': _expspace(metaData['g_search'])}, kernel=kernel, n_repeats=1, verbose=0)
-        metaData['C_search'], metaData['g_search'] = [int(np.min(C)), int(np.max(C))], [int(np.min(g)), int(np.max(g))]
-      df['predicted'], mdl['mdl'], mdl['scaler'], metaData['auc'], (metaData['C_collect'], metaData['g_collect']) = run_SVC(
-                  df, predictors, to_predict, groups_to_classify, param_grid={'C': _expspace(metaData['C_search']), 'gamma': _expspace(metaData['g_search'])}, kernel=kernel)
+      param_grid = {'C': _expspace([-9, 5]), 'gamma': _expspace([-5, 5])}
+    if len(df.index) > 1000:
+      _, _, _, params = run_SVC(df.sample(n=500, random_state=2022).reset_index(drop=True), predictors,
+                to_predict, groups_to_classify, param_grid=param_grid, kernel=kernel, n_repeats=1, verbose=0)
+      for par in param_grid.keys():
+        param_grid[par] = _expspace([np.min(params[f'{par}_optimal']), np.max(params[f'{par}_optimal'])])
+    df['predicted'], mdl, metaData['auc'], metaData['params'] = run_SVC(
+                df, predictors, to_predict, groups_to_classify, param_grid=param_grid, kernel=kernel)
+
   # SPARE regression
   elif spare_type == 'regression':
-    metaData['C_search'], metaData['e_search'] = [-5, 5], [-5, 5]
+    param_grid = {'C': _expspace([-5, 5]), 'epsilon': _expspace([-5, 5])}
     if len(df.index) > 1000:
-      _, _, _, _, _, (C, e) = run_SVR(df.sample(n=500, random_state=2022).reset_index(drop=True), predictors, to_predict,
-                                      param_grid={'C': _expspace(metaData['C_search']), 'epsilon': _expspace(metaData['e_search'])}, verbose=0)
-      metaData['C_search'], metaData['e_search'] = [int(np.min(C)), int(np.max(C))], [int(np.min(e)), int(np.max(e))]
-    df['predicted'], mdl['mdl'], mdl['scaler'], mdl['bias_correct'], metaData['mae'], (metaData['C_collect'], metaData['e_collect']) = run_SVR(
-                  df, predictors, to_predict, param_grid={'C': _expspace(metaData['C_search']), 'epsilon': _expspace(metaData['e_search'])})
-
+      _, _, _, params = run_SVR(df.sample(n=500, random_state=2022).reset_index(drop=True), predictors,
+                to_predict, param_grid=param_grid, n_repeats=1, verbose=0)
+      for par in param_grid.keys():
+        param_grid[par] = _expspace([np.min(params[f'{par}_optimal']), np.max(params[f'{par}_optimal'])])
+    df['predicted'], mdl, metaData['mae'], metaData['params'] = run_SVR(
+                  df, predictors, to_predict, param_grid=param_grid)
   metaData['cv_results'] = df[list(dict.fromkeys(['PTID', 'Age', 'Sex', to_predict, 'predicted']))]
 
   # Save model
@@ -185,7 +179,7 @@ def spare_test(df,
   ss = np.zeros([len(df.index), n_ensemble])
   for i in range(n_ensemble):
     X = mdl['scaler'][i].transform(df[metaData['predictors']])
-    if mdl['kernel'] == 'linear':
+    if metaData['kernel'] == 'linear':
       ss[:, i] = np.sum(X * mdl['mdl'][i].coef_, axis=1) + mdl['mdl'][i].intercept_
     else:
       ss[:, i] = mdl['mdl'][i].decision_function(X)
