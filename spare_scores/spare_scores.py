@@ -154,6 +154,10 @@ def spare_test(df,
 
   if np.sum(np.sum(pd.isna(df[metaData['predictors']]))) > 0:
     logging.warn('Some participants have invalid predictor variables.')
+
+  if np.any(df['PTID'].isin(metaData['cv_results']['PTID'])):
+    n_training = int(np.sum(df['PTID'].isin(metaData['cv_results']['PTID'])))
+    logging.info(f'{n_training} participants have matching IDs to IDs from the training sample. Only models where they were left out from the training will be used for testing.')
   #########################################
 
   # Convert categorical variables
@@ -185,8 +189,9 @@ def spare_test(df,
       ss[:, i] = mdl['mdl'][i].decision_function(X)
     if metaData['spare_type'] == 'regression':
       ss[:, i] = (ss[:, i] - mdl['bias_correct']['int'][i]) / mdl['bias_correct']['slope'][i]
+    ss[df['PTID'].isin(metaData['cv_results']['PTID'][mdl['cv_folds'][i][0]]), i] = np.nan
 
-  df_results = pd.DataFrame(data={'SPARE_scores': np.mean(ss, axis=1)})
+  df_results = pd.DataFrame(data={'SPARE_scores': np.nanmean(ss, axis=1)})
 
   # Save results csv
   if save_csv:
