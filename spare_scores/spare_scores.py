@@ -4,7 +4,7 @@ import pickle
 import logging
 import numpy as np
 import pandas as pd
-from .svm import run_SVC, run_SVR
+from spare_scores.svm import run_SVC, run_SVR
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
@@ -12,13 +12,12 @@ def load_model(mdl_path: str):
   with gzip.open(mdl_path, 'rb') as f:
     return pickle.load(f)
 
-def spare_train(df,
+def spare_train(df: pd.DataFrame,
                 predictors: list,
                 to_predict: str,
                 pos_group: str = '',
                 kernel: str = 'linear',
-                save_mdl: bool = True,
-                out_path: str = './Mdl',
+                save_path: str = None,
                 mdl_name: str = ''):
 
   def _expspace(span: list):
@@ -110,20 +109,18 @@ def spare_train(df,
   metaData['cv_results'] = df[list(dict.fromkeys(['PTID', 'Age', 'Sex', to_predict, 'predicted']))]
 
   # Save model
-  if save_mdl:
+  if save_path is not None:
     if mdl_name == '':
       to_predict_ = to_predict.replace('.', '_')
       mdl_name = f'SPARE_{spare_type}_{to_predict_}'
-    with gzip.open(f'{out_path}/mdl_{mdl_name}.pkl.gz', 'wb') as f:
+    with gzip.open(f'{save_path}/mdl_{mdl_name}.pkl.gz', 'wb') as f:
       pickle.dump((mdl, metaData), f)
 
   return mdl, metaData
 
 
-def spare_test(df,
-               mdl_path: str,
-               save_csv: bool = False,
-               out_path: str = './Out'):
+def spare_test(df: pd.DataFrame,
+               mdl_path: str) -> pd.DataFrame:
 
   # Load trained SPARE model
   mdl, metaData = load_model(mdl_path)
@@ -132,8 +129,7 @@ def spare_test(df,
   ################ FILTERS ################
   if not set(metaData['predictors']).issubset(df.columns):
     cols_not_found = sorted(set(metaData['predictors']) - set(df.columns))
-    if len([a for a in cols_not_found if '_' not in a]) > 0:
-      return logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
+    assert len([a for a in cols_not_found if '_' not in a]) > 0, f'Not all predictors exist in the input dataframe: {cols_not_found}'
     try:
       roi_name = [a for a in metaData['predictors'] if '_' in a]
       for roi_alter in [[int(a.split('_')[-1]) for a in roi_name],
@@ -146,29 +142,26 @@ def spare_test(df,
     except Exception:
       return logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
     cols_not_found = sorted(set(metaData['predictors']) - set(df.columns))
-    if len(cols_not_found) > 0:
-      return logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
-
+    assert len(cols_not_found) > 0, f'Not all predictors exist in the input dataframe: {cols_not_found}'
   if (np.min(df['Age']) < metaData['age_range'][0]) or (np.max(df['Age']) > metaData['age_range'][1]):
-    logging.warn('Some participants fall outside of the age range of the SPARE model.')
+    logging.warn('Some participants fall outside the age range of the SPARE model.')
 
   if np.sum(np.sum(pd.isna(df[metaData['predictors']]))) > 0:
     logging.warn('Some participants have invalid predictor variables.')
 
   if np.any(df['PTID'].isin(metaData['cv_results']['PTID'])):
-    n_training = int(np.sum(df['PTID'].isin(metaData['cv_results']['PTID'])))
-    logging.info(f'{n_training} participants have matching IDs to IDs from the training sample. Only models where they were left out from the training will be used for testing.')
+    logging.info('Some participants seem to have been in the model training.')
   #########################################
 
   # Convert categorical variables
-  if 'categorical_var_map' in metaData.keys():
-    for var in metaData['categorical_var_map'].keys():
-      if isinstance(metaData['categorical_var_map'][var], dict):
-        if np.all(df[var].isin(metaData['categorical_var_map'][var].keys())):
-          df[var] = df[var].map(metaData['categorical_var_map'][var])
-        else:
-          expected_var = list(metaData['categorical_var_map'][var].keys())
-          return logging.error(f'Column "{var}" contains value(s) other than expected: {expected_var}')
+  for var in metaData.get('categorical_var_map',{}).keys():
+    if not isinstance(metaData['categorical_var_map'][var], dict):
+      continue
+    if np.all(df[var].isin(metaData['categorical_var_map'][var].keys())):
+      df[var] = df[var].map(metaData['categorical_var_map'][var])
+    else:
+      expected_var = list(metaData['categorical_var_map'][var].keys())
+      return logging.error(f'Column "{var}" contains value(s) other than expected: {expected_var}')
 
   # Output model description
   print('Model Info: training N =', metaData['n'], end=' / ')
@@ -180,7 +173,7 @@ def spare_test(df,
 
   # Calculate SPARE scores
   n_ensemble = len(mdl['scaler'])
-  ss = np.zeros([len(df.index), n_ensemble])
+  ss, ss_mean = np.zeros([len(df.index), n_ensemble]), np.zeros([len(df.index), ])
   for i in range(n_ensemble):
     X = mdl['scaler'][i].transform(df[metaData['predictors']])
     if metaData['kernel'] == 'linear':
@@ -190,14 +183,7 @@ def spare_test(df,
     if metaData['spare_type'] == 'regression':
       ss[:, i] = (ss[:, i] - mdl['bias_correct']['int'][i]) / mdl['bias_correct']['slope'][i]
     ss[df['PTID'].isin(metaData['cv_results']['PTID'][mdl['cv_folds'][i][0]]), i] = np.nan
+  index_nan = np.all(np.isnan(ss),axis=1)
+  ss_mean[~index_nan] = np.nanmean(ss[~index_nan,:], axis=1)
 
-  df_results = pd.DataFrame(data={'SPARE_scores': np.nanmean(ss, axis=1)})
-
-  # Save results csv
-  if save_csv:
-    mdl_name = mdl_path.split('/')[-1].split('.')[0]
-    if not os.path.exists(out_path):
-      os.makedirs(out_path)
-    df_results.to_csv(f'{out_path}/SPAREs_from_{mdl_name}.csv')
-
-  return df_results
+  return pd.DataFrame(data={'SPARE_scores': ss_mean})
