@@ -3,31 +3,53 @@ import pickle
 import logging
 import numpy as np
 import pandas as pd
-from typing import Tuple
+from typing import Tuple, Union
 from dataclasses import dataclass
-from spare_scores.svm import run_SVC, run_SVR
+from .svm import run_SVC, run_SVR
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 @dataclass
 class MetaData:
+  """Contains training information on a paired SPARE model
+  """
   spare_type: str
   kernel: str
   n: int
   age_range: list
   to_predict: str
   predictors: list
-  
-def spare_train(df: pd.DataFrame,
+
+def spare_train(df: Union[pd.DataFrame, str],
                 predictors: list,
                 to_predict: str,
                 pos_group: str = '',
                 kernel: str = 'linear',
-                save_path: str = None,
-                mdl_name: str = '') -> Tuple[dict, dict]:
+                save_path: str = None) -> Tuple[dict, dict]:
+  """Trains a SPARE model, either classification or regression
 
+  Args:
+    df: either a pandas dataframe or a path to a saved csv containing the training sample.
+    predictors: a list of predictors for the training. All must be present in columns of df.
+    to_predict: variable to predict. Binary for classification and continuous for regression.
+      Must be one of the columnes in df.
+    pos_group: group to assign a positive SPARE score (only for classification).
+    kernel: 'linear' or 'rbf' (only linear is supported currently in regression).
+    save_path: path to save the trained model. '.pkl.gz' file extension expected.
+      If None is given, no model will be saved.
+
+  Returns:
+    a tuple of two dictionaries: first to contain SPARE model coefficients, and
+      second to contain model information
+  """
   def _expspace(span: list):
     return np.exp(np.linspace(span[0], span[1], num=int(span[1])-int(span[0])+1))
+
+  # Load dataframe
+  if isinstance(df, str):
+    df = pd.read_csv(df, low_memory=False)
+  else:
+    df = df.copy()
 
   ################ FILTERS ################
   if not set(predictors).issubset(df.columns):
@@ -38,7 +60,7 @@ def spare_train(df: pd.DataFrame,
     if pos_group == '':
       return logging.error('"pos_group" not provided (group to assign a positive score).')
     elif pos_group not in df[to_predict].unique():
-      return logging.error('"pos_group" does not match one of the two groups in variable to predict.')
+      return logging.error('"pos_group" is not one of the two groups in the variable to predict.')
     if np.min(df[to_predict].value_counts()) < 10:
       return logging.error('At least one of the groups to classify is too small (n<10).')
     elif np.min(df[to_predict].value_counts()) < 100:
@@ -66,7 +88,7 @@ def spare_train(df: pd.DataFrame,
     logging.info('Variable to predict is in the predictor set. This will be removed from the set.')
     predictors.remove(to_predict)
   if np.sum(np.sum(pd.isna(df[predictors]))) > 0:
-    logging.info('Some participants have invalid predictor variables (such as n/a). They will be excluded from the training.')
+    logging.info('Some participants have invalid predictor variables (i.e. n/a). They will be excluded.')
     df = df.loc[np.sum(pd.isna(df[predictors]), axis=1) == 0].reset_index(drop=True)
   #########################################
 
@@ -111,12 +133,11 @@ def spare_train(df: pd.DataFrame,
 
   # Save model
   if save_path is not None:
-    if mdl_name == '':
-      to_predict_ = to_predict.replace('.', '_')
-      mdl_name = f'SPARE_{spare_type}_{to_predict_}'
-    with gzip.open(f'{save_path}/mdl_{mdl_name}.pkl.gz', 'wb') as f:
+    if ~save_path.endswith('.pkl.gz'):
+      save_path = save_path + '.pkl.gz'
+    with gzip.open(save_path, 'wb') as f:
       pickle.dump((mdl, vars(meta_data)), f)
-      logging.info(f'Model saved to {save_path}/mdl_{mdl_name}.pkl.gz')
+      logging.info(f'Model saved to {save_path}')
 
   return mdl, vars(meta_data)
 
@@ -124,12 +145,30 @@ def load_model(mdl_path: str):
   with gzip.open(mdl_path, 'rb') as f:
     return pickle.load(f)
 
-def spare_test(df: pd.DataFrame,
-               mdl_path: str) -> pd.DataFrame:
+def spare_test(df: Union[pd.DataFrame, str],
+               mdl_path: Union[str, Tuple[dict, dict]]) -> pd.DataFrame:
+
+  """Applies a trained SPARE model on a test dataset
+
+  Args:
+    df: either a pandas dataframe or a path to a saved csv containing the test sample.
+    mdl_path: either a path to a saved SPARE model ('.pkl.gz' file extension expected) or
+      a tuple of SPARE model and meta_data.
+
+  Returns:
+    a pandas dataframe containing predicted SPARE scores.
+  """
+  # Load dataframe
+  if isinstance(df, str):
+    df = pd.read_csv(df, low_memory=False)
+  else:
+    df = df.copy()
 
   # Load trained SPARE model
-  mdl, meta_data = load_model(mdl_path)
-  df = df.copy()
+  if isinstance(mdl_path, str):
+    mdl, meta_data = load_model(mdl_path)
+  else:
+    mdl, meta_data = mdl_path
 
   ################ FILTERS ################
   if not set(meta_data['predictors']).issubset(df.columns):
