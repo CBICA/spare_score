@@ -3,8 +3,8 @@ import numpy as np
 from sklearn import metrics
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import LinearSVC, LinearSVR, SVC
-from sklearn.model_selection import GridSearchCV, KFold, RepeatedKFold
+from sklearn.svm import LinearSVR, SVC
+from sklearn.model_selection import GridSearchCV, RepeatedKFold
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 

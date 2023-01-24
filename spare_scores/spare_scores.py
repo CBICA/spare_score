@@ -5,22 +5,21 @@ import numpy as np
 import pandas as pd
 from typing import Tuple, Union
 from dataclasses import dataclass
-from .svm import run_SVC, run_SVR
+from spare_scores.svm import run_SVC, run_SVR
+from spare_scores.data_prep import check_train, check_test
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 @dataclass
 class MetaData:
-  """Contains training information on a paired SPARE model
+  """Stores training information on its paired SPARE model
   """
   spare_type: str
   kernel: str
-  n: int
-  age_range: list
-  to_predict: str
   predictors: list
+  to_predict: str
 
-def spare_train(df: Union[pd.DataFrame, str],
+def spare_train(df: Union[pd.DataFrame, str], 
                 predictors: list,
                 to_predict: str,
                 pos_group: str = '',
@@ -29,7 +28,7 @@ def spare_train(df: Union[pd.DataFrame, str],
   """Trains a SPARE model, either classification or regression
 
   Args:
-    df: either a pandas dataframe or a path to a saved csv containing the training sample.
+    df: either a pandas dataframe or a path to a saved csv containing training data.
     predictors: a list of predictors for the training. All must be present in columns of df.
     to_predict: variable to predict. Binary for classification and continuous for regression.
       Must be one of the columnes in df.
@@ -42,58 +41,16 @@ def spare_train(df: Union[pd.DataFrame, str],
     a tuple of two dictionaries: first to contain SPARE model coefficients, and
       second to contain model information
   """
-  def _expspace(span: list):
-    return np.exp(np.linspace(span[0], span[1], num=int(span[1])-int(span[0])+1))
 
-  # Load dataframe
-  if isinstance(df, str):
-    df = pd.read_csv(df, low_memory=False)
-  else:
-    df = df.copy()
-
-  ################ FILTERS ################
-  if not set(predictors).issubset(df.columns):
-    return logging.error('Not all predictors exist in the input dataframe.')
-
-  # Determine SPARE type
-  if len(df[to_predict].unique()) == 2:
-    if pos_group == '':
-      return logging.error('"pos_group" not provided (group to assign a positive score).')
-    elif pos_group not in df[to_predict].unique():
-      return logging.error('"pos_group" is not one of the two groups in the variable to predict.')
-    if np.min(df[to_predict].value_counts()) < 10:
-      return logging.error('At least one of the groups to classify is too small (n<10).')
-    elif np.min(df[to_predict].value_counts()) < 100:
-      logging.warn('At least one of the groups to classify may be too small (n<100).')
-    if np.sum((df['PTID']+df[to_predict]).duplicated()) > 0:
-      logging.warn('Training dataset has duplicate participants.')
-    spare_type = 'classification'
+  df = _load_df(df)
+  df, predictors, spare_type = check_train(df, predictors, to_predict, pos_group)
+  if spare_type == 'classification':
     groups_to_classify = [a for a in df[to_predict].unique() if a != pos_group] + [pos_group]
-  elif len(df[to_predict].unique()) > 2:
-    if df[to_predict].dtype not in ['int64', 'float64']:
-      return logging.error('Variable to predict must be either binary or numeric.')
-    if len(df.index) < 10:
-      return logging.error('Sample size is too small (n<10).')
-    elif len(df.index) < 100:
-      logging.warn('Sample size may be too small (n<100).')
-    if np.sum(df['PTID'].duplicated()) > 0:
-      logging.warn('Training dataset has duplicate participants.')
-    if pos_group != '':
-      logging.info('SPARE regression model does not need a "pos_group". This will be ignored.')
-    spare_type = 'regression'
-  else:
-    return logging.error('Variable to predict has no variance.')
-
-  if to_predict in predictors:
-    logging.info('Variable to predict is in the predictor set. This will be removed from the set.')
-    predictors.remove(to_predict)
-  if np.sum(np.sum(pd.isna(df[predictors]))) > 0:
-    logging.info('Some participants have invalid predictor variables (i.e. n/a). They will be excluded.')
-    df = df.loc[np.sum(pd.isna(df[predictors]), axis=1) == 0].reset_index(drop=True)
-  #########################################
 
   # Initiate SPARE model
-  meta_data = MetaData(spare_type, kernel, len(df.index), [np.min(df['Age']), np.max(df['Age'])], to_predict, predictors)
+  meta_data = MetaData(spare_type, kernel, predictors, to_predict)
+  meta_data.n = len(df.index)
+  meta_data.age_range = [np.min(df['Age']), np.max(df['Age'])]
 
   # Convert categorical variables
   var_categorical = df[predictors].dtypes == np.object
@@ -103,6 +60,8 @@ def spare_train(df: Union[pd.DataFrame, str],
     if len(df[var].unique()) == 2:
       meta_data.categorical_var_map[var] = {df[var].unique()[0]: 1, df[var].unique()[1]: 2}
       df[var] = df[var].map(meta_data.categorical_var_map[var])
+    elif len(df[var].unique()) > 2:
+      return logging.error('Categorical variables with more than 2 categories are currently not supported.')
 
   # SPARE classification
   if spare_type == 'classification':
@@ -141,7 +100,7 @@ def spare_train(df: Union[pd.DataFrame, str],
 
   return mdl, vars(meta_data)
 
-def load_model(mdl_path: str):
+def load_model(mdl_path: str) -> Tuple[dict, dict]:
   with gzip.open(mdl_path, 'rb') as f:
     return pickle.load(f)
 
@@ -158,44 +117,16 @@ def spare_test(df: Union[pd.DataFrame, str],
   Returns:
     a pandas dataframe containing predicted SPARE scores.
   """
-  # Load dataframe
-  if isinstance(df, str):
-    df = pd.read_csv(df, low_memory=False)
-  else:
-    df = df.copy()
+
+  df = _load_df(df)
 
   # Load trained SPARE model
   if isinstance(mdl_path, str):
     mdl, meta_data = load_model(mdl_path)
   else:
     mdl, meta_data = mdl_path
-
-  ################ FILTERS ################
-  if not set(meta_data['predictors']).issubset(df.columns):
-    cols_not_found = sorted(set(meta_data['predictors']) - set(df.columns))
-    assert len([a for a in cols_not_found if '_' not in a]) == 0, f'Not all predictors exist in the input dataframe: {cols_not_found}'
-    try:
-      roi_name = [a for a in meta_data['predictors'] if '_' in a]
-      for roi_alter in [[int(a.split('_')[-1]) for a in roi_name],
-                        [a.split('_')[-1] for a in roi_name],
-                        ['R'+a.split('_')[-1] for a in roi_name]]:  
-        if set(roi_alter).issubset(df.columns):
-          df = df.rename(columns=dict(zip(roi_alter, roi_name)))
-          logging.info(f'ROI names changed to match the model (e.g. {roi_alter[0]} to {roi_name[0]}).')
-          continue
-    except Exception:
-      return logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
-    cols_not_found = sorted(set(meta_data['predictors']) - set(df.columns))
-    assert len(cols_not_found) == 0, f'Not all predictors exist in the input dataframe: {cols_not_found}'
-  if (np.min(df['Age']) < meta_data['age_range'][0]) or (np.max(df['Age']) > meta_data['age_range'][1]):
-    logging.warn('Some participants fall outside the age range of the SPARE model.')
-
-  if np.sum(np.sum(pd.isna(df[meta_data['predictors']]))) > 0:
-    logging.warn('Some participants have invalid predictor variables.')
-
-  if np.any(df['PTID'].isin(meta_data['cv_results']['PTID'])):
-    logging.info('Some participants seem to have been in the model training.')
-  #########################################
+    
+  check_test(df, meta_data)
 
   # Convert categorical variables
   for var in meta_data.get('categorical_var_map',{}).keys():
@@ -205,7 +136,7 @@ def spare_test(df: Union[pd.DataFrame, str],
       df[var] = df[var].map(meta_data['categorical_var_map'][var])
     else:
       expected_var = list(meta_data['categorical_var_map'][var].keys())
-      return logging.error(f'Column "{var}" contains value(s) other than expected: {expected_var}')
+      return logging.error(f'Column "{var}" expected {expected_var}, but received {list(df[var].unique())}')
 
   # Output model description
   print('Model Info: training N =', meta_data['n'], end=' / ')
@@ -231,3 +162,12 @@ def spare_test(df: Union[pd.DataFrame, str],
   ss_mean[~index_nan] = np.nanmean(ss[~index_nan,:], axis=1)
 
   return pd.DataFrame(data={'SPARE_scores': ss_mean})
+
+def _expspace(span: list):
+  return np.exp(np.linspace(span[0], span[1], num=int(span[1])-int(span[0])+1))
+
+def _load_df(df: Union[pd.DataFrame, str]) -> pd.DataFrame:
+  if isinstance(df, str):
+    return pd.read_csv(df, low_memory=False)
+  else:
+    return df.copy()
