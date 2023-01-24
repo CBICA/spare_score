@@ -7,6 +7,36 @@ from scipy import stats
 from typing import Tuple
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+def col_names(df: pd.DataFrame,
+              cols: list=['ID','Age','Sex']) -> tuple:
+  """Matches required column names with common name variants. 
+
+  Args:
+    df: pandas dataframe.
+    cols: columns to search for name variants.
+
+  Returns:
+    a string or a tuple with matched variants.
+  """
+  col_name_variants = {'ID':['ID','id','PTID','participant_id'],
+                       'Age':['Age','age','AGE'],
+                       'Sex':['Sex','sex','SEX']}
+  col_name_variants = {a: col_name_variants[a] for a in cols}
+  for k in col_name_variants.keys():
+    if k not in cols:
+      continue
+    for i in col_name_variants[k]:
+      if i in df.columns:
+        col_name_variants[k] = i
+        break
+  col_not_found = [a for a in col_name_variants.keys() if type(col_name_variants[a])==list]
+  if len(col_not_found) > 0:
+    return logging.error(f'Required columns not found: {col_not_found}')
+  if len(cols) == 1:
+    return col_name_variants[cols[0]]
+  else: 
+    return tuple(col_name_variants.values())
+
 def check_train(df: pd.DataFrame, 
                 predictors: list,
                 to_predict: str,
@@ -33,6 +63,7 @@ def check_train(df: pd.DataFrame,
     logging.info('Some participants have invalid predictor variables (i.e. n/a). They will be excluded.')
     df = df.loc[np.sum(pd.isna(df[predictors]), axis=1) == 0].reset_index(drop=True)
 
+  col_id = col_names(df,['ID'])
   if len(df[to_predict].unique()) == 2:
     if pos_group == '':
       return logging.error('"pos_group" not provided (group to assign a positive score).')
@@ -42,7 +73,7 @@ def check_train(df: pd.DataFrame,
       return logging.error('At least one of the groups to classify is too small (n<10).')
     elif np.min(df[to_predict].value_counts()) < 100:
       logging.warn('At least one of the groups to classify may be too small (n<100).')
-    if np.sum((df['PTID']+df[to_predict]).duplicated()) > 0:
+    if np.sum((df[col_id]+df[to_predict]).duplicated()) > 0:
       logging.warn('Training dataset has duplicate participants.')
     spare_type = 'classification'
 
@@ -53,7 +84,7 @@ def check_train(df: pd.DataFrame,
       return logging.error('Sample size is too small (n<10).')
     elif len(df.index) < 100:
       logging.warn('Sample size may be too small (n<100).')
-    if np.sum(df['PTID'].duplicated()) > 0:
+    if np.sum(df[col_id].duplicated()) > 0:
       logging.warn('Training dataset has duplicate participants.')
     if pos_group != '':
       logging.info('SPARE regression does not need a "pos_group". This will be ignored.')
@@ -72,49 +103,20 @@ def check_test(df: pd.DataFrame,
     df: a pandas dataframe containing testing data.
     meta_data: a dictionary containing training information on its paired SPARE model.
   """
-  
+  col_id, col_age = col_names(df,['ID','Age'])
   if not set(meta_data['predictors']).issubset(df.columns):
     cols_not_found = sorted(set(meta_data['predictors']) - set(df.columns))
     return logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
     
-  if (np.min(df['Age']) < meta_data['age_range'][0]) or (np.max(df['Age']) > meta_data['age_range'][1]):
+  if (np.min(df[col_age]) < meta_data['age_range'][0]) or (
+           np.max(df[col_age]) > meta_data['age_range'][1]):
     logging.warn('Some participants fall outside the age range of the SPARE model.')
 
   if np.sum(np.sum(pd.isna(df[meta_data['predictors']]))) > 0:
     logging.warn('Some participants have invalid predictor variables.')
 
-  if np.any(df['PTID'].isin(meta_data['cv_results']['PTID'])):
+  if np.any(df[col_id].isin(meta_data['cv_results'][col_id])):
     logging.info('Some participants seem to have been in the model training.')
-
-def col_names(df: pd.DataFrame,
-              cols: list=['ID','Age','Sex']) -> tuple:
-  """Matches required column names with common name variants. 
-
-  Args:
-    df: pandas dataframe.
-    cols: columns to search for name variants.
-
-  Returns:
-    a string or a tuple with matched variants.
-  """
-  col_name_variants = {'ID':['ID','id','PTID','participant_id'],
-                       'Age':['Age','age'],
-                       'Sex':['Sex','sex']}
-  col_name_variants = {a: col_name_variants[a] for a in cols}
-  for k in col_name_variants.keys():
-    if k not in cols:
-      continue
-    for i in col_name_variants[k]:
-      if i in df.columns:
-        col_name_variants[k] = i
-        break
-  col_not_found = [a for a in col_name_variants.keys() if type(col_name_variants[a])==list]
-  if len(col_not_found) > 1:
-    return logging.error(f'Required columns not found: {col_not_found}')
-  if len(cols) == 1:
-    return col_name_variants[cols[0]]
-  else: 
-    return tuple(col_name_variants.values())
 
 def smart_unique(df: pd.DataFrame,
                  to_predict: str) -> pd.DataFrame:
@@ -169,8 +171,8 @@ def age_sex_match(df: pd.DataFrame,
     verbose: whether to output messages.
     age_out_percentage: percentage of the larger group to randomly select a participant to
       take out from during the age matching. For example, if age_out_percentage = 20 and the
-      larger group is significantly older, then exclude one random participant from the top
-      20 percentage based on age.
+      larger group is significantly older, then exclude one random participant from the fifth
+      quintile based on age.
 
   Returns:
     a trimmed pandas dataframe with age/sex matched groups.

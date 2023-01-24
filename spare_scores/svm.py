@@ -8,7 +8,6 @@ from sklearn.model_selection import GridSearchCV, RepeatedKFold
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 
-
 def train_initialize(df, k, n_repeats, param_grid):
   folds = [(train, test) for (train, test) in RepeatedKFold(n_splits=k, n_repeats=n_repeats, random_state=2022).split(df['PTID'])]
   scaler = [StandardScaler()] * len(folds)
