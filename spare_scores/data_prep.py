@@ -120,20 +120,25 @@ def check_test(df: pd.DataFrame,
 
 def smart_unique(df1: pd.DataFrame,
                  df2: pd.DataFrame=None,
-                 to_predict: str=None) -> Union[pd.DataFrame, tuple]:
+                 to_predict: str=None,
+                 verbose: int=1) -> Union[pd.DataFrame, tuple]:
   """Select unique data points in a way that optimizes SPARE training.
   For SPARE regression, preserve data points with extreme values.
   For SPARE classification, preserve data points that help age match.
 
   Args:
     df1: a pandas dataframe.
-    df2: a pandas dataframe (optional) if df and df2 are two groups to classify.
+    df2: a pandas dataframe (optional) if df1 and df2 are two groups to classify.
     to_predict: variable to predict. Binary for classification and continuous for regression.
       Must be one of the columnes in df. Ignored if df2 is given.
 
   Returns:
-    a trimmed pandas dataframe with only one time point per IDs.
+    a trimmed pandas dataframe or a tuple of two dataframes with only one time point per ID.
   """
+  assert (isinstance(df2, pd.DataFrame) or (df2 is None)), (
+    'Either provide a 2nd pandas dataframe for the 2nd argument or specify it with "to_predict"')
+  if verbose == 0:
+    logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s', force=True)
   col_id = col_names(df1, cols=['ID'])
   if df2 is None:
     if to_predict is None:
@@ -178,24 +183,26 @@ def smart_unique(df1: pd.DataFrame,
     logging.info('Age difference not significant between two groups.')
   df1 = df1[~df1[col_id].duplicated()].reset_index(drop=True)
   df2 = df2[~df2[col_id].duplicated()].reset_index(drop=True)
+  if swap:
+    df1, df2 = df2.copy(), df1.copy()
   if no_df2:
     return pd.concat([df1, df2], ignore_index=True)
   else:
-    if swap:
-      return (df2, df1)
-    else:
-      return (df1, df2)
+    return (df1, df2)
 
-def age_sex_match(df: pd.DataFrame,
-                  to_match: str,
+def age_sex_match(df1: pd.DataFrame,
+                  df2: pd.DataFrame = None,
+                  to_match: str = None,
                   p_threshold: float = 0.15,
                   verbose: int = 1,
                   age_out_percentage: float = 20) -> pd.DataFrame:
   """Match two groups for age and sex.
 
   Args:
-    df: a pandas dataframe.
+    df1: a pandas dataframe.
+    df2: a pandas dataframe (optional) if df1 and df2 are two groups to classify.
     to_match: a binary variable of two groups. Must be one of the columns in df.
+      Ignored if df2 id given.
     p_threshold: minimum p-value for matching.
     verbose: whether to output messages.
     age_out_percentage: percentage of the larger group to randomly select a participant to
@@ -204,29 +211,43 @@ def age_sex_match(df: pd.DataFrame,
       quintile based on age.
 
   Returns:
-    a trimmed pandas dataframe with age/sex matched groups.
+    a trimmed pandas dataframe or a tuple of two dataframes with age/sex matched groups.
   """
-  if len(df[to_match].unique()) != 2:
-    return logging.error('Variable to match must be binary')
+  assert (isinstance(df2, pd.DataFrame) or (df2 is None)), (
+    'Either provide a 2nd pandas dataframe for the 2nd argument or specify it with "to_match"')
+  if verbose == 0:
+    logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s', force=True)
+  if df2 is None:
+    if to_match is None:
+      return logging.error('Either provide a second dataframe or provide a column "to_match"')
+    if len(df1[to_match].unique()) != 2:
+      return logging.error('Variable to match must be binary')
+    grps = list(df1[to_match].unique())
+    df1, df2 = df1[df1[to_match] == grps[0]], df1[df1[to_match] == grps[1]]
+    no_df2 = True
+  else:
+    if to_match is not None:
+      logging.info('"to_match" will be ignored.')
+    no_df2 = False
+
   if (age_out_percentage <= 0) or (age_out_percentage >= 100):
     return logging.error('Age-out-percentage must be between 0 and 100')
-  df = df.copy()
-  grps = list(df[to_match].unique())
-  df1, df2 = df[df[to_match] == grps[0]], df[df[to_match] == grps[1]]
+ 
   swap = 1
   random.seed(2022)
-  col_age, col_sex = col_names(df, ['Age', 'Sex'])
-  s1, s2 = df[col_sex].unique()
+  n_orig = len(df1.index) + len(df2.index)
+  col_age, col_sex = col_names(df1, ['Age', 'Sex'])
+  s1, s2 = df1[col_sex].unique()
 
   p_age = stats.ttest_ind(df1[col_age], df2[col_age]).pvalue
   p_sex = stats.chi2_contingency([np.array(df1[col_sex].value_counts()), np.array(df2[col_sex].value_counts())])[1]
-  if verbose > 0:
+  if verbose > 1:
     print(f' Orig.: P_age: {np.round(p_age,2)}/ P_sex {np.round(p_sex,2)}')
 
   p_age_all, p_sex_all = np.array(p_age), np.array(p_sex)
   while np.min([p_age, p_sex]) < p_threshold:
     if len(df2.index) > len(df1.index):
-      df1, df2 = df2, df1
+      df1, df2 = df2.copy(), df1.copy()
       swap *= -1
     if p_age < p_threshold:
       if np.mean(df1[col_age]) < np.mean(df2[col_age]):
@@ -254,12 +275,14 @@ def age_sex_match(df: pd.DataFrame,
     p_age_all = np.append(p_age_all, p_age)
     p_sex_all = np.append(p_sex_all, p_sex)
   if swap == -1:
-    df1, df2 = df2, df1
+    df1, df2 = df2.copy(), df1.copy()
 
-  if verbose > 0:
-    n_dropped = len(df.index) - len(df1.index) - len(df2.index)
+  if verbose > 1:
+    n_dropped = n_orig - len(df1.index) - len(df2.index)
     print(f' {n_dropped} participants excluded')
     print(f' Final: P_age: {np.round(p_age,2)}/ P_sex {np.round(p_sex,2)}')
   logging.info('Age/Sex matched!')
-  df = pd.concat([df1, df2], ignore_index=True)
-  return df
+  if no_df2:
+    return pd.concat([df1, df2], ignore_index=True)
+  else:
+    return (df1, df2)
