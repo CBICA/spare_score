@@ -118,44 +118,73 @@ def check_test(df: pd.DataFrame,
   if np.any(df[col_id].isin(meta_data['cv_results'][col_id])):
     logging.info('Some participants seem to have been in the model training.')
 
-def smart_unique(df: pd.DataFrame,
-                 to_predict: str) -> pd.DataFrame:
+def smart_unique(df1: pd.DataFrame,
+                 df2: pd.DataFrame=None,
+                 to_predict: str=None) -> Union[pd.DataFrame, tuple]:
   """Select unique data points in a way that optimizes SPARE training.
   For SPARE regression, preserve data points with extreme values.
   For SPARE classification, preserve data points that help age match.
 
   Args:
-    df: a pandas dataframe.
+    df1: a pandas dataframe.
+    df2: a pandas dataframe (optional) if df and df2 are two groups to classify.
     to_predict: variable to predict. Binary for classification and continuous for regression.
-      Must be one of the columnes in df.
+      Must be one of the columnes in df. Ignored if df2 is given.
 
   Returns:
     a trimmed pandas dataframe with only one time point per IDs.
   """
-  if len(df[to_predict].unique()) > 2:
-    logging.info('Select unique time points for SPARE regression training')
-    col_id = col_names(df, cols=['ID'])
-    df[f'{to_predict}_from_mean'] = np.abs(df[to_predict] - np.mean(df[to_predict]))
-    df = df[df.groupby(col_id)[f'{to_predict}_from_mean'].transform(max) == df[f'{to_predict}_from_mean']].reset_index(drop=True)
-    df = df.drop(columns=f'{to_predict}_from_mean')
-    df = df[~df[col_id].duplicated()].reset_index(drop=True)
-  elif len(df[to_predict].unique()) == 2:
-    logging.info('Select unique time points for SPARE classification training')
-    col_id, col_age = col_names(df, cols=['ID','Age'])
-    grps = list(df[to_predict].unique())
-    df1 = df[df[to_predict] == grps[0]]
-    df2 = df[df[to_predict] == grps[1]]
+  col_id = col_names(df1, cols=['ID'])
+  if df2 is None:
+    if to_predict is None:
+      return logging.error('Either provide a second dataframe or provide a column "to_predict"')
+    elif len(df1[to_predict].unique()) > 2:
+      if ~np.any(df1[col_id].duplicated()):
+        logging.info('No duplicated IDs.')
+      else:
+        logging.info('Select unique time points for SPARE regression training.')
+        df1[f'{to_predict}_from_mean'] = np.abs(df1[to_predict] - np.mean(df1[to_predict]))
+        df1 = df1[df1.groupby(col_id)[f'{to_predict}_from_mean'].transform(
+                          max) == df1[f'{to_predict}_from_mean']].reset_index(drop=True)
+        df1 = df1.drop(columns=f'{to_predict}_from_mean')
+        df1 = df1[~df1[col_id].duplicated()].reset_index(drop=True)
+      return df1
+    elif len(df1[to_predict].unique()) < 2:
+      return logging.error('Variable to predict has no variance.')
+    if ~np.any((df1[col_id].astype(str) + df1[to_predict].astype(str)).duplicated()):
+      logging.info('No duplicated IDs in either group.')
+      return df1
+    grps = list(df1[to_predict].unique())
+    df1, df2 = df1[df1[to_predict] == grps[0]], df1[df1[to_predict] == grps[1]]
+    no_df2 = True
+  else:
+    if to_predict is not None:
+      logging.info('"to_predict" will be ignored.')
+    if (~np.any(df1[col_id].duplicated())) and (~np.any(df2[col_id].duplicated())):
+      logging.info('No duplicated IDs in either group.')
+      return (df1, df2)
+    no_df2 = False
+
+  logging.info('Select unique time points for SPARE classification training.')
+  col_age = col_names(df1, cols=['Age'])
+  swap = False
+  if stats.ttest_ind(df1[col_age], df2[col_age]).pvalue < 0.05:
     if np.mean(df1[col_age]) < np.mean(df2[col_age]):
-      df1, df2 = df2.copy(), df1.copy()
+        df1, df2, swap = df2.copy(), df1.copy(), True
     df2 = df2.loc[df2[col_age] >= np.min(df1[col_age])].reset_index(drop=True)
     df1 = df1[df1.groupby(col_id)[col_age].transform(min) == df1[col_age]].reset_index(drop=True)
     df2 = df2[df2.groupby(col_id)[col_age].transform(max) == df2[col_age]].reset_index(drop=True)
-    df1 = df1[~df1[col_id].duplicated()].reset_index(drop=True)
-    df2 = df2[~df2[col_id].duplicated()].reset_index(drop=True)
-    df = pd.concat([df1, df2], ignore_index=True)
   else:
-    return logging.error('Variable to predict has no variance.')
-  return df
+    logging.info('Age difference not significant between two groups.')
+  df1 = df1[~df1[col_id].duplicated()].reset_index(drop=True)
+  df2 = df2[~df2[col_id].duplicated()].reset_index(drop=True)
+  if no_df2:
+    return pd.concat([df1, df2], ignore_index=True)
+  else:
+    if swap:
+      return (df2, df1)
+    else:
+      return (df1, df2)
 
 def age_sex_match(df: pd.DataFrame,
                   to_match: str,
@@ -178,9 +207,9 @@ def age_sex_match(df: pd.DataFrame,
     a trimmed pandas dataframe with age/sex matched groups.
   """
   if len(df[to_match].unique()) != 2:
-    return logging.warning('Variable to match must be binary')
+    return logging.error('Variable to match must be binary')
   if (age_out_percentage <= 0) or (age_out_percentage >= 100):
-    return logging.warning('Age-out-percentage must be between 0 and 100')
+    return logging.error('Age-out-percentage must be between 0 and 100')
   df = df.copy()
   grps = list(df[to_match].unique())
   df1, df2 = df[df[to_match] == grps[0]], df[df[to_match] == grps[1]]
@@ -219,7 +248,7 @@ def age_sex_match(df: pd.DataFrame,
     except:
       if np.min([len(df1.index), len(df2.index)]) > 10:
         print('Try increasing "age_out_percentage" parameter')
-      return logging.warning('Matching failed...')
+      return logging.error('Matching failed...')
     p_age = stats.ttest_ind(df1[col_age], df2[col_age]).pvalue
     p_sex = stats.chi2_contingency([np.array(df1[col_sex].value_counts()), np.array(df2[col_sex].value_counts())])[1]
     p_age_all = np.append(p_age_all, p_age)
