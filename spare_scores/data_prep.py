@@ -202,7 +202,7 @@ def age_sex_match(df1: pd.DataFrame,
     df1: a pandas dataframe.
     df2: a pandas dataframe (optional) if df1 and df2 are two groups to classify.
     to_match: a binary variable of two groups. Must be one of the columns in df.
-      Ignored if df2 id given.
+      Ignored if df2 is given.
     p_threshold: minimum p-value for matching.
     verbose: whether to output messages.
     age_out_percentage: percentage of the larger group to randomly select a participant to

@@ -160,8 +160,8 @@ def spare_test(df: Union[pd.DataFrame, str],
       ss[:, i] = (ss[:, i] - mdl['bias_correct']['int'][i]) / mdl['bias_correct']['slope'][i]
     ss[df[col_names(df,['ID'])].isin(
       meta_data['cv_results'][col_names(meta_data['cv_results'],['ID'])][mdl['cv_folds'][i][0]]), i] = np.nan
-  index_nan = np.all(np.isnan(ss),axis=1)
-  ss_mean[~index_nan] = np.nanmean(ss[~index_nan,:], axis=1)
+  ss_mean = np.nanmean(ss, axis=1)
+  ss_mean[np.all(np.isnan(ss),axis=1)] = np.nan
 
   return pd.DataFrame(data={'SPARE_scores': ss_mean})
 
