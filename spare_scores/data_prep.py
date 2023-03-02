@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from scipy import stats
-from typing import Tuple
+from typing import Tuple, Union
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 def col_names(df: pd.DataFrame,
