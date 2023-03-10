@@ -1,3 +1,5 @@
+For detailed documentation, please see here: **https://cbica.github.io/spare_score/**
+
 # Compute SPARE Scores for Your Case
 "SPARE" is short for "Spatial Pattern of Abnormalities for Recognition of ..." If you have brain images of a case population, such as the Alzheimer's disease (AD), the SPARE model will try to find characteristic brain patterns of AD with respect to a control population, such as cognitively normal. This would be an example of a classification-based SPARE model (currently powered by support vector machine or SVM). This model (that we named SPARE-AD) then computes SPARE-AD scores on an individual-basis that indicates how much the individual carries the learned brain patterns of AD.
 
@@ -16,3 +18,10 @@ Alternatively, you may want to find the spatial pattern related to brain aging (
 - diSPARE-AD
 
   Hwang, G. et al. Disentangling Alzheimer's disease neurodegeneration from typical brain ageing using machine learning. Brain Commun 4, fcac117, [doi:10.1093/braincomms/fcac117](https://doi.org/10.1093/braincomms/fcac117) (2022).
+
+## Disclaimer
+- The software has been designed for research purposes only and has neither been reviewed nor approved for clinical use by the Food and Drug Administration (FDA) or by any other federal/state agency.
+- By using spare_scores, the user agrees to the following license: https://www.med.upenn.edu/cbica/software-agreement-non-commercial.html
+
+## Contact
+For more information and support, please post on the [Discussions](https://github.com/CBICA/spare_score/discussionss) section or contact <a href="mailto:software@cbica.upenn.edu">CBICA Software</a>.
