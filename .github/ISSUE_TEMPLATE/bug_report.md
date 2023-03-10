@@ -25,7 +25,7 @@ If applicable, add screenshots to help explain your problem.
 
 **Platform Info (please complete the following information):**
  - OS: [e.g. Windows] + Version [e.g. 10]
- - MRISnapshot Version: 1.0.0
+ - spare_scores Version: 1.0.0
 
 **Additional context**
 Add any other context about the problem here.
