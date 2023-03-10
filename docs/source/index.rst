@@ -12,15 +12,6 @@ Welcome to doc3's documentation!
 
    contents/installation
    contents/quickstart
-   contents/datapreprocessing
-   contents/api
-   contents/guiplugins
-   contents/development
    contents/userguide
 
-.. Indices and tables
-.. ==================
 
-.. * :ref:`genindex`
-.. * :ref:`modindex`
-.. * :ref:`search`
