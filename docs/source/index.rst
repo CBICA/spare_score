@@ -1,9 +1,9 @@
-.. doc3 documentation master file, created by
+.. spare_scores documentation master file, created by
    sphinx-quickstart on Fri Mar 10 11:07:19 2023.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to doc3's documentation!
+Welcome to spare_scores's documentation!
 ================================
 
 .. toctree::
