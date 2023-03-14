@@ -6,7 +6,7 @@ import pandas as pd
 from typing import Tuple, Union
 from dataclasses import dataclass
 from spare_scores.svm import run_SVC, run_SVR
-from spare_scores.data_prep import col_names, check_train, check_test
+from spare_scores.data_prep import col_names, check_train, check_test, load_model
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
@@ -100,10 +100,6 @@ def spare_train(df: Union[pd.DataFrame, str],
       logging.info(f'Model saved to {save_path}')
 
   return mdl, vars(meta_data)
-
-def load_model(mdl_path: str) -> Tuple[dict, dict]:
-  with gzip.open(mdl_path, 'rb') as f:
-    return pickle.load(f)
 
 def spare_test(df: Union[pd.DataFrame, str],
                mdl_path: Union[str, Tuple[dict, dict]]) -> pd.DataFrame:
