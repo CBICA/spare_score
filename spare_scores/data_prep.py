@@ -1,5 +1,9 @@
+import os
+import gzip
+import pickle
 import random
 import logging
+import pkg_resources
 import numpy as np
 import pandas as pd
 
@@ -7,6 +11,33 @@ from scipy import stats
 from typing import Tuple, Union
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+def load_model(mdl_path: str) -> Tuple[dict, dict]:
+  with gzip.open(mdl_path, 'rb') as f:
+    return pickle.load(f)
+  
+def load_examples(file_name: str=''):
+  """Loads example data and models in the package.
+
+  Args:
+    file_name: either name of the example data saved as .csv or
+      name of the SPARE model saved as .pkl.gz.
+
+  Returns:
+    a tuple containing pandas df and 
+  """
+  pkg_path = pkg_resources.resource_filename('spare_scores','')
+  list_data = os.listdir(f'{pkg_path}/data/')
+  list_mdl = os.listdir(f'{pkg_path}/mdl/')
+  if file_name in list_data:
+    return pd.read_csv(f'{pkg_path}/data/{file_name}')
+  elif file_name in list_mdl:
+    return load_model(f'{pkg_path}/mdl/{file_name}')
+  else:
+    print('Available example data:')
+    [print(f' - {a}') for a in list_data]
+    print('Available example SPARE models:')
+    [print(f' - {a}') for a in list_mdl]
+
 def col_names(df: pd.DataFrame,
               cols: list=['ID','Age','Sex']) -> tuple:
   """Matches required column names with common name variants. 
