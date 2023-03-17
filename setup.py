@@ -5,7 +5,7 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
 setup(name='spare_scores',
-      version='0.1.6',
+      version='0.1.8',
       description='Compute characteristic brain signatures of your case population.',
       long_description=long_description,
       long_description_content_type='text/markdown',
@@ -15,5 +15,7 @@ setup(name='spare_scores',
       packages=find_packages(),
       package_data={'spare_scores':['mdl/*.pkl.gz','data/*.csv']},
       include_package_data=True,
-      install_requires=['numpy', 'pandas', 'scikit-learn']
+      install_requires=['numpy==1.20.3',
+                        'pandas==1.5.3',
+                        'scikit-learn==0.23.2']
       )
