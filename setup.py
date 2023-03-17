@@ -17,5 +17,5 @@ setup(name='spare_scores',
       include_package_data=True,
       install_requires=['numpy==1.20.3',
                         'pandas==1.5.3',
-                        'scikit-learn==0.23.2']
+                        'scikit-learn==0.23.0']
       )
