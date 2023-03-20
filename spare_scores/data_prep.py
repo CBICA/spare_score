@@ -54,7 +54,7 @@ def check_train(df: pd.DataFrame,
     a tuple containing 1) filtered dataframe, 2) filtered predictors, 3) SPARE model type.
   """
   if not {'ID','Age','Sex'}.issubset(set(df.columns)):
-    return logging.error('Please check equired columns: ID, Age, Sex.')
+    return logging.error('Please check required columns: ID, Age, Sex.')
   if not set(predictors).issubset(df.columns):
     return logging.error('Not all predictors exist in the input dataframe.')
   if to_predict not in df.columns:
@@ -106,7 +106,7 @@ def check_test(df: pd.DataFrame,
     meta_data: a dictionary containing training information on its paired SPARE model.
   """
   if not {'ID','Age','Sex'}.issubset(set(df.columns)):
-    return logging.error('Please check equired columns: ID, Age, Sex.')
+    return logging.error('Please check required columns: ID, Age, Sex.')
   if not set(meta_data['predictors']).issubset(df.columns):
     cols_not_found = sorted(set(meta_data['predictors']) - set(df.columns))
     return logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
