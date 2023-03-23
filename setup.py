@@ -15,7 +15,5 @@ setup(name='spare_scores',
       packages=find_packages(),
       package_data={'spare_scores':['mdl/*.pkl.gz','data/*.csv']},
       include_package_data=True,
-      install_requires=['numpy==1.20.3',
-                        'pandas==1.5.3',
-                        'scikit-learn==0.23.0']
+      install_requires=['numpy', 'pandas', 'scikit-learn']
       )

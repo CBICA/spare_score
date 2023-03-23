@@ -12,6 +12,6 @@ Welcome to spare_scores' documentation!
 
    contents/installation
    contents/quickstart
-   contents/userguide
+   contents/datapreprocessing
 
 
