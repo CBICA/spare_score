@@ -6,7 +6,7 @@ import pandas as pd
 from typing import Tuple, Union
 from dataclasses import dataclass
 from spare_scores.svm import run_SVC, run_SVR
-from spare_scores.data_prep import col_names, check_train, check_test, load_model
+from spare_scores.data_prep import check_train, check_test, load_model
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
@@ -43,7 +43,6 @@ def spare_train(df: Union[pd.DataFrame, str],
   """
 
   df = _load_df(df)
-  col_id, col_age, col_sex = col_names(df)
   df, predictors, spare_type = check_train(df, predictors, to_predict, pos_group)
   if spare_type == 'classification':
     groups_to_classify = [a for a in df[to_predict].unique() if a != pos_group] + [pos_group]
@@ -51,7 +50,7 @@ def spare_train(df: Union[pd.DataFrame, str],
   # Initiate SPARE model
   meta_data = MetaData(spare_type, kernel, predictors, to_predict)
   meta_data.n = len(df.index)
-  meta_data.age_range = [np.min(df[col_age]), np.max(df[col_age])]
+  meta_data.age_range = [np.min(df['Age']), np.max(df['Age'])]
 
   # Convert categorical variables
   var_categorical = df[predictors].dtypes == np.object
@@ -89,7 +88,7 @@ def spare_train(df: Union[pd.DataFrame, str],
         param_grid[par] = _expspace([np.min(params[f'{par}_optimal']), np.max(params[f'{par}_optimal'])])
     df['predicted'], mdl, meta_data.mae, meta_data.params = run_SVR(
                   df, predictors, to_predict, param_grid=param_grid)
-  meta_data.cv_results = df[list(dict.fromkeys([col_id, col_age, col_sex, to_predict, 'predicted']))]
+  meta_data.cv_results = df[list(dict.fromkeys(['ID', 'Age', 'Sex', to_predict, 'predicted']))]
 
   # Save model
   if save_path is not None:
@@ -154,11 +153,10 @@ def spare_test(df: Union[pd.DataFrame, str],
       ss[:, i] = mdl['mdl'][i].decision_function(X)
     if meta_data['spare_type'] == 'regression':
       ss[:, i] = (ss[:, i] - mdl['bias_correct']['int'][i]) / mdl['bias_correct']['slope'][i]
-    ss[df[col_names(df,['ID'])].isin(
-      meta_data['cv_results'][col_names(meta_data['cv_results'],['ID'])][mdl['cv_folds'][i][0]]), i] = np.nan
-  ss_mean = np.empty((ss.shape[0],))
-  all_nan = np.all(np.isnan(ss),axis=1)
-  ss_mean[~all_nan] = np.nanmean(ss[~all_nan,:],axis=1)
+    ss[df['ID'].isin(
+      meta_data['cv_results']['ID'][mdl['cv_folds'][i][0]]), i] = np.nan
+  ss_mean = np.nanmean(ss, axis=1)
+  ss_mean[np.all(np.isnan(ss),axis=1)] = np.nan
 
   return pd.DataFrame(data={'SPARE_scores': ss_mean})
 

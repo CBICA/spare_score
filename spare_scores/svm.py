@@ -9,7 +9,7 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 
 def train_initialize(df, k, n_repeats, param_grid):
-  folds = [(train, test) for (train, test) in RepeatedKFold(n_splits=k, n_repeats=n_repeats, random_state=2022).split(df['PTID'])]
+  folds = [(train, test) for (train, test) in RepeatedKFold(n_splits=k, n_repeats=n_repeats, random_state=2022).split(df['ID'])]
   scaler = [StandardScaler()] * len(folds)
   params = param_grid.copy()
   for par in param_grid.keys():

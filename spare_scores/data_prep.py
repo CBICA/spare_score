@@ -38,36 +38,6 @@ def load_examples(file_name: str=''):
     print('Available example SPARE models:')
     [print(f' - {a}') for a in list_mdl]
 
-def col_names(df: pd.DataFrame,
-              cols: list=['ID','Age','Sex']) -> tuple:
-  """Matches required column names with common name variants. 
-
-  Args:
-    df: pandas dataframe.
-    cols: columns to search for name variants.
-
-  Returns:
-    a string or a tuple with matched variants.
-  """
-  col_name_variants = {'ID':['ID','id','PTID','participant_id'],
-                       'Age':['Age','age','AGE'],
-                       'Sex':['Sex','sex','SEX']}
-  col_name_variants = {a: col_name_variants[a] for a in cols}
-  for k in col_name_variants.keys():
-    if k not in cols:
-      continue
-    for i in col_name_variants[k]:
-      if i in df.columns:
-        col_name_variants[k] = i
-        break
-  col_not_found = [a for a in col_name_variants.keys() if type(col_name_variants[a])==list]
-  if len(col_not_found) > 0:
-    return logging.error(f'Required columns not found: {col_not_found}')
-  if len(cols) == 1:
-    return col_name_variants[cols[0]]
-  else: 
-    return tuple(col_name_variants.values())
-
 def check_train(df: pd.DataFrame, 
                 predictors: list,
                 to_predict: str,
@@ -83,6 +53,8 @@ def check_train(df: pd.DataFrame,
   Returns:
     a tuple containing 1) filtered dataframe, 2) filtered predictors, 3) SPARE model type.
   """
+  if not {'ID','Age','Sex'}.issubset(set(df.columns)):
+    return logging.error('Please check required columns: ID, Age, Sex.')
   if not set(predictors).issubset(df.columns):
     return logging.error('Not all predictors exist in the input dataframe.')
   if to_predict not in df.columns:
@@ -94,7 +66,6 @@ def check_train(df: pd.DataFrame,
     logging.info('Some participants have invalid predictor variables (i.e. n/a). They will be excluded.')
     df = df.loc[np.sum(pd.isna(df[predictors]), axis=1) == 0].reset_index(drop=True)
 
-  col_id = col_names(df,['ID'])
   if len(df[to_predict].unique()) == 2:
     if pos_group == '':
       return logging.error('"pos_group" not provided (group to assign a positive score).')
@@ -115,7 +86,7 @@ def check_train(df: pd.DataFrame,
       return logging.error('Sample size is too small (n<10).')
     elif len(df.index) < 100:
       logging.warn('Sample size may be too small (n<100).')
-    if np.sum(df[col_id].duplicated()) > 0:
+    if np.sum(df['ID'].duplicated()) > 0:
       logging.warn('Training dataset has duplicate participants.')
     if pos_group != '':
       logging.info('SPARE regression does not need a "pos_group". This will be ignored.')
@@ -134,19 +105,20 @@ def check_test(df: pd.DataFrame,
     df: a pandas dataframe containing testing data.
     meta_data: a dictionary containing training information on its paired SPARE model.
   """
-  col_id, col_age = col_names(df,['ID','Age'])
+  if not {'ID','Age','Sex'}.issubset(set(df.columns)):
+    return logging.error('Please check required columns: ID, Age, Sex.')
   if not set(meta_data['predictors']).issubset(df.columns):
     cols_not_found = sorted(set(meta_data['predictors']) - set(df.columns))
     return logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
     
-  if (np.min(df[col_age]) < meta_data['age_range'][0]) or (
-           np.max(df[col_age]) > meta_data['age_range'][1]):
+  if (np.min(df['Age']) < meta_data['age_range'][0]) or (
+           np.max(df['Age']) > meta_data['age_range'][1]):
     logging.warn('Some participants fall outside the age range of the SPARE model.')
 
   if np.sum(np.sum(pd.isna(df[meta_data['predictors']]))) > 0:
     logging.warn('Some participants have invalid predictor variables.')
 
-  if np.any(df[col_id].isin(meta_data['cv_results'][col_id])):
+  if np.any(df['ID'].isin(meta_data['cv_results']['ID'])):
     logging.info('Some participants seem to have been in the model training.')
 
 def smart_unique(df1: pd.DataFrame,
@@ -170,24 +142,23 @@ def smart_unique(df1: pd.DataFrame,
     'Either provide a 2nd pandas dataframe for the 2nd argument or specify it with "to_predict"')
   if verbose == 0:
     logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s', force=True)
-  col_id = col_names(df1, cols=['ID'])
   if df2 is None:
     if to_predict is None:
       return logging.error('Either provide a second dataframe or provide a column "to_predict"')
     elif len(df1[to_predict].unique()) > 2:
-      if ~np.any(df1[col_id].duplicated()):
+      if ~np.any(df1['ID'].duplicated()):
         logging.info('No duplicated IDs.')
       else:
         logging.info('Select unique time points for SPARE regression training.')
         df1[f'{to_predict}_from_mean'] = np.abs(df1[to_predict] - np.mean(df1[to_predict]))
-        df1 = df1[df1.groupby(col_id)[f'{to_predict}_from_mean'].transform(
+        df1 = df1[df1.groupby('ID')[f'{to_predict}_from_mean'].transform(
                           max) == df1[f'{to_predict}_from_mean']].reset_index(drop=True)
         df1 = df1.drop(columns=f'{to_predict}_from_mean')
-        df1 = df1[~df1[col_id].duplicated()].reset_index(drop=True)
+        df1 = df1[~df1['ID'].duplicated()].reset_index(drop=True)
       return df1
     elif len(df1[to_predict].unique()) < 2:
       return logging.error('Variable to predict has no variance.')
-    if ~np.any((df1[col_id].astype(str) + df1[to_predict].astype(str)).duplicated()):
+    if ~np.any((df1['ID'].astype(str) + df1[to_predict].astype(str)).duplicated()):
       logging.info('No duplicated IDs in either group.')
       return df1
     grps = list(df1[to_predict].unique())
@@ -196,24 +167,23 @@ def smart_unique(df1: pd.DataFrame,
   else:
     if to_predict is not None:
       logging.info('"to_predict" will be ignored.')
-    if (~np.any(df1[col_id].duplicated())) and (~np.any(df2[col_id].duplicated())):
+    if (~np.any(df1['ID'].duplicated())) and (~np.any(df2['ID'].duplicated())):
       logging.info('No duplicated IDs in either group.')
       return (df1, df2)
     no_df2 = False
 
   logging.info('Select unique time points for SPARE classification training.')
-  col_age = col_names(df1, cols=['Age'])
   swap = False
-  if stats.ttest_ind(df1[col_age], df2[col_age]).pvalue < 0.05:
-    if np.mean(df1[col_age]) < np.mean(df2[col_age]):
+  if stats.ttest_ind(df1['Age'], df2['Age']).pvalue < 0.05:
+    if np.mean(df1['Age']) < np.mean(df2['Age']):
         df1, df2, swap = df2.copy(), df1.copy(), True
-    df2 = df2.loc[df2[col_age] >= np.min(df1[col_age])].reset_index(drop=True)
-    df1 = df1[df1.groupby(col_id)[col_age].transform(min) == df1[col_age]].reset_index(drop=True)
-    df2 = df2[df2.groupby(col_id)[col_age].transform(max) == df2[col_age]].reset_index(drop=True)
+    df2 = df2.loc[df2['Age'] >= np.min(df1['Age'])].reset_index(drop=True)
+    df1 = df1[df1.groupby('ID')['Age'].transform(min) == df1['Age']].reset_index(drop=True)
+    df2 = df2[df2.groupby('ID')['Age'].transform(max) == df2['Age']].reset_index(drop=True)
   else:
     logging.info('Age difference not significant between two groups.')
-  df1 = df1[~df1[col_id].duplicated()].reset_index(drop=True)
-  df2 = df2[~df2[col_id].duplicated()].reset_index(drop=True)
+  df1 = df1[~df1['ID'].duplicated()].reset_index(drop=True)
+  df2 = df2[~df2['ID'].duplicated()].reset_index(drop=True)
   if swap:
     df1, df2 = df2.copy(), df1.copy()
   if no_df2:
@@ -267,11 +237,10 @@ def age_sex_match(df1: pd.DataFrame,
   swap = 1
   random.seed(2022)
   n_orig = len(df1.index) + len(df2.index)
-  col_age, col_sex = col_names(df1, ['Age', 'Sex'])
-  s1, s2 = df1[col_sex].unique()
+  s1, s2 = df1['Sex'].unique()
 
-  p_age = stats.ttest_ind(df1[col_age], df2[col_age]).pvalue
-  p_sex = stats.chi2_contingency([np.array(df1[col_sex].value_counts()), np.array(df2[col_sex].value_counts())])[1]
+  p_age = stats.ttest_ind(df1['Age'], df2['Age']).pvalue
+  p_sex = stats.chi2_contingency([np.array(df1['Sex'].value_counts()), np.array(df2['Sex'].value_counts())])[1]
   if verbose > 1:
     print(f' Orig.: P_age: {np.round(p_age,2)}/ P_sex {np.round(p_sex,2)}')
 
@@ -281,19 +250,19 @@ def age_sex_match(df1: pd.DataFrame,
       df1, df2 = df2.copy(), df1.copy()
       swap *= -1
     if p_age < p_threshold:
-      if np.mean(df1[col_age]) < np.mean(df2[col_age]):
-        i_age = df1[col_age] < np.percentile(df1[col_age], age_out_percentage)
+      if np.mean(df1['Age']) < np.mean(df2['Age']):
+        i_age = df1['Age'] < np.percentile(df1['Age'], age_out_percentage)
       else:
-        i_age = df1[col_age] > np.percentile(df1[col_age], 100-age_out_percentage)
+        i_age = df1['Age'] > np.percentile(df1['Age'], 100-age_out_percentage)
     else:
-      i_age = df1[col_age] >= 0
+      i_age = df1['Age'] >= 0
     if p_sex < p_threshold:
-      if np.sum(df1[col_sex] == s1)/np.sum(df1[col_sex] == s2) > np.sum(df2[col_sex] == s1)/np.sum(df2[col_sex] == s2):
-        i_sex = df1[col_sex] == s1
+      if np.sum(df1['Sex'] == s1)/np.sum(df1['Sex'] == s2) > np.sum(df2['Sex'] == s1)/np.sum(df2['Sex'] == s2):
+        i_sex = df1['Sex'] == s1
       else:
-        i_sex = df1[col_sex] == s2
+        i_sex = df1['Sex'] == s2
     else:
-      i_sex = df1[col_sex].isin([s1, s2])
+      i_sex = df1['Sex'].isin([s1, s2])
 
     try:
       df1 = df1.drop(random.sample(list(df1[i_age & i_sex].index), 1)).reset_index(drop=True)
@@ -301,8 +270,8 @@ def age_sex_match(df1: pd.DataFrame,
       if np.min([len(df1.index), len(df2.index)]) > 10:
         print('Try increasing "age_out_percentage" parameter')
       return logging.error('Matching failed...')
-    p_age = stats.ttest_ind(df1[col_age], df2[col_age]).pvalue
-    p_sex = stats.chi2_contingency([np.array(df1[col_sex].value_counts()), np.array(df2[col_sex].value_counts())])[1]
+    p_age = stats.ttest_ind(df1['Age'], df2['Age']).pvalue
+    p_sex = stats.chi2_contingency([np.array(df1['Sex'].value_counts()), np.array(df2['Sex'].value_counts())])[1]
     p_age_all = np.append(p_age_all, p_age)
     p_sex_all = np.append(p_sex_all, p_sex)
   if swap == -1:
