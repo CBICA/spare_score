@@ -75,7 +75,7 @@ def check_train(df: pd.DataFrame,
       return logging.error('At least one of the groups to classify is too small (n<10).')
     elif np.min(df[to_predict].value_counts()) < 100:
       logging.warn('At least one of the groups to classify may be too small (n<100).')
-    if np.sum((df['ID']+df[to_predict]).duplicated()) > 0:
+    if np.sum((df[col_id].astype(str)+df[to_predict].astype(str)).duplicated()) > 0:
       logging.warn('Training dataset has duplicate participants.')
     spare_type = 'classification'
 
