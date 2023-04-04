@@ -1,44 +1,43 @@
 import numpy as np
-
 from sklearn import metrics
-from sklearn.model_selection import GridSearchCV
+from sklearn.svm import LinearSVR, LinearSVC, SVC
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import LinearSVR, SVC
-from sklearn.model_selection import GridSearchCV, RepeatedKFold
-from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import ignore_warnings
+from sklearn.model_selection import GridSearchCV, RepeatedKFold
 
 def train_initialize(df, k, n_repeats, param_grid):
-  folds = [(train, test) for (train, test) in RepeatedKFold(n_splits=k, n_repeats=n_repeats, random_state=2022).split(df['ID'])]
+  id_unique = df['ID'].unique()
+  folds = list(RepeatedKFold(n_splits=k, n_repeats=n_repeats, random_state=2022).split(id_unique))
+  if len(id_unique) < len(df):
+    folds = [[np.array(df.index[df['ID'].isin(id_unique[a])]) for a in folds[b]] for b in range(len(folds))]
   scaler = [StandardScaler()] * len(folds)
   params = param_grid.copy()
-  for par in param_grid.keys():
-    params[f'{par}_optimal'] = np.zeros((len(folds),))
-  stat, y_hat = np.zeros((len(folds),)), np.zeros((len(df.index),))
+  params.update({f'{par}_optimal': np.zeros(len(folds)) for par in param_grid.keys()})
+  stat, y_hat = np.zeros(len(folds)), np.zeros(len(df))
   return folds, scaler, params, stat, y_hat
 
 def prepare_sample(df, fold, predictors, to_predict, scaler, classify=None):
-  X_train = df.loc[fold[0], predictors]
-  X_test = df.loc[fold[1], predictors]
-  scaler.fit(X_train)
-  X_train, X_test = scaler.transform(X_train), scaler.transform(X_test)
+  X_train, X_test = scaler.fit_transform(df.loc[fold[0], predictors]), scaler.transform(df.loc[fold[1], predictors])
   y_train, y_test = df.loc[fold[0], to_predict], df.loc[fold[1], to_predict]
   if classify is not None:
-    y_train = y_train.map({classify[0]: -1, classify[1]: 1})
-    y_test = y_test.map({classify[0]: -1, classify[1]: 1})
+    y_train, y_test = y_train.map(dict(zip(classify, [-1, 1]))), y_test.map(dict(zip(classify, [-1, 1])))
   return X_train, X_test, y_train, y_test
 
 @ignore_warnings(category=ConvergenceWarning)
-def run_SVC(df, predictors, to_predict, classify, param_grid, kernel='linear', k=5, n_repeats=5, verbose=1):
+def run_SVC(df, predictors, to_predict, param_grid, kernel='linear', k=5, n_repeats=5, verbose=1):
 
   folds, scaler, params, auc, y_hat = train_initialize(df, k, n_repeats, param_grid)
-  mdl = [SVC(max_iter=100000, kernel=kernel)] * len(folds)
+  if kernel == 'linear':
+    mdl = [LinearSVC(max_iter=100000)] * len(folds)
+  else:
+    mdl = [SVC(max_iter=100000, kernel=kernel)] * len(folds)
 
   for i, fold in enumerate(folds):
-    if (i % n_repeats == 0) & (verbose==1):
+    if (i % n_repeats == 0) & (verbose>=1):
       print(f'  FOLD {int(i/n_repeats+1)}...')
 
-    X_train, X_test, y_train, y_test = prepare_sample(df, fold, predictors, to_predict, scaler[i], classify=classify)
+    X_train, X_test, y_train, y_test = prepare_sample(df, fold, predictors, to_predict[0], scaler[i], classify=to_predict[1])
     gs = GridSearchCV(mdl[i], param_grid, scoring='roc_auc', cv=k, return_train_score=True, verbose=0)
     gs.fit(X_train, y_train)
     mdl[i] = gs.best_estimator_
@@ -50,20 +49,20 @@ def run_SVC(df, predictors, to_predict, classify, param_grid, kernel='linear', k
     mdl[i].fit(X_train, y_train)
     y_hat[fold[1]] = mdl[i].decision_function(X_test)
     
-  if verbose==1:
-    print('>> AUC =', np.round(np.mean(auc), 3), '+/-', np.round(np.std(auc), 3))
+  if verbose>=0:
+    print(f'>> AUC = {np.mean(auc):.3f} \u00B1 {np.std(auc):.3f}')
   
-  return y_hat, {'mdl':mdl, 'scaler':scaler, 'cv_folds':folds}, auc, params
+  return y_hat, {'mdl':mdl, 'scaler':scaler}, {'AUC':auc}, params, [a[1] for a in folds]
 
 @ignore_warnings(category=ConvergenceWarning)
-def run_SVR(df, predictors, to_predict, param_grid, k=5, n_repeats=1, verbose=1):
+def run_SVR(df, predictors, to_predict, param_grid, kernel='linear', k=5, n_repeats=1, verbose=1):
   
   folds, scaler, params, mae, y_hat = train_initialize(df, k, n_repeats, param_grid)
   mdl = [LinearSVR(max_iter=100000)] * len(folds)
   bias_correct = {'slope':np.zeros((len(folds),)), 'int':np.zeros((len(folds),))}
 
   for i, fold in enumerate(folds):
-    if verbose==1:
+    if verbose>=1:
       print(f'  FOLD {int(i+1)}')
     
     X_train, X_test, y_train, y_test = prepare_sample(df, fold, predictors, to_predict, scaler[i])
@@ -82,7 +81,7 @@ def run_SVR(df, predictors, to_predict, param_grid, k=5, n_repeats=1, verbose=1)
     if bias_correct['slope'][i] != 0:
       y_hat[fold[1]] = (y_hat[fold[1]] - bias_correct['int'][i]) / bias_correct['slope'][i]
 
-  if verbose==1:
-    print('>> MAE =', np.round(np.mean(mae), 3), '+/-', np.round(np.std(mae), 3))
+  if verbose>=0:
+    print(f'>> AUC = {np.mean(mae):.3f} \u00B1 {np.std(mae):.3f}')
 
-  return y_hat, {'mdl':mdl, 'scaler':scaler, 'bias_correct':bias_correct, 'cv_folds':folds}, mae, params
+  return y_hat, {'mdl':mdl, 'scaler':scaler, 'bias_correct':bias_correct}, {'MAE':mae}, params, [a[1] for a in folds]

@@ -75,9 +75,9 @@ def check_train(df: pd.DataFrame,
       return logging.error('At least one of the groups to classify is too small (n<10).')
     elif np.min(df[to_predict].value_counts()) < 100:
       logging.warn('At least one of the groups to classify may be too small (n<100).')
-    if np.sum((df[col_id].astype(str)+df[to_predict].astype(str)).duplicated()) > 0:
+    if np.sum((df['ID'].astype(str)+df[to_predict].astype(str)).duplicated()) > 0:
       logging.warn('Training dataset has duplicate participants.')
-    spare_type = 'classification'
+    mdl_type = 'SVM Classification'
 
   elif len(df[to_predict].unique()) > 2:
     if df[to_predict].dtype not in ['int64', 'float64']:
@@ -90,12 +90,12 @@ def check_train(df: pd.DataFrame,
       logging.warn('Training dataset has duplicate participants.')
     if pos_group != '':
       logging.info('SPARE regression does not need a "pos_group". This will be ignored.')
-    spare_type = 'regression'
+    mdl_type = 'SVM Regression'
   else:
     return logging.error('Variable to predict has no variance.')
     
-  logging.info(f'Dataframe checked for SPARE {spare_type} training.')
-  return df, predictors, spare_type
+  logging.info(f'Dataframe checked for SPARE training ({mdl_type}).')
+  return df, predictors, mdl_type
 
 def check_test(df: pd.DataFrame, 
                meta_data: dict):
@@ -110,9 +110,9 @@ def check_test(df: pd.DataFrame,
   if not set(meta_data['predictors']).issubset(df.columns):
     cols_not_found = sorted(set(meta_data['predictors']) - set(df.columns))
     return logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
-    
-  if (np.min(df['Age']) < meta_data['age_range'][0]) or (
-           np.max(df['Age']) > meta_data['age_range'][1]):
+  
+  if (np.min(df['Age']) < np.min((meta_data['cv_results']['Age']))) or (
+           np.max(df['Age']) > np.max((meta_data['cv_results']['Age']))):
     logging.warn('Some participants fall outside the age range of the SPARE model.')
 
   if np.sum(np.sum(pd.isna(df[meta_data['predictors']]))) > 0:
@@ -145,20 +145,20 @@ def smart_unique(df1: pd.DataFrame,
   if df2 is None:
     if to_predict is None:
       return logging.error('Either provide a second dataframe or provide a column "to_predict"')
-    elif len(df1[to_predict].unique()) > 2:
+    if len(df1[to_predict].unique()) < 2:
+      return logging.error('Variable to predict has no variance.')
+    if len(df1[to_predict].unique()) > 2:
       if ~np.any(df1['ID'].duplicated()):
         logging.info('No duplicated IDs.')
       else:
         logging.info('Select unique time points for SPARE regression training.')
         df1[f'{to_predict}_from_mean'] = np.abs(df1[to_predict] - np.mean(df1[to_predict]))
-        df1 = df1[df1.groupby('ID')[f'{to_predict}_from_mean'].transform(
-                          max) == df1[f'{to_predict}_from_mean']].reset_index(drop=True)
-        df1 = df1.drop(columns=f'{to_predict}_from_mean')
+        df1 = (df1[df1.groupby('ID')[f'{to_predict}_from_mean']
+                      .transform(max) == df1[f'{to_predict}_from_mean']]
+                      .drop(columns=f'{to_predict}_from_mean'))
         df1 = df1[~df1['ID'].duplicated()].reset_index(drop=True)
       return df1
-    elif len(df1[to_predict].unique()) < 2:
-      return logging.error('Variable to predict has no variance.')
-    if ~np.any((df1['ID'].astype(str) + df1[to_predict].astype(str)).duplicated()):
+    if ~np.any(df1.groupby(['ID', to_predict]).size() > 1):
       logging.info('No duplicated IDs in either group.')
       return df1
     grps = list(df1[to_predict].unique())
@@ -186,10 +186,7 @@ def smart_unique(df1: pd.DataFrame,
   df2 = df2[~df2['ID'].duplicated()].reset_index(drop=True)
   if swap:
     df1, df2 = df2.copy(), df1.copy()
-  if no_df2:
-    return pd.concat([df1, df2], ignore_index=True)
-  else:
-    return (df1, df2)
+  return pd.concat([df1, df2], ignore_index=True) if no_df2 else (df1, df2)
 
 def age_sex_match(df1: pd.DataFrame,
                   df2: pd.DataFrame = None,
