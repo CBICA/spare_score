@@ -10,11 +10,10 @@ import pandas as pd
 from scipy import stats
 from typing import Tuple, Union
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 def load_model(mdl_path: str) -> Tuple[dict, dict]:
   with gzip.open(mdl_path, 'rb') as f:
     return pickle.load(f)
-  
+
 def load_examples(file_name: str=''):
   """Loads example data and models in the package.
 
@@ -25,6 +24,7 @@ def load_examples(file_name: str=''):
   Returns:
     a tuple containing pandas df and 
   """
+  logging_basic_config(content_only=True)
   pkg_path = pkg_resources.resource_filename('spare_scores','')
   list_data = os.listdir(f'{pkg_path}/data/')
   list_mdl = os.listdir(f'{pkg_path}/mdl/')
@@ -33,15 +33,16 @@ def load_examples(file_name: str=''):
   elif file_name in list_mdl:
     return load_model(f'{pkg_path}/mdl/{file_name}')
   else:
-    print('Available example data:')
-    [print(f' - {a}') for a in list_data]
-    print('Available example SPARE models:')
-    [print(f' - {a}') for a in list_mdl]
+    logging.info('Available example data:')
+    [logging.info(f' - {a}') for a in list_data]
+    logging.info('Available example SPARE models:')
+    [logging.info(f' - {a}') for a in list_mdl]
 
 def check_train(df: pd.DataFrame, 
                 predictors: list,
                 to_predict: str,
-                pos_group: str = '') -> Tuple[pd.DataFrame, list, str]:
+                pos_group: str = '',
+                verbose: int = 1) -> Tuple[pd.DataFrame, list, str]:
   """Checks training dataframe for errors.
 
   Args:
@@ -53,6 +54,7 @@ def check_train(df: pd.DataFrame,
   Returns:
     a tuple containing 1) filtered dataframe, 2) filtered predictors, 3) SPARE model type.
   """
+  logging_basic_config(verbose)
   if not {'ID','Age','Sex'}.issubset(set(df.columns)):
     return logging.error('Please check required columns: ID, Age, Sex.')
   if not set(predictors).issubset(df.columns):
@@ -98,13 +100,15 @@ def check_train(df: pd.DataFrame,
   return df, predictors, mdl_type
 
 def check_test(df: pd.DataFrame, 
-               meta_data: dict):
+               meta_data: dict,
+               verbose: int = 1):
   """Checks testing dataframe for errors.
 
   Args:
     df: a pandas dataframe containing testing data.
     meta_data: a dictionary containing training information on its paired SPARE model.
   """
+  logging_basic_config(verbose)
   if not {'ID','Age','Sex'}.issubset(set(df.columns)):
     return logging.error('Please check required columns: ID, Age, Sex.')
   if not set(meta_data['predictors']).issubset(df.columns):
@@ -138,10 +142,9 @@ def smart_unique(df1: pd.DataFrame,
   Returns:
     a trimmed pandas dataframe or a tuple of two dataframes with only one time point per ID.
   """
+  logging_basic_config(verbose)
   assert (isinstance(df2, pd.DataFrame) or (df2 is None)), (
     'Either provide a 2nd pandas dataframe for the 2nd argument or specify it with "to_predict"')
-  if verbose == 0:
-    logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s', force=True)
   if df2 is None:
     if to_predict is None:
       return logging.error('Either provide a second dataframe or provide a column "to_predict"')
@@ -201,6 +204,7 @@ def age_sex_match(df1: pd.DataFrame,
     df2: a pandas dataframe (optional) if df1 and df2 are two groups to classify.
     to_match: a binary variable of two groups. Must be one of the columns in df.
       Ignored if df2 is given.
+      If to_match is 'Sex', then only perform age matching.
     p_threshold: minimum p-value for matching.
     verbose: whether to output messages.
     age_out_percentage: percentage of the larger group to randomly select a participant to
@@ -211,13 +215,13 @@ def age_sex_match(df1: pd.DataFrame,
   Returns:
     a trimmed pandas dataframe or a tuple of two dataframes with age/sex matched groups.
   """
+  logging_basic_config(verbose)
   assert (isinstance(df2, pd.DataFrame) or (df2 is None)), (
-    'Either provide a 2nd pandas dataframe for the 2nd argument or specify it with "to_match"')
-  if verbose == 0:
-    logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s', force=True)
+    'Either provide a 2nd pandas dataframe for the 2nd argument or specify the two groups with "to_match"')
+
   if df2 is None:
     if to_match is None:
-      return logging.error('Either provide a second dataframe or provide a column "to_match"')
+      return logging.error('Either provide a 2nd dataframe or provide a column "to_match"')
     if len(df1[to_match].unique()) != 2:
       return logging.error('Variable to match must be binary')
     grps = list(df1[to_match].unique())
@@ -225,21 +229,28 @@ def age_sex_match(df1: pd.DataFrame,
     no_df2 = True
   else:
     if to_match is not None:
-      logging.info('"to_match" will be ignored.')
+      logging.info('Two dataframes provided. "to_match" will be ignored.')
     no_df2 = False
 
   if (age_out_percentage <= 0) or (age_out_percentage >= 100):
     return logging.error('Age-out-percentage must be between 0 and 100')
- 
+  if (len(df1['Sex'].unique())==1) & (len(df2['Sex'].unique())==1):
+    logging.info('Performing age matching only.')
+    sex_match = False
+  else:
+    sex_match = True
+
   swap = 1
   random.seed(2022)
   n_orig = len(df1.index) + len(df2.index)
-  s1, s2 = df1['Sex'].unique()
 
   p_age = stats.ttest_ind(df1['Age'], df2['Age']).pvalue
-  p_sex = stats.chi2_contingency([np.array(df1['Sex'].value_counts()), np.array(df2['Sex'].value_counts())])[1]
-  if verbose > 1:
-    print(f' Orig.: P_age: {np.round(p_age,2)}/ P_sex {np.round(p_sex,2)}')
+  if sex_match:
+    s1, s2 = df1['Sex'].unique() 
+    p_sex = stats.chi2_contingency([np.array(df1['Sex'].value_counts()), np.array(df2['Sex'].value_counts())])[1]
+  else:
+    p_sex = 1
+  logging.debug(f' Original: P_age: {np.round(p_age,2)}/ P_sex: {np.round(p_sex,2)}')
 
   p_age_all, p_sex_all = np.array(p_age), np.array(p_sex)
   while np.min([p_age, p_sex]) < p_threshold:
@@ -259,14 +270,13 @@ def age_sex_match(df1: pd.DataFrame,
       else:
         i_sex = df1['Sex'] == s2
     else:
-      i_sex = df1['Sex'].isin([s1, s2])
+      i_sex = np.ones(len(df1.index)).astype(bool)
 
     try:
       df1 = df1.drop(random.sample(list(df1[i_age & i_sex].index), 1)).reset_index(drop=True)
     except:
-      if np.min([len(df1.index), len(df2.index)]) > 10:
-        print('Try increasing "age_out_percentage" parameter')
-      return logging.error('Matching failed...')
+      suggestion = 'Try increasing "age_out_percentage" parameter.' if np.min([len(df1.index), len(df2.index)]) > 10 else ''
+      return logging.error(f'Matching failed... {suggestion}')
     p_age = stats.ttest_ind(df1['Age'], df2['Age']).pvalue
     p_sex = stats.chi2_contingency([np.array(df1['Sex'].value_counts()), np.array(df2['Sex'].value_counts())])[1]
     p_age_all = np.append(p_age_all, p_age)
@@ -274,12 +284,15 @@ def age_sex_match(df1: pd.DataFrame,
   if swap == -1:
     df1, df2 = df2.copy(), df1.copy()
 
-  if verbose > 1:
-    n_dropped = n_orig - len(df1.index) - len(df2.index)
-    print(f' {n_dropped} participants excluded')
-    print(f' Final: P_age: {np.round(p_age,2)}/ P_sex {np.round(p_sex,2)}')
+  logging.debug(f' {n_orig - len(df1.index) - len(df2.index)} participants excluded')
+  logging.debug(f' Final: P_age: {np.round(p_age,2)}/ P_sex {np.round(p_sex,2)}')
   logging.info('Age/Sex matched!')
   if no_df2:
     return pd.concat([df1, df2], ignore_index=True)
   else:
     return (df1, df2)
+
+def logging_basic_config(verbose=1, content_only=False):
+  logging_level = {0:logging.WARNING, 1:logging.INFO, 2:logging.DEBUG}
+  fmt = ' %(message)s' if content_only else '%(levelname)s (%(funcName)s): %(message)s'
+  logging.basicConfig(level=logging_level[verbose], format=fmt, force=True)

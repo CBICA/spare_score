@@ -6,7 +6,7 @@ import pandas as pd
 from typing import Tuple, Union
 from dataclasses import dataclass
 from spare_scores.svm import run_SVC, run_SVR
-from spare_scores.data_prep import check_train, check_test, load_model
+from spare_scores.data_prep import *
 
 
 @dataclass
@@ -41,10 +41,9 @@ def spare_train(df: Union[pd.DataFrame, str],
     a tuple of two dictionaries: first to contain SPARE model coefficients, and
       second to contain model information
   """
-  if verbose >= 1:
-    logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s', force=True)
+  logging_basic_config(verbose)
   df = _load_df(df)
-  df, predictors, mdl_type = check_train(df, predictors, to_predict, pos_group)
+  df, predictors, mdl_type = check_train(df, predictors, to_predict, pos_group, verbose=verbose)
   meta_data = MetaData(mdl_type, kernel, predictors, to_predict)
 
   # Convert categorical variables
@@ -89,7 +88,8 @@ def spare_train(df: Union[pd.DataFrame, str],
   return mdl, vars(meta_data)
 
 def spare_test(df: Union[pd.DataFrame, str],
-               mdl_path: Union[str, Tuple[dict, dict]]) -> pd.DataFrame:
+               mdl_path: Union[str, Tuple[dict, dict]],
+               verbose: int = 1) -> pd.DataFrame:
   """Applies a trained SPARE model on a test dataset
 
   Args:
@@ -100,6 +100,7 @@ def spare_test(df: Union[pd.DataFrame, str],
   Returns:
     a pandas dataframe containing predicted SPARE scores.
   """
+  logging_basic_config(verbose)
   df = _load_df(df)
 
   # Load trained SPARE model
@@ -117,11 +118,12 @@ def spare_test(df: Union[pd.DataFrame, str],
       return logging.error(f'Column "{var}" expected {expected_var}, but received {list(df[var].unique())}')
 
   # Output model description
-  print('Model Info: training N =', len(meta_data['cv_results'].index), end=' / ')
-  print('ages =', int(np.floor(np.min((meta_data['cv_results']['Age'])))),
-             '-', int(np.ceil(np.max((meta_data['cv_results']['Age'])))), end=' / ')
+  n = len(meta_data['cv_results'].index)
+  a1 = int(np.floor(np.min((meta_data['cv_results']['Age']))))
+  a2 = int(np.ceil(np.max((meta_data['cv_results']['Age']))))
   stats_metric = list(meta_data['stats'].keys())[0]
-  print(f'expected {stats_metric} =', '{:.3f}'.format(np.mean(meta_data['stats'][stats_metric])))
+  stats = '{:.3f}'.format(np.mean(meta_data['stats'][stats_metric]))
+  logging.info(f'Model Info: training N = {n} / ages = {a1} - {a2} / expected {stats_metric} = {stats}')
   
   # Calculate SPARE scores
   n_ensemble = len(mdl['scaler'])
