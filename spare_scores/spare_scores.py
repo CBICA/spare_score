@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 from typing import Tuple, Union
 from dataclasses import dataclass
-from spare_scores.svm import run_SVC, run_SVR
-from spare_scores.data_prep import *
+from ..spare_scores.svm import run_SVM
+from ..spare_scores.data_prep import *
 
 
 @dataclass
@@ -67,15 +67,15 @@ def spare_train(df: Union[pd.DataFrame, str],
     param_grid = {'C': _expspace([-5, 5]), 'epsilon': _expspace([-5, 5])}
 
   # Train model
-  svms = {'SVM Classification': run_SVC, 'SVM Regression': run_SVR}
+  n_repeats = {'SVM Classification': 5, 'SVM Regression': 1}
   if len(df.index) > 1000:
     logging.info('Due to large dataset, first performing parameter tuning with 500 randomly sampled data points.')
-    _, _, _, params, _ = svms[mdl_type](df.sample(n=500, random_state=2022).reset_index(drop=True), predictors,
+    _, _, _, params, _ = run_SVM(df.sample(n=500, random_state=2022).reset_index(drop=True), predictors,
               to_predict_input, param_grid=param_grid, kernel=kernel, n_repeats=1, verbose=0)
     param_grid = {par: _expspace([np.min(params[f'{par}_optimal']), np.max(params[f'{par}_optimal'])]) for par in param_grid}
   logging.info(f'Training {mdl_type} model...')
-  df['predicted'], mdl, meta_data.stats, meta_data.params, meta_data.cv_folds = svms[mdl_type](df, predictors,
-              to_predict_input, param_grid=param_grid, kernel=kernel, verbose=verbose)
+  df['predicted'], mdl, meta_data.stats, meta_data.params, meta_data.cv_folds = run_SVM(df, predictors,
+              to_predict_input, param_grid=param_grid, kernel=kernel, n_repeats=n_repeats[mdl_type], verbose=verbose)
   meta_data.cv_results = df[list(dict.fromkeys(['ID', 'Age', 'Sex', to_predict, 'predicted']))]
   
   # Save model

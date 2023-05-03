@@ -96,7 +96,7 @@ def check_train(df: pd.DataFrame,
   else:
     return logging.error('Variable to predict has no variance.')
     
-  logging.info(f'Dataframe checked for SPARE training ({mdl_type}).')
+  logging.debug(f'Dataframe checked for SPARE training ({mdl_type}).')
   return df, predictors, mdl_type
 
 def check_test(df: pd.DataFrame, 
