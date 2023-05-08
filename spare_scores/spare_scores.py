@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 from typing import Tuple, Union
 from dataclasses import dataclass
-from ..spare_scores.svm import run_SVM
-from ..spare_scores.data_prep import *
+from spare_scores.svm import run_SVM
+from spare_scores.data_prep import *
 
 
 @dataclass
@@ -136,7 +136,8 @@ def spare_test(df: Union[pd.DataFrame, str],
       ss[:, i] = mdl['mdl'][i].decision_function(X)
     if meta_data['mdl_type'] == 'SVM Regression':
       ss[:, i] = (ss[:, i] - mdl['bias_correct']['int'][i]) / mdl['bias_correct']['slope'][i]
-    ss[df['ID'].isin(meta_data['cv_results']['ID'].drop(meta_data['cv_folds'][i])), i] = np.nan
+    if 'ID' in df.columns:
+      ss[df['ID'].isin(meta_data['cv_results']['ID'].drop(meta_data['cv_folds'][i])), i] = np.nan
   ss_mean = np.nanmean(ss, axis=1)
   ss_mean[np.all(np.isnan(ss),axis=1)] = np.nan
 
