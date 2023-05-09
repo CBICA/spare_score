@@ -130,12 +130,11 @@ def spare_test(df: Union[pd.DataFrame, str],
   ss = np.zeros([len(df.index), n_ensemble])
   for i in range(n_ensemble):
     X = mdl['scaler'][i].transform(df[meta_data['predictors']])
-    if meta_data['kernel'] == 'linear':
-      ss[:, i] = np.sum(X * mdl['mdl'][i].coef_, axis=1) + mdl['mdl'][i].intercept_
+    if meta_data['mdl_type'] == 'SVM Regression':
+      ss[:, i] = mdl['mdl'][i].predict(X)
+      ss[:, i] = (ss[:, i] - mdl['bias_correct']['int'][i]) / mdl['bias_correct']['slope'][i]
     else:
       ss[:, i] = mdl['mdl'][i].decision_function(X)
-    if meta_data['mdl_type'] == 'SVM Regression':
-      ss[:, i] = (ss[:, i] - mdl['bias_correct']['int'][i]) / mdl['bias_correct']['slope'][i]
     if 'ID' in df.columns:
       ss[df['ID'].isin(meta_data['cv_results']['ID'].drop(meta_data['cv_folds'][i])), i] = np.nan
   ss_mean = np.nanmean(ss, axis=1)

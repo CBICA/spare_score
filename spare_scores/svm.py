@@ -68,8 +68,7 @@ class SVM_Model:
   def param_search(self, mdl_i, X_train, y_train, scoring):
     gs = GridSearchCV(mdl_i, self.param_grid, scoring=scoring, cv=self.k, return_train_score=True, verbose=0)
     gs.fit(X_train, y_train)
-    gs.best_estimator_.fit(X_train, y_train)
-    return gs
+    return gs.best_estimator_.fit(X_train, y_train)
 
   def get_stats(self, y_test, y_score):
     if len(y_test.unique()) == 2:
