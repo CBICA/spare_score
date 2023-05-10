@@ -96,7 +96,7 @@ def check_train(df: pd.DataFrame,
   else:
     return logging.error('Variable to predict has no variance.')
     
-  logging.info(f'Dataframe checked for SPARE training ({mdl_type}).')
+  logging.debug(f'Dataframe checked for SPARE training ({mdl_type}).')
   return df, predictors, mdl_type
 
 def check_test(df: pd.DataFrame, 
@@ -109,21 +109,26 @@ def check_test(df: pd.DataFrame,
     meta_data: a dictionary containing training information on its paired SPARE model.
   """
   logging_basic_config(verbose)
-  if not {'ID','Age','Sex'}.issubset(set(df.columns)):
-    return logging.error('Please check required columns: ID, Age, Sex.')
+  #if not {'ID','Age','Sex'}.issubset(set(df.columns)):
+  #  return logging.error('Please check required columns: ID, Age, Sex.')
   if not set(meta_data['predictors']).issubset(df.columns):
     cols_not_found = sorted(set(meta_data['predictors']) - set(df.columns))
     return logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
-  
-  if (np.min(df['Age']) < np.min((meta_data['cv_results']['Age']))) or (
-           np.max(df['Age']) > np.max((meta_data['cv_results']['Age']))):
-    logging.warn('Some participants fall outside the age range of the SPARE model.')
+  if 'Age' not in df.columns:
+    logging.info('"Age" column not found in the input dataframe.')
+  else:
+    if (np.min(df['Age']) < np.min((meta_data['cv_results']['Age']))) or (
+            np.max(df['Age']) > np.max((meta_data['cv_results']['Age']))):
+      logging.warn('Some participants fall outside the age range of the SPARE model.')
 
   if np.sum(np.sum(pd.isna(df[meta_data['predictors']]))) > 0:
     logging.warn('Some participants have invalid predictor variables.')
 
-  if np.any(df['ID'].isin(meta_data['cv_results']['ID'])):
-    logging.info('Some participants seem to have been in the model training.')
+  if 'ID' not in df.columns:
+    logging.info('"ID" column not found in the input dataframe. Treating all participants as independent from training.')
+  else:
+    if np.any(df['ID'].isin(meta_data['cv_results']['ID'])):
+      logging.info('Some participants seem to have been in the model training.')
 
 def smart_unique(df1: pd.DataFrame,
                  df2: pd.DataFrame=None,
