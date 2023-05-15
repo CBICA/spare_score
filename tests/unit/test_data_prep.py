@@ -22,5 +22,3 @@ def test_age_sex_match():
 
 def test_logging_basic_config():
     pass
-
-
