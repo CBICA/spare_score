@@ -41,7 +41,7 @@ def spare_train(
         kernel:     'linear' or 'rbf' (only linear is supported currently in 
                     regression).
         save_path:  path to save the trained model. '.pkl.gz' file extension 
-                    expected. If None is given, no model will be saved.
+                    optional. If None is given, no model will be saved.
 
     Returns:
         a tuple of two dictionaries: first to contain SPARE model coefficients,
@@ -135,7 +135,7 @@ def spare_train(
     
     # Save model
     if save_path is not None:
-        save_path = save_path.rstrip('.pkl.gz') + '.pkl.gz'
+        save_path = add_file_extension(save_path, '.pkl.gz')
         with gzip.open(save_path, 'wb') as f:
             pickle.dump((mdl, vars(meta_data)), f)
             logging.info(f'Model saved to {save_path}')
@@ -215,3 +215,8 @@ def _expspace(span: list):
 def _load_df(df: Union[pd.DataFrame, str]) -> pd.DataFrame:
     return pd.read_csv(df, low_memory=False) if isinstance(df, str)\
                                              else df.copy()
+
+def add_file_extension(filename, extension):
+    if not filename.endswith(extension):
+        filename += extension
+    return filename

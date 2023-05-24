@@ -50,7 +50,7 @@ def main():
         --verbosity]
 
         [SAVE_PATH]     Path to save the trained model. '.pkl.gz' file 
-        [-s,            extension expected. If None is given, no model will be 
+        [-s,            extension optional. If None is given, no model will be 
         --save_path]    saved.
         
         [HELP]          Show this help message and exit.

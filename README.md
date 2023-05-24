@@ -89,7 +89,7 @@ spare_score --action train \
             --to_predict Age \
             --kernel linear \
             --verbose 2 \
-            --ssave_path my_model.pkl.gz
+            --save_path my_model.pkl.gz
 ```
 
 <p>Example of testing (applying) a model (given the example data):</p>
