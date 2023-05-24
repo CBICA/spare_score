@@ -97,7 +97,7 @@ spare_score --action train \
 ```
 spare_score -a test \
             -d spare_scores/data/example_data.csv  \
-            --model saved_model_gai_240523.pkl.gz \
+            --model my_model.pkl.gz \
             -v 0
 ```
 
