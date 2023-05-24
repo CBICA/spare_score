@@ -45,8 +45,8 @@ class SVM_Model:
         logging.info(f'  FOLD {int(i/self.n_repeats+1)}...')
       X_train, X_test, y_train, y_test = self.prepare_sample(fold, self.scaler[i], classify=self.classify)
       self.mdl[i] = self.param_search(self.mdl[i], X_train, y_train, scoring=self.scoring)
-      for par in self.param_grid.keys():
-        self.params[f'{par}_optimal'][i] = np.round(np.log(self.mdl[i].best_params_[par]), 0)
+      # for par in self.param_grid.keys():
+      #   self.params[f'{par}_optimal'][i] = np.round(np.log(self.mdl[i].best_params_[par]), 0)
       if self.type == 'SVC':
         self.y_hat[fold[1]] = self.mdl[i].decision_function(X_test)
       if self.type == 'SVR':

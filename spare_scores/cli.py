@@ -171,7 +171,7 @@ def main():
         if arguments.predictors is None or arguments.to_predict is None:
             print(usage)
             print("The following arguments are required: -p/--predictors, "
-                  +"-pg/--pos_group")
+                  +"-t/--to_predict")
             return
         
         spare_train(arguments.data, 
