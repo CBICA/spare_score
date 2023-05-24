@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 from typing import Tuple, Union
 from dataclasses import dataclass
-from spare_scores.svm import run_SVM
-from spare_scores.data_prep import *
 
+from svm import run_SVM
+from data_prep import *
 
 @dataclass
 class MetaData:

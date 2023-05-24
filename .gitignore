@@ -4,6 +4,7 @@ spare_scores.egg-info/
 spare_scores/__pycache__/
 # Byte-compiled / optimized / DLL files
 __pycache__/
+*.pyc
 *.py[cod]
 *$py.class
 

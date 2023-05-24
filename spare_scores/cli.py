@@ -1,7 +1,8 @@
-from .spare_scores import load_model, spare_train, spare_test
 import argparse
 import pandas as pd
 import pkg_resources  # part of setuptools
+
+from spare_scores.spare_scores import spare_train, spare_test
 
 VERSION = pkg_resources.require("spare_scores")[0].version
 
