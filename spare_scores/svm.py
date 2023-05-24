@@ -7,7 +7,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import ignore_warnings
 from sklearn.model_selection import GridSearchCV, RepeatedKFold
 
-from data_prep import logging_basic_config
+from spare_scores.data_prep import logging_basic_config
 
 class SVM_Model:
   def __init__(self, df, predictors, to_predict, param_grid, kernel, k, n_repeats):
