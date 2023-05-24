@@ -8,7 +8,7 @@ Alternatively, you may want to find the spatial pattern related to brain aging (
 
 ## Installation
 
-### Installation in a Conda environment using pip
+### Conda environment using pip
 ```
     conda create -n spare python=3.8
     conda activate spare
@@ -16,14 +16,14 @@ Alternatively, you may want to find the spatial pattern related to brain aging (
     pip install spare_scores
 ```
 
-### Installation in a Python3 virtual environment using pip
+### Python3 virtual environment using pip
 ```
     python3 -m venv env spare
     source spare/bin/activate
     pip install spare_scores
 ```
 
-### Installation in a Conda environment from Github repository
+### Conda environment from Github repository
 ```
     git clone https://github.com/CBICA/spare_score.git
     cd spare_score
