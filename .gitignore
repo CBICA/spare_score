@@ -165,3 +165,11 @@ cython_debug/
 
 # VSCode
 .vscode/
+
+# Data files
+.csv
+.pkl.gz
+
+# Except sample data, models:
+!spare_scores/data/*
+!spare_scores/mdl/*
