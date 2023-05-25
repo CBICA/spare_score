@@ -1,8 +1,9 @@
 import argparse
+
 import pandas as pd
 import pkg_resources  # part of setuptools
 
-from spare_scores.spare_scores import spare_train, spare_test
+from spare_scores.spare_scores import spare_test, spare_train
 
 VERSION = pkg_resources.require("spare_scores")[0].version
 
@@ -17,24 +18,41 @@ def main():
         [ACTION]        The action to be performed, either 'train' or 'test'
         [-a, --action]
 
-
-        [DATA]          The dataset to be used for training / testing. Can be 
-        [-d, --data,    a filepath string of a .csv file, or a string filepath  
-        --dataset,      of a pandas df. 
-        --data_file]    
+        [INPUT]         The dataset to be used for training / testing. Can be 
+        [-i, --input]   a filepath string of a .csv file.
                         
     optional arguments:
+        [OUTPUT]        The filename for the model (as a .pkl.gz) to be saved 
+        [-o, --output]  at, if training. If testing, the filepath of the 
+                        resulting SPARE score dataframe (as a .csv file) to be 
+                        saved. If not given, nothing will be saved.
+
         [MODEL]         The model to be used (only) for testing. Can be a 
-        [-m, --mdl,     filepath string of a .pkl.gz file. Required for testing
-        --model,        
+        [-m, --model,   filepath string of a .pkl.gz file. Required for testing
         --model_file]
 
-        [PREDICTORS]    The list of predictors to be used for training. List.
-        [-p,            Example: --predictors predictorA predictorB predictorC
-        --predictors]   Required for training.
+        [KEY_VARS]      The list of key variables to be used for training. This
+        [-kv,           could be a list of strings that can uniquely identify a
+        --key_vars,     row of the dataset. 
+        --identifiers]  For example (if a row_ID doesn't exist), it could be: 
+                        --key_vars PTID Age ScanID.
+                        If not given, the first column of the dataset is 
+                        considered the primary key of the dataset. Required for
+                        training.
 
-        [TO_PREDICT]    The characteristic to be predicted in the course of the
-        [-t,            training. String. Required for training.
+        [DATA_VARS]     The list of predictors to be used for training. List.
+        [-dv,           If not given, training will assume that all (apart from
+        --data_vars,    the key variables) variables will be used as 
+        --predictors]   predictors, with the ignore variables ignored.
+
+        [IGNORE_VARS]   The list of predictors to be ignored for training. Can
+        [-iv,           be a list, or empty. 
+        --ignore_vars,
+        --ignore]  
+
+        [TARGET]        The characteristic to be predicted in the course of the
+        [-t,            training. String of the name of the column. Required 
+        --target,       for training.
         --to_predict]
 
         [POS_GROUP]     Group to assign a positive SPARE score (only for 
@@ -45,17 +63,21 @@ def main():
         -k,             linear is supported currently in regression).
         --kernel]
 
-        [VERBOSE]       Verbosity. Int, higher is more verbose. [0,1,2]     
-        [-v, 
-        --verbose, 
-        --verbosity]
+        [VERBOSE]       Verbosity. Int.
+        [-v,            0: Warnings
+        --verbose,      1: Info 
+        --verbosity]    2: Debug
 
-        [SAVE_PATH]     Path to save the trained model. '.pkl.gz' file 
-        [-s,            extension optional. If None is given, no model will be 
-        --save_path]    saved.
-        
+        [LOGS]          Where to save log file. If not given, logs will be
+        [-l,            printed out.
+        --logs]
+
+        [VERSION]       Display the version of the package. 
+        [-V, --version]        
+
         [HELP]          Show this help message and exit.
-        -h, --help
+        [-h, --help]
+
     """.format(VERSION=VERSION)
 
     
@@ -64,7 +86,7 @@ def main():
                                      description=description,
                                      add_help=False)
 
-    # Action argument
+    # ACTION argument
     help = "The action to be performed, either 'train' or 'test'"
     parser.add_argument("-a", 
                         "--action", 
@@ -74,70 +96,103 @@ def main():
                         default=None,
                         required=True)
     
-    # Data argument
-    help = "The dataset to be used for training / testing. Can be either a "\
-            + "string filepath of a .csv file (str) or a pandas dataframe "\
-            + "(pd.DataFrame)"
-    parser.add_argument("-d", 
-                        "--data", 
-                        "--dataset",
-                        "--data_file",
+    # INPUT argument
+    help = "The dataset to be used for training / testing. Can be"\
+            + "a filepath string of a .csv file."
+    parser.add_argument("-i", 
+                        "--input",
                         type=str,
                         help=help, 
                         default=None,
                         required=True)
     
-    # Model argument
-    help = "The model to be used (only) for testing. Can be either a "\
-            + "string filepath of a .pkl.gz file or a tuple (dict, dict)."
+    # OUTPUT argument
+    help = "The filename for the model (as a .pkl.gz) to be saved "\
+            + "at, if training. If testing, the filepath of the "\
+            + "resulting SPARE score dataframe (as a .csv file) to be "\
+            + "saved. If not given, nothing will be saved."
+    parser.add_argument("-o", 
+                        "--output",
+                        type=str,
+                        help=help, 
+                        default=None,
+                        required=False)
+    
+    # MODEL argument
+    help = "The model to be used (only) for testing. Can be a "\
+            + "filepath string of a .pkl.gz file. Required for testing."
     parser.add_argument("-m", 
-                        "--mdl", 
                         "--model",
                         "--model_file",
                         type=str,
                         help=help, 
                         default=None, 
                         required=False)
-    
-    # Predictors argument
-    help = "The list of predictors to be used for training. Example: "\
-            + "--predictors predictorA predictorB predictorC"
-    parser.add_argument("-p", 
+
+    # KEY_VARS argument
+    help = "The list of key variables to be used for training. This "\
+          + "could be a list of strings that can uniquely identify a "\
+          + "row of the dataset. "\
+          + "For example (if a row_ID doesn't exist), it could be: "\
+          + "--key_vars PTID Age ScanID. "\
+          + "If not given, the first column of the dataset is "\
+          + "considered the primary key of the dataset. Required for "\
+          + "training."
+    parser.add_argument("-kv",
+                        "--key_vars", 
+                        "--identifiers",
+                        type=str, 
+                        nargs='+', 
+                        default=[], 
+                        required=False)
+
+    # DATA_VARS argument
+    help = "The list of predictors to be used for training. List. "\
+            + "If not given, training will assume that all (apart from "\
+            + "the key variables) variables will be used as "\
+            + "predictors, with the ignore variables ignored."
+    parser.add_argument("-dv",
+                        "--data_vars", 
                         "--predictors",
                         type=str, 
                         nargs='+', 
-                        default=None, 
+                        default=[], 
                         required=False)
-    
-    # To_predict argument
-    help = "The characteristic to be predicted in the course of the training."
+
+    # IGNORE_VARS argument
+    help = "The list of predictors to be ignored for training. Can be a list,"\
+            +" or empty."
+    parser.add_argument("-iv",
+                        "--ignore_vars", 
+                        "--ignore",
+                        type=str, 
+                        nargs='+', 
+                        default=[], 
+                        required=False)
+
+    # TARGET argument
+    help = "The characteristic to be predicted in the course of the "\
+            + "training. String of the name of the column. Required "\
+            + "for training."
     parser.add_argument("-t", 
+                        "--target",
                         "--to_predict",
                         type=str, 
                         help=help, 
                         default=None, 
                         required=False)
 
-    # Pos_group argument
-    help = "Group to assign a positive SPARE score (only for classification)"
+    # POS_GROUP argument
+    help = "Group to assign a positive SPARE score (only for classification)."\
+            +" String. Required for training."
     parser.add_argument("-pg", 
                         "--pos_group",
                         type=str, 
                         help=help, 
                         default=None, 
                         required=False)
-
-    # Save_path argument
-    help = "Path to save the trained model. '.pkl.gz' file extension "\
-            + "expected. If None is given, no model will be saved."
-    parser.add_argument("-s", 
-                        "--save_path", 
-                        type=str, 
-                        help=help, 
-                        default='', 
-                        required=False)
     
-    # Kernel argument
+    # KERNEL argument
     help = "The kernel for the training. 'linear' or 'rbf' (only linear is "\
             + "supported currently in regression)."
     parser.add_argument("-k", 
@@ -148,8 +203,8 @@ def main():
                         default='linear',
                         required=False)
         
-    # Verbosity argument
-    help = "Verbosity"
+    # VERBOSE argument
+    help = "Verbose"
     parser.add_argument("-v", 
                         "--verbose", 
                         "--verbosity",
@@ -157,8 +212,24 @@ def main():
                         help=help, 
                         default=1, 
                         required=False)
-        
-    # Help
+
+    # LOGS argument
+    help = "Where to save log file. If not given, logs will only be printed "\
+            + "out."
+    parser.add_argument("-l",
+                        "--logs",
+                        type=str,
+                        help=help, 
+                        default=None, 
+                        required=False)
+
+    # VERSION argument
+    help = "Version"
+    parser.add_argument("-V", 
+                        "--version", 
+                        action='store_true')
+
+    # HELP argument
     parser.add_argument('-h', 
                         '--help',
                         action='store_true')
@@ -167,34 +238,44 @@ def main():
     if arguments.help:
         print(usage)
         return
+    if arguments.version:
+        print(prog, ": v{VERSION}.")
+        print(description)
+        return
     
     if arguments.action == 'train':
-        if arguments.predictors is None or arguments.to_predict is None:
+        if arguments.target is None:
             print(usage)
-            print("The following arguments are required: -p/--predictors, "
-                  +"-t/--to_predict")
+            print("The following argument is required: -t/--target"
+                  +"/--to_predict")
             return
         
-        spare_train(arguments.data, 
-                    arguments.predictors, 
-                    arguments.to_predict, 
+        spare_train(arguments.input, 
+                    arguments.target, 
                     arguments.pos_group, 
+                    arguments.key_vars,
+                    arguments.data_vars, 
+                    arguments.ignore_vars, 
                     arguments.kernel, 
+                    arguments.output,
                     arguments.verbose, 
-                    arguments.save_path)
+                    arguments.logs)
         return
         
 
     if arguments.action == 'test':
-        if arguments.mdl is None:
+        if arguments.model is None:
             print(usage)
-            print("The following arguments are required: -m/--mdl/--model/"
+            print("The following arguments are required: -m/--model/"
                   +"--model_file")
             return
         
-        spare_test(arguments.data,
-                   arguments.mdl,
-                   arguments.verbose)
+        spare_test(arguments.input,
+                   arguments.model,
+                   arguments.key_vars,
+                   arguments.output,
+                   arguments.verbose, 
+                   arguments.logs)
         return
 
     return

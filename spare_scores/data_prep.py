@@ -1,13 +1,15 @@
-import os
 import gzip
+import logging
+import os
 import pickle
 import random
-import logging
-import pkg_resources
+from typing import Tuple, Union
+
 import numpy as np
 import pandas as pd
+import pkg_resources
 from scipy import stats
-from typing import Tuple, Union
+
 
 def load_model(mdl_path: str) -> Tuple[dict, dict]:
   with gzip.open(mdl_path, 'rb') as f:
@@ -23,7 +25,6 @@ def load_examples(file_name: str=''):
   Returns:
     a tuple containing pandas df and 
   """
-  logging_basic_config(content_only=True)
   pkg_path = pkg_resources.resource_filename('spare_scores','')
   list_data = os.listdir(f'{pkg_path}/data/')
   list_mdl = os.listdir(f'{pkg_path}/mdl/')
@@ -53,13 +54,15 @@ def check_train(df: pd.DataFrame,
   Returns:
     a tuple containing 1) filtered dataframe, 2) filtered predictors, 3) SPARE model type.
   """
-  logging_basic_config(verbose)
   if not {'ID','Age','Sex'}.issubset(set(df.columns)):
-    return logging.error('Please check required columns: ID, Age, Sex.')
+    logging.error('Please check required columns: ID, Age, Sex.')
+    return 'Please check required columns: ID, Age, Sex.'
   if not set(predictors).issubset(df.columns):
-    return logging.error('Not all predictors exist in the input dataframe.')
+    logging.error('Not all predictors exist in the input dataframe.')
+    return 'Not all predictors exist in the input dataframe.'
   if to_predict not in df.columns:
-    return logging.error('Variable to predict is not in the input dataframe.')
+    logging.error('Variable to predict is not in the input dataframe.')
+    return 'Variable to predict is not in the input dataframe.'
   if to_predict in predictors:
     logging.info('Variable to predict is in the predictor set. This will be removed from the set.')
     predictors.remove(to_predict)
@@ -69,11 +72,14 @@ def check_train(df: pd.DataFrame,
 
   if len(df[to_predict].unique()) == 2:
     if pos_group == '':
-      return logging.error('"pos_group" not provided (group to assign a positive score).')
+      logging.error('"pos_group" not provided (group to assign a positive score).')
+      return '"pos_group" not provided (group to assign a positive score).'
     elif pos_group not in df[to_predict].unique():
-      return logging.error('"pos_group" is not one of the two groups in the variable to predict.')
+      logging.error('"pos_group" is not one of the two groups in the variable to predict.')
+      return '"pos_group" is not one of the two groups in the variable to predict.'
     if np.min(df[to_predict].value_counts()) < 10:
-      return logging.error('At least one of the groups to classify is too small (n<10).')
+      logging.error('At least one of the groups to classify is too small (n<10).')
+      return 'At least one of the groups to classify is too small (n<10).'
     elif np.min(df[to_predict].value_counts()) < 100:
       logging.warn('At least one of the groups to classify may be too small (n<100).')
     if np.sum((df['ID'].astype(str)+df[to_predict].astype(str)).duplicated()) > 0:
@@ -82,9 +88,11 @@ def check_train(df: pd.DataFrame,
 
   elif len(df[to_predict].unique()) > 2:
     if df[to_predict].dtype not in ['int64', 'float64']:
-      return logging.error('Variable to predict must be either binary or numeric.')
+      logging.error('Variable to predict must be either binary or numeric.')
+      return 'Variable to predict must be either binary or numeric.'
     if len(df.index) < 10:
-      return logging.error('Sample size is too small (n<10).')
+      logging.error('Sample size is too small (n<10).')
+      return 'Sample size is too small (n<10).'
     elif len(df.index) < 100:
       logging.warn('Sample size may be too small (n<100).')
     if np.sum(df['ID'].duplicated()) > 0:
@@ -93,9 +101,9 @@ def check_train(df: pd.DataFrame,
       logging.info('SPARE regression does not need a "pos_group". This will be ignored.')
     mdl_type = 'SVM Regression'
   else:
-    return logging.error('Variable to predict has no variance.')
-    
-  logging.debug(f'Dataframe checked for SPARE training ({mdl_type}).')
+    logging.error('Variable to predict has no variance.')
+    return 'Variable to predict has no variance.'
+
   return df, predictors, mdl_type
 
 def check_test(df: pd.DataFrame, 
@@ -107,12 +115,12 @@ def check_test(df: pd.DataFrame,
     df: a pandas dataframe containing testing data.
     meta_data: a dictionary containing training information on its paired SPARE model.
   """
-  logging_basic_config(verbose)
   #if not {'ID','Age','Sex'}.issubset(set(df.columns)):
   #  return logging.error('Please check required columns: ID, Age, Sex.')
   if not set(meta_data['predictors']).issubset(df.columns):
     cols_not_found = sorted(set(meta_data['predictors']) - set(df.columns))
-    return logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
+    logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
+    return f'Not all predictors exist in the input dataframe: {cols_not_found}'
   if 'Age' not in df.columns:
     logging.info('"Age" column not found in the input dataframe.')
   else:
@@ -128,6 +136,7 @@ def check_test(df: pd.DataFrame,
   else:
     if np.any(df['ID'].isin(meta_data['cv_results']['ID'])):
       logging.info('Some participants seem to have been in the model training.')
+  return 
 
 def smart_unique(df1: pd.DataFrame,
                  df2: pd.DataFrame=None,
@@ -146,14 +155,15 @@ def smart_unique(df1: pd.DataFrame,
   Returns:
     a trimmed pandas dataframe or a tuple of two dataframes with only one time point per ID.
   """
-  logging_basic_config(verbose)
   assert (isinstance(df2, pd.DataFrame) or (df2 is None)), (
     'Either provide a 2nd pandas dataframe for the 2nd argument or specify it with "to_predict"')
   if df2 is None:
     if to_predict is None:
-      return logging.error('Either provide a second dataframe or provide a column "to_predict"')
+      logging.error('Either provide a second dataframe or provide a column "to_predict"')
+      return 'Either provide a second dataframe or provide a column "to_predict"'
     if len(df1[to_predict].unique()) < 2:
-      return logging.error('Variable to predict has no variance.')
+      logging.error('Variable to predict has no variance.')
+      return 'Variable to predict has no variance.'
     if len(df1[to_predict].unique()) > 2:
       if ~np.any(df1['ID'].duplicated()):
         logging.info('No duplicated IDs.')
@@ -219,15 +229,16 @@ def age_sex_match(df1: pd.DataFrame,
   Returns:
     a trimmed pandas dataframe or a tuple of two dataframes with age/sex matched groups.
   """
-  logging_basic_config(verbose)
   assert (isinstance(df2, pd.DataFrame) or (df2 is None)), (
     'Either provide a 2nd pandas dataframe for the 2nd argument or specify the two groups with "to_match"')
 
   if df2 is None:
     if to_match is None:
-      return logging.error('Either provide a 2nd dataframe or provide a column "to_match"')
+      logging.error('Either provide a 2nd dataframe or provide a column "to_match"')
+      return 'Either provide a 2nd dataframe or provide a column "to_match"'
     if len(df1[to_match].unique()) != 2:
-      return logging.error('Variable to match must be binary')
+      logging.error('Variable to match must be binary')
+      return 'Variable to match must be binary'
     grps = list(df1[to_match].unique())
     df1, df2 = df1[df1[to_match] == grps[0]], df1[df1[to_match] == grps[1]]
     no_df2 = True
@@ -237,7 +248,8 @@ def age_sex_match(df1: pd.DataFrame,
     no_df2 = False
 
   if (age_out_percentage <= 0) or (age_out_percentage >= 100):
-    return logging.error('Age-out-percentage must be between 0 and 100')
+    logging.error('Age-out-percentage must be between 0 and 100')
+    return 'Age-out-percentage must be between 0 and 100'
   if (len(df1['Sex'].unique())==1) & (len(df2['Sex'].unique())==1):
     logging.info('Performing age matching only.')
     sex_match = False
@@ -280,7 +292,8 @@ def age_sex_match(df1: pd.DataFrame,
       df1 = df1.drop(random.sample(list(df1[i_age & i_sex].index), 1)).reset_index(drop=True)
     except:
       suggestion = 'Try increasing "age_out_percentage" parameter.' if np.min([len(df1.index), len(df2.index)]) > 10 else ''
-      return logging.error(f'Matching failed... {suggestion}')
+      logging.error(f'Matching failed... {suggestion}')
+      return f'Matching failed... {suggestion}'
     p_age = stats.ttest_ind(df1['Age'], df2['Age']).pvalue
     p_sex = stats.chi2_contingency([np.array(df1['Sex'].value_counts()), np.array(df2['Sex'].value_counts())])[1]
     p_age_all = np.append(p_age_all, p_age)
@@ -296,7 +309,13 @@ def age_sex_match(df1: pd.DataFrame,
   else:
     return (df1, df2)
 
-def logging_basic_config(verbose=1, content_only=False):
+def logging_basic_config(verbose=1, content_only=False, filename=''):
   logging_level = {0:logging.WARNING, 1:logging.INFO, 2:logging.DEBUG}
   fmt = ' %(message)s' if content_only else '%(levelname)s (%(funcName)s): %(message)s'
-  logging.basicConfig(level=logging_level[verbose], format=fmt, force=True)
+  if filename != '' and filename is not None:
+    filename = filename.rsplit('.', 1)[0] + '.log'
+    logging.basicConfig(level=logging_level[verbose], format=fmt, force=True, filename=filename)
+  else:
+    logging.basicConfig(level=logging_level[verbose], format=fmt, force=True)
+  return logging.getLogger()
+    

@@ -36,47 +36,68 @@ Alternatively, you may want to find the spatial pattern related to brain aging (
 spare_scores  v0.1.17.
 SPARE model training & scores calculation
 required arguments:
-    [ACTION]        The action to be performed, either 'train' or 'test'
-    [-a, --action]
+        [ACTION]        The action to be performed, either 'train' or 'test'
+        [-a, --action]
 
-    [DATA]          The dataset to be used for training / testing. Can be 
-    [-d, --data,    a filepath string of a .csv file, or a string filepath  
-    --dataset,      of a pandas df. 
-    --data_file]    
-                    
+        [INPUT]         The dataset to be used for training / testing. Can be 
+        [-i, --input]   a filepath string of a .csv file.
+                        
 optional arguments:
-    [MODEL]         The model to be used (only) for testing. Can be a 
-    [-m, --mdl,     filepath string of a .pkl.gz file. Required for testing
-    --model,        
-    --model_file]
+        [OUTPUT]        The filename for the model (as a .pkl.gz) to be saved 
+        [-o, --output]  at, if training. If testing, the filepath of the 
+                        resulting SPARE score dataframe (as a .csv file) to be 
+                        saved. If not given, nothing will be saved.
 
-    [PREDICTORS]    The list of predictors to be used for training. List.
-    [-p,            Example: --predictors predictorA predictorB predictorC
-    --predictors]   Required for training.
+        [MODEL]         The model to be used (only) for testing. Can be a 
+        [-m, --model,   filepath string of a .pkl.gz file. Required for testing
+        --model_file]
 
-    [TO_PREDICT]    The characteristic to be predicted in the course of the
-    [-t,            training. String. Required for training.
-    --to_predict]
+        [KEY_VARS]      The list of key variables to be used for training. This
+        [-kv,           could be a list of strings that can uniquely identify a
+        --key_vars,     row of the dataset. 
+        --identifiers]  For example (if a row_ID doesn't exist), it could be: 
+                        --key_vars PTID Age ScanID.
+                        If not given, the first column of the dataset is 
+                        considered the primary key of the dataset. Required for
+                        training.
 
-    [POS_GROUP]     Group to assign a positive SPARE score (only for 
-    -pg,            classification). String. Required for training.
-    --pos_group]
+        [DATA_VARS]     The list of predictors to be used for training. List.
+        [-dv,           If not given, training will assume that all (apart from
+        --data_vars,    the key variables) variables will be used as 
+        --predictors]   predictors, with the ignore variables ignored.
 
-    [KERNEL]        The kernel for the training. 'linear' or 'rbf' (only 
-    -k,             linear is supported currently in regression).
-    --kernel]
+        [IGNORE_VARS]   The list of predictors to be ignored for training. Can
+        [-iv,           be a list, or empty. 
+        --ignore_vars,
+        --ignore]  
 
-    [VERBOSE]       Verbosity. Int, higher is more verbose. [0,1,2]     
-    [-v, 
-    --verbose, 
-    --verbosity]
+        [TARGET]        The characteristic to be predicted in the course of the
+        [-t,            training. String of the name of the column. Required 
+        --target,       for training.
+        --to_predict]
 
-    [SAVE_PATH]     Path to save the trained model. '.pkl.gz' file 
-    [-s,            extension expected. If None is given, no model will be 
-    --save_path]    saved.
-    
-    [HELP]          Show this help message and exit.
-    -h, --help
+        [POS_GROUP]     Group to assign a positive SPARE score (only for 
+        -pg,            classification). String. Required for training.
+        --pos_group]
+
+        [KERNEL]        The kernel for the training. 'linear' or 'rbf' (only 
+        -k,             linear is supported currently in regression).
+        --kernel]
+
+        [VERBOSE]       Verbosity. Int.
+        [-v,            0: Warnings
+        --verbose,      1: Info 
+        --verbosity]    2: Debug
+
+        [LOGS]          Where to save log file. If not given, logs will be
+        [-l,            printed out.
+        --logs]
+
+        [VERSION]       Display the version of the package. 
+        [-V, --version]        
+
+        [HELP]          Show this help message and exit.
+        [-h, --help]
 ```
 
 ## Examples
@@ -84,21 +105,23 @@ optional arguments:
 
 ```
 spare_score --action train \
-            --data_file spare_scores/data/example_data.csv \
+            --input spare_scores/data/example_data.csv \
             --predictors H_MUSE_Volume_11 H_MUSE_Volume_23 H_MUSE_Volume_30 \
             --to_predict Age \
             --kernel linear \
             --verbose 2 \
-            --save_path my_model.pkl.gz
+            --output my_model.pkl.gz
 ```
 
 <p>Example of testing (applying) a model (given the example data):</p>
 
 ```
 spare_score -a test \
-            -d spare_scores/data/example_data.csv  \
+            -i spare_scores/data/example_data.csv  \
             --model my_model.pkl.gz \
-            -v 0
+            -o test_spare_data.csv \
+            -v 0 \
+            --logs test_logs
 ```
 
 ## References
