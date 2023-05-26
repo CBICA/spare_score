@@ -313,7 +313,9 @@ def logging_basic_config(verbose=1, content_only=False, filename=''):
   logging_level = {0:logging.WARNING, 1:logging.INFO, 2:logging.DEBUG}
   fmt = ' %(message)s' if content_only else '%(levelname)s (%(funcName)s): %(message)s'
   if filename != '' and filename is not None:
-    filename = filename.rsplit('.', 1)[0] + '.log'
+    if not os.path.exists(filename):
+      dirname, _ = os.path.split(filename)
+      os.mkdir(dirname)
     logging.basicConfig(level=logging_level[verbose], format=fmt, force=True, filename=filename)
   else:
     logging.basicConfig(level=logging_level[verbose], format=fmt, force=True)

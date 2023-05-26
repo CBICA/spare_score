@@ -62,6 +62,10 @@ def spare_train(
                                      and second to contain model information.
     """
     logger = logging_basic_config(verbose=verbose, filename=logs)
+    
+    # Make sure that no overwrites happen:
+    if check_file_exists(output, logger):
+        return
 
     # Load the data
     df = _load_df(df)
@@ -83,11 +87,15 @@ def spare_train(
     predictors = data_vars
 
     # Check if it contains any errors.
-    df, predictors, mdl_type = check_train(df, 
-                                           predictors, 
-                                           to_predict, 
-                                           pos_group, 
-                                           verbose=verbose)
+    try:
+        df, predictors, mdl_type = check_train(df, 
+                                            predictors, 
+                                            to_predict, 
+                                            pos_group, 
+                                            verbose=verbose)
+    except Exception as e:
+        print("Dataset check failed before training was initiated.")
+        return
     
     meta_data = MetaData(mdl_type, kernel, predictors, to_predict, key_vars)
     meta_data.key_vars = key_vars
@@ -134,14 +142,14 @@ def spare_train(
         logger.info('Due to large dataset, first performing parameter tuning '
                      + 'with 500 randomly sampled data points.')
         
-        sampled_df = df.sample(n=500, random_state=2022).reset_index(drop=True)
-        _   , _ , _ , _ , params, _ = run_SVM(sampled_df, 
-                                              predictors, 
-                                              to_predict_input, 
-                                              param_grid=param_grid, 
-                                              kernel=kernel, 
-                                              n_repeats=1, 
-                                              verbose=0)
+        sampled_df = df.sample(n=500, random_state=2023).reset_index(drop=True)
+        _ , _ , _ , params, _ = run_SVM(sampled_df, 
+                                        predictors, 
+                                        to_predict_input, 
+                                        param_grid=param_grid, 
+                                        kernel=kernel, 
+                                        n_repeats=1, 
+                                        verbose=0)
         param_grid = {par: _expspace([
                                        np.min(params[f'{par}_optimal']), 
                                        np.max(params[f'{par}_optimal'])
@@ -177,14 +185,13 @@ def spare_train(
                                                   to_predict, 
                                                   'predicted']))]
     
+    result = mdl, vars(meta_data)
+
     # Save model
     if output != '' and output is not None:
-        output = add_file_extension(output, '.pkl.gz')
-        with gzip.open(output, 'wb') as f:
-            pickle.dump((mdl, vars(meta_data)), f)
-            logger.info(f'Model saved to {output}')
-    # Shut down the logger
-    return mdl, vars(meta_data)
+        save_file(result, output, 'train', logger)
+        
+    return result
 
 def spare_test(df: Union[pd.DataFrame, str],
                mdl_path: Union[str, Tuple[dict, dict]],
@@ -215,6 +222,11 @@ def spare_test(df: Union[pd.DataFrame, str],
         a pandas dataframe containing predicted SPARE scores.
     """
     logger = logging_basic_config(verbose=verbose, filename=logs)
+
+    # Make sure that no overwrites happen:
+    if check_file_exists(output, logger):
+        return
+
     df = _load_df(df)
 
     # Load & check for errors / compatibility the trained SPARE model
@@ -279,9 +291,7 @@ def spare_test(df: Union[pd.DataFrame, str],
         out_df = pd.DataFrame(data=d)
 
     if output != '' and output is not None:
-        output = add_file_extension(output, '.csv')
-        out_df.to_csv(output)
-        logger.info(f'Spare scores saved to {output}')
+        save_file(out_df, output, 'test', logger)
     return out_df
 
 def _expspace(span: list):
@@ -297,3 +307,48 @@ def add_file_extension(filename, extension):
     if not filename.endswith(extension):
         filename += extension
     return filename
+
+def check_file_exists(filename, logger):
+    # Make sure that no overwrites happen:
+    if filename is None or filename == '':
+        return False
+    if os.path.exists(filename):
+        print("The output filename " + filename + ", corresponds to an "
+              + "existing file, interrupting execution to avoid overwrite.")
+        logger.info("The output filename " + filename + ", corresponds to an "
+              + "existing file, interrupting execution to avoid overwrite.")
+        return True
+    return False
+
+def save_file(result, output, action, logger):
+    # Add the correct extension:
+    if action == 'train':
+        output = add_file_extension(output, '.pkl.gz')
+    if action == 'test':
+        output = add_file_extension(output, '.csv')
+
+    # Make directory doesn't exist:
+    if not os.path.exists(output):
+        dirname, fname = os.path.split(output)
+        try:
+            os.mkdir(dirname)
+            logger.info("Created directory {dirname}")
+        except FileExistsError:
+            logger.info("Directory of file already exists.")
+        except FileNotFoundError:
+            logger.info("Directory couldn't be created")
+
+    # Create the file:
+    if action == 'train':
+        with gzip.open(output, 'wb') as f:
+            pickle.dump(result, f)
+            logger.info(f'Model {fname} saved to {dirname}')
+    
+    if action == 'test':
+        try:
+            result.to_csv(output)
+        except Exception as e:
+            logger.info(e)
+        logger.info(f'Spare scores {fname} saved to {dirname}')
+    
+    return

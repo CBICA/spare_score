@@ -117,7 +117,7 @@ def main():
                         help=help, 
                         default=None,
                         required=False)
-    
+
     # MODEL argument
     help = "The model to be used (only) for testing. Can be a "\
             + "filepath string of a .pkl.gz file. Required for testing."
@@ -224,24 +224,21 @@ def main():
                         required=False)
 
     # VERSION argument
-    help = "Version"
+    help = "Show the version and exit"
     parser.add_argument("-V", 
                         "--version", 
-                        action='store_true')
+                        action='version',
+                        version=prog+ ": v{VERSION}.".format(VERSION=VERSION),
+                        help=help)
 
     # HELP argument
+    help = 'Show this message and exit'
     parser.add_argument('-h', 
                         '--help',
-                        action='store_true')
+                        action='store_true', 
+                        help=help)
     
     arguments = parser.parse_args()
-    if arguments.help:
-        print(usage)
-        return
-    if arguments.version:
-        print(prog, ": v{VERSION}.")
-        print(description)
-        return
     
     if arguments.action == 'train':
         if arguments.target is None:
@@ -249,7 +246,7 @@ def main():
             print("The following argument is required: -t/--target"
                   +"/--to_predict")
             return
-        
+
         spare_train(arguments.input, 
                     arguments.target, 
                     arguments.pos_group, 
