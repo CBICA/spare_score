@@ -54,9 +54,10 @@ def check_train(df: pd.DataFrame,
   Returns:
     a tuple containing 1) filtered dataframe, 2) filtered predictors, 3) SPARE model type.
   """
-  if not {'ID','Age','Sex'}.issubset(set(df.columns)):
-    logging.error('Please check required columns: ID, Age, Sex.')
-    return 'Please check required columns: ID, Age, Sex.'
+  # GAI 26/04/2023: Removed check for existence of these columns
+  # if not {'ID','Age','Sex'}.issubset(set(df.columns)):
+  #   logging.error('Please check required columns: ID, Age, Sex.')
+  #   return 'Please check required columns: ID, Age, Sex.'
   if not set(predictors).issubset(df.columns):
     logging.error('Not all predictors exist in the input dataframe.')
     return 'Not all predictors exist in the input dataframe.'
