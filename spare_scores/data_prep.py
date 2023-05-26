@@ -41,6 +41,7 @@ def load_examples(file_name: str=''):
 def check_train(df: pd.DataFrame, 
                 predictors: list,
                 to_predict: str,
+                key_var: str,
                 pos_group: str = '',
                 verbose: int = 1) -> Tuple[pd.DataFrame, list, str]:
   """Checks training dataframe for errors.
@@ -83,8 +84,6 @@ def check_train(df: pd.DataFrame,
       return 'At least one of the groups to classify is too small (n<10).'
     elif np.min(df[to_predict].value_counts()) < 100:
       logging.warn('At least one of the groups to classify may be too small (n<100).')
-    if np.sum((df['ID'].astype(str)+df[to_predict].astype(str)).duplicated()) > 0:
-      logging.warn('Training dataset has duplicate participants.')
     mdl_type = 'SVM Classification'
 
   elif len(df[to_predict].unique()) > 2:
@@ -96,8 +95,6 @@ def check_train(df: pd.DataFrame,
       return 'Sample size is too small (n<10).'
     elif len(df.index) < 100:
       logging.warn('Sample size may be too small (n<100).')
-    if np.sum(df['ID'].duplicated()) > 0:
-      logging.warn('Training dataset has duplicate participants.')
     if pos_group != '':
       logging.info('SPARE regression does not need a "pos_group". This will be ignored.')
     mdl_type = 'SVM Regression'
@@ -311,7 +308,7 @@ def age_sex_match(df1: pd.DataFrame,
     return (df1, df2)
 
 def logging_basic_config(verbose=1, content_only=False, filename=''):
-  logging_level = {0:logging.WARNING, 1:logging.INFO, 2:logging.DEBUG}
+  logging_level = {0:logging.WARNING, 1:logging.INFO, 2:logging.DEBUG, 3:logging.ERROR, 4:logging.CRITICAL}
   fmt = ' %(message)s' if content_only else '%(levelname)s (%(funcName)s): %(message)s'
   if filename != '' and filename is not None:
     if not os.path.exists(filename):

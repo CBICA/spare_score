@@ -18,13 +18,13 @@ class MetaData:
     kernel: str
     predictors: list
     to_predict: str
-    key_vars: list
+    key_var: str
 
 def spare_train(
         df: Union[pd.DataFrame, str], 
         to_predict: str,
         pos_group: str = '',
-        key_vars: list = [],
+        key_var: str = '',
         data_vars: list = [],
         ignore_vars: list = [],
         kernel: str = 'linear',
@@ -42,13 +42,13 @@ def spare_train(
                     df.
         pos_group:  group to assign a positive SPARE score (only for 
                     classification).
-        key_vars:   The list of key variables to be used for training. If not 
+        key_var:    The key variable to be used for training. If not 
                     given, the first column of the dataset is considered the 
                     primary key of the dataset.
         data_vars:  a list of predictors for the training. All must be present 
                     in columns of df. If empty list, then 
         ignore_vars:The list of predictors to be ignored for training. Can be 
-                    a list, or empty. 
+                    a listkey_var, or empty. 
         kernel:     'linear' or 'rbf' (only linear is supported currently in 
                     regression).
         output:     path to save the trained model. '.pkl.gz' file extension 
@@ -70,39 +70,42 @@ def spare_train(
     # Load the data
     df = _load_df(df)
 
-    # Assume key_variables (if not given)
-    if key_vars == [] or key_vars is None:
-        key_vars = [df.columns[0]]
-        if not is_unique_identifier(df, key_vars):
-            logging.info("Assumed primary key(s) are not capable of uniquely " 
-                        + "identifying each row of the dataset. Assumed pkeys: "
-                        + str(key_vars))
+    # Assume key_variable (if not given)
+    if key_var == '' or key_var is None:
+        key_var = df.columns[0]
+        if not is_unique_identifier(df, key_var):
+            logging.info("Assumed primary key is not capable of uniquely " 
+                        + "identifying each row of the dataset. Assumed pkey: "
+                        + key_var)
     # Assume predictors (if not given)
     if data_vars == [] or data_vars is None:
-
-        # Predictors = all_vars - key_vars - ignore_vars
+        # Predictors = all_vars - key_var - ignore_vars - to_predict
         if ignore_vars == [] or ignore_vars is None:
-            data_vars = list( set(df.columns)\
-                              - set(key_vars))
+            data_vars = list( set(list(df))\
+                              - set([key_var])\
+                              - set([to_predict]))
         else:
-            data_vars = list( set(df.columns)\
-                              - set(key_vars)\
-                              - set(ignore_vars))
+            data_vars = list( set(list(df))\
+                              - set([key_var])\
+                              - set(ignore_vars)\
+                              - set([to_predict]))
     predictors = data_vars
 
     # Check if it contains any errors.
     try:
         df, predictors, mdl_type = check_train(df, 
                                             predictors, 
-                                            to_predict, 
+                                            to_predict,
+                                            key_var, 
                                             pos_group, 
                                             verbose=verbose)
     except Exception as e:
-        print("Dataset check failed before training was initiated.")
+        logger.error("Dataset check failed before training was initiated.")
+        print(e)
         return
     
-    meta_data = MetaData(mdl_type, kernel, predictors, to_predict, key_vars)
-    meta_data.key_vars = key_vars
+    meta_data = MetaData(mdl_type, kernel, predictors, to_predict, key_var)
+    meta_data.key_var = key_var
 
     # Convert categorical variables
     cat_vars = [var 
@@ -151,6 +154,7 @@ def spare_train(
                                         predictors, 
                                         to_predict_input, 
                                         param_grid=param_grid, 
+                                        key_var=key_var,
                                         kernel=kernel, 
                                         n_repeats=1, 
                                         verbose=0)
@@ -170,6 +174,7 @@ def spare_train(
                                     predictors, 
                                     to_predict_input, 
                                     param_grid=param_grid, 
+                                    key_var=key_var,
                                     kernel=kernel, 
                                     n_repeats=n_repeats[mdl_type], 
                                     verbose=verbose)
@@ -183,9 +188,7 @@ def spare_train(
               + "they could be causing problems.\n\n\n")
         return 
     
-    meta_data.cv_results = df[list(dict.fromkeys(['ID', 
-                                                  'Age', 
-                                                  'Sex', 
+    meta_data.cv_results = df[list(dict.fromkeys([key_var, 
                                                   to_predict, 
                                                   'predicted']))]
     
@@ -199,7 +202,7 @@ def spare_train(
 
 def spare_test(df: Union[pd.DataFrame, str],
                mdl_path: Union[str, Tuple[dict, dict]],
-               key_vars: list = [],
+               key_var: str = '',
                output: str = '',
                verbose: int = 1,
                logs: str = '') -> pd.DataFrame:
@@ -212,8 +215,8 @@ def spare_test(df: Union[pd.DataFrame, str],
         mdl_path:   either a path to a saved SPARE model ('.pkl.gz' file 
                     extension expected) or a tuple of SPARE model and 
                     meta_data.
-        key_vars:   The list of key variables to be used for training. If not 
-                    given, and the saved model does not contain them,the first 
+        key_var:    The of key variable to be used for training. If not 
+                    given, and the saved model does not contain it,the first 
                     column of the dataset is considered the primary key of the 
                     dataset.
         output:     path to save the calculated scores. '.csv' file extension 
@@ -238,13 +241,13 @@ def spare_test(df: Union[pd.DataFrame, str],
                                           else mdl_path
     check_test(df, meta_data)
 
-    # Assume key_variables (if not given)
-    if key_vars == [] or key_vars is None:
-        key_vars = [df.columns[0]]
-        if not is_unique_identifier(df, key_vars):
+    # Assume key_variable (if not given)
+    if key_var == '' or key_var is None:
+        key_var = df.columns[0]
+        if not is_unique_identifier(df, key_var):
             logging.info("Assumed primary key(s) are not capable of uniquely " 
                         + "identifying each row of the dataset. Assumed pkeys: "
-                        + str(key_vars))
+                        + key_var)
 
     # Convert categorical variables
     for var, map_dict in meta_data.get('categorical_var_map',{}).items():
@@ -259,8 +262,12 @@ def spare_test(df: Union[pd.DataFrame, str],
 
     # Output model description
     n = len(meta_data['cv_results'].index)
-    a1 = int(np.floor(np.min((meta_data['cv_results']['Age']))))
-    a2 = int(np.ceil(np.max((meta_data['cv_results']['Age']))))
+    if 'Age' in meta_data['cv_results'].keys():
+        a1 = int(np.floor(np.min((meta_data['cv_results']['Age']))))
+        a2 = int(np.ceil(np.max((meta_data['cv_results']['Age']))))
+    else:
+        a1 = None
+        a2 = None
     stats_metric = list(meta_data['stats'].keys())[0]
     stats = '{:.3f}'.format(np.mean(meta_data['stats'][stats_metric]))
     logger.info(f'Model Info: training N = {n} / ages = {a1} - {a2} / '
@@ -278,8 +285,8 @@ def spare_test(df: Union[pd.DataFrame, str],
         else:
             ss[:, i] = mdl['mdl'][i].decision_function(X)
         
-        if 'ID' in df.columns:
-            index_to_nan = df['ID'].isin(meta_data['cv_results']['ID']\
+        if key_var in df.columns:
+            index_to_nan = df[key_var].isin(meta_data['cv_results'][key_var]\
                                    .drop(meta_data['cv_folds'][i]))
             ss[index_to_nan, i] = np.nan
     ss_mean = np.nanmean(ss, axis=1)
@@ -288,13 +295,8 @@ def spare_test(df: Union[pd.DataFrame, str],
     d = {}
     d['SPARE_scores'] = ss_mean
     # Unique primary key:
-    if len(key_vars) == 1:
-        out_df = pd.DataFrame(data=d, index=df[key_vars[0]])
-    else:
-        for k in key_vars:
-            d[k] = list(df[k])
-        out_df = pd.DataFrame(data=d)
-
+    out_df = pd.DataFrame(data=d, index=df[key_var])
+    
     if output != '' and output is not None:
         save_file(out_df, output, 'test', logger)
     return out_df
@@ -347,14 +349,14 @@ def save_file(result, output, action, logger):
     if action == 'train':
         with gzip.open(output, 'wb') as f:
             pickle.dump(result, f)
-            logger.info(f'Model {fname} saved to {dirname}')
+            logger.info(f'Model {fname} saved to {dirname}/{fname}')
     
     if action == 'test':
         try:
             result.to_csv(output)
         except Exception as e:
             logger.info(e)
-        logger.info(f'Spare scores {fname} saved to {dirname}')
+        logger.info(f'Spare scores {fname} saved to {dirname}/{fname}')
     
     return
 

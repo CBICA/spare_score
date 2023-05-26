@@ -31,11 +31,11 @@ def main():
         [-m, --model,   filepath string of a .pkl.gz file. Required for testing
         --model_file]
 
-        [KEY_VARS]      The list of key variables to be used for training. This
-        [-kv,           could be a list of strings that can uniquely identify a
-        --key_vars,     row of the dataset. 
-        --identifiers]  For example (if a row_ID doesn't exist), it could be: 
-                        --key_vars PTID Age ScanID.
+        [KEY_VAR]       The key variable to be used for training. This could 
+        [-kv,           be a string of a column name that can uniquely 
+        --key_var,      identify a row of the dataset. 
+        --identifier]   For example (if a row_ID doesn't exist), it could be: 
+                        --key_var PTID
                         If not given, the first column of the dataset is 
                         considered the primary key of the dataset. Required for
                         training.
@@ -67,6 +67,8 @@ def main():
         [-v,            0: Warnings
         --verbose,      1: Info 
         --verbosity]    2: Debug
+                        3: Errors
+                        4: Critical
 
         [LOGS]          Where to save log file. If not given, logs will be
         [-l,            printed out.
@@ -129,21 +131,21 @@ def main():
                         default=None, 
                         required=False)
 
-    # KEY_VARS argument
-    help = "The list of key variables to be used for training. This "\
-          + "could be a list of strings that can uniquely identify a "\
-          + "row of the dataset. "\
+    # KEY_VAR argument
+    help = "The key variable to be used for training. This could "\
+          + "be a string of a column name that can uniquely "\
+          + "identify a row of the dataset. "\
           + "For example (if a row_ID doesn't exist), it could be: "\
-          + "--key_vars PTID Age ScanID. "\
+          + "--key_var PTID"\
           + "If not given, the first column of the dataset is "\
-          + "considered the primary key of the dataset. Required for "\
+          + "considered the primary key of the dataset. Required for"\
           + "training."
     parser.add_argument("-kv",
-                        "--key_vars", 
-                        "--identifiers",
+                        "--key_var", 
+                        "--identifier",
                         type=str, 
                         nargs='+', 
-                        default=[], 
+                        default='', 
                         required=False)
 
     # DATA_VARS argument
@@ -250,7 +252,7 @@ def main():
         spare_train(arguments.input, 
                     arguments.target, 
                     arguments.pos_group, 
-                    arguments.key_vars,
+                    arguments.key_var,
                     arguments.data_vars, 
                     arguments.ignore_vars, 
                     arguments.kernel, 
@@ -269,7 +271,7 @@ def main():
         
         spare_test(arguments.input,
                    arguments.model,
-                   arguments.key_vars,
+                   arguments.key_var,
                    arguments.output,
                    arguments.verbose, 
                    arguments.logs)

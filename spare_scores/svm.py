@@ -12,20 +12,21 @@ from spare_scores.data_prep import logging_basic_config
 
 
 class SVM_Model:
-  def __init__(self, df, predictors, to_predict, param_grid, kernel, k, n_repeats):
+  def __init__(self, df, predictors, to_predict, param_grid, key_var, kernel, k, n_repeats):
     self.df = df
     self.predictors = predictors
     self.param_grid = param_grid
+    self.key_var = key_var
     self.kernel = kernel
     self.k = k
     self.n_repeats = n_repeats
     self.train_initialize(to_predict)
 
   def train_initialize(self, to_predict):
-    id_unique = self.df['ID'].unique()
+    id_unique = self.df[self.key_var].unique()
     self.folds = list(RepeatedKFold(n_splits=self.k, n_repeats=self.n_repeats, random_state=2022).split(id_unique))
     if len(id_unique) < len(self.df):
-      self.folds = [[np.array(self.df.index[self.df['ID'].isin(id_unique[a])]) for a in self.folds[b]] for b in range(len(self.folds))]
+      self.folds = [[np.array(self.df.index[self.df[self.key_var].isin(id_unique[a])]) for a in self.folds[b]] for b in range(len(self.folds))]
     self.scaler = [StandardScaler()] * len(self.folds)
     self.params = self.param_grid.copy()
     self.params.update({f'{par}_optimal': np.zeros(len(self.folds)) for par in self.param_grid.keys()})
@@ -101,10 +102,10 @@ class SVM_Model:
     [logging.info(f'>> {key} = {np.mean(value):#.4f} \u00B1 {np.std(value):#.4f}') for key, value in self.stats.items()]
 
 @ignore_warnings(category=ConvergenceWarning)
-def run_SVM(df, predictors, to_predict, param_grid, kernel='linear', k=5, n_repeats=1, verbose=1):
+def run_SVM(df, predictors, to_predict, param_grid, key_var, kernel='linear', k=5, n_repeats=1, verbose=1):
 
   logging_basic_config(verbose, content_only=True)
-  SVM_mdl = SVM_Model(df, predictors, to_predict, param_grid, kernel, k, n_repeats)
+  SVM_mdl = SVM_Model(df, predictors, to_predict, param_grid, key_var, kernel, k, n_repeats)
   SVM_mdl.run_CV()  
   return SVM_mdl.y_hat, SVM_mdl.mdl, SVM_mdl.stats, SVM_mdl.params, [a[1] for a in SVM_mdl.folds]
   
