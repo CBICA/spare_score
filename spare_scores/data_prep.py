@@ -316,7 +316,8 @@ def logging_basic_config(verbose=1, content_only=False, filename=''):
   if filename != '' and filename is not None:
     if not os.path.exists(filename):
       dirname, _ = os.path.split(filename)
-      os.mkdir(dirname)
+      if dirname != '':
+        os.mkdir(dirname)
     logging.basicConfig(level=logging_level[verbose], format=fmt, force=True, filename=filename)
   else:
     logging.basicConfig(level=logging_level[verbose], format=fmt, force=True)

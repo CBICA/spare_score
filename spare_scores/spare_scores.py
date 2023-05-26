@@ -73,6 +73,10 @@ def spare_train(
     # Assume key_variables (if not given)
     if key_vars == [] or key_vars is None:
         key_vars = [df.columns[0]]
+        if not is_unique_identifier(df, key_vars):
+            logging.info("Assumed primary key(s) are not capable of uniquely " 
+                        + "identifying each row of the dataset. Assumed pkeys: "
+                        + str(key_vars))
     # Assume predictors (if not given)
     if data_vars == [] or data_vars is None:
 
@@ -236,10 +240,11 @@ def spare_test(df: Union[pd.DataFrame, str],
 
     # Assume key_variables (if not given)
     if key_vars == [] or key_vars is None:
-        if 'key_vars' not in meta_data.keys():
-            key_vars = [df.columns[0]]
-        else:
-            key_vars = meta_data['key_vars']  
+        key_vars = [df.columns[0]]
+        if not is_unique_identifier(df, key_vars):
+            logging.info("Assumed primary key(s) are not capable of uniquely " 
+                        + "identifying each row of the dataset. Assumed pkeys: "
+                        + str(key_vars))
 
     # Convert categorical variables
     for var, map_dict in meta_data.get('categorical_var_map',{}).items():
@@ -352,3 +357,15 @@ def save_file(result, output, action, logger):
         logger.info(f'Spare scores {fname} saved to {dirname}')
     
     return
+
+
+def is_unique_identifier(df, column_names):
+    # Check the number of unique combinations
+    unique_combinations = df[column_names].drop_duplicates()
+    num_unique_combinations = len(unique_combinations)
+
+    # Check the total number of rows
+    num_rows = df.shape[0]
+
+    # Return True if the number of unique combinations is equal to the total number of rows
+    return num_unique_combinations == num_rows

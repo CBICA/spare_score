@@ -107,6 +107,7 @@ optional arguments:
 spare_score --action train \
             --input spare_scores/data/example_data.csv \
             --predictors H_MUSE_Volume_11 H_MUSE_Volume_23 H_MUSE_Volume_30 \
+            --ignore_vars Sex \
             --to_predict Age \
             --kernel linear \
             --verbose 2 \
@@ -121,7 +122,7 @@ spare_score -a test \
             --model my_model.pkl.gz \
             -o test_spare_data.csv \
             -v 0 \
-            --logs test_logs
+            --logs test_logs.txt
 ```
 
 ## References
