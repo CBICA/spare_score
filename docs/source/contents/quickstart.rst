@@ -26,5 +26,5 @@ After installation, users can quickly run a small example in Python:
    .. code-block:: python
       
       predictors = df.columns[df.columns.str.startswith('H_MUSE')][:20]
-      mdl_1, meta_data_1 = spare.spare_train(df, predictors, to_predict='Age')
-      mdl_2, meta_data_1 = spare.spare_train(df, predictors, to_predict='Sex', pos_group='M')
+      mdl_1, meta_data_1 = spare.spare_train(df, 'Age', data_vars=predictors)
+      mdl_2, meta_data_1 = spare.spare_train(df, 'Sex', data_vars=predictors, pos_group='M')

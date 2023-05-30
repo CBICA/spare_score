@@ -6,7 +6,7 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
 setup(name='spare_scores',
-      version='0.1.17',
+      version='1.0.0',
       description='Compute characteristic brain signatures of your case population.',
       long_description=long_description,
       long_description_content_type='text/markdown',

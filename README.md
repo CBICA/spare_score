@@ -33,7 +33,7 @@ Alternatively, you may want to find the spatial pattern related to brain aging (
 
 ## Usage
 ```
-spare_scores  v0.1.17.
+spare_scores  v1.0.0.
 SPARE model training & scores calculation
 required arguments:
         [ACTION]        The action to be performed, either 'train' or 'test'

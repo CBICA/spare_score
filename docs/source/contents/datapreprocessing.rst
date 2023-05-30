@@ -12,16 +12,7 @@ Users can bring their own dataset to train SPARE models. Here are steps to prepa
       
       df = pd.read_csv('your_dataset.csv', low_memory=False)
 
-**2. Make sure required columns exist**
-
-   .. code-block:: python
-
-      try:
-         df[['ID','Age','Sex']]
-      except KeyError:
-         print('These three columns are required for the training')
-
-**3. Define a column to predict and columns to use as predictors**
+**2. Define a column to predict and columns to use as predictors**
 
    .. code-block:: python
 
@@ -31,7 +22,7 @@ Users can bring their own dataset to train SPARE models. Here are steps to prepa
       predictors = df.columns.str.startswith('MUSE_Volume_')
       # categorical variables with more than 2 categories are currently not supported.
 
-**4. (Optional) Select unique timepoints for a longitudinal dataset**
+**3. (Optional) Select unique timepoints for a longitudinal dataset**
 
    .. code-block:: python
 
@@ -40,7 +31,7 @@ Users can bring their own dataset to train SPARE models. Here are steps to prepa
       df = data_prep.smart_unique(df, to_predict=to_predict)
       # selects unique timepoints in a way that optimizes SPARE training.
 
-**5. (Optional) Match two groups to classify for age and sex**
+**4. (Optional) Match two groups to classify for age and sex**
 
    .. code-block:: python
 

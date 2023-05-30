@@ -361,7 +361,6 @@ def save_file(result, output, action, logger):
     
     return
 
-
 def is_unique_identifier(df, column_names):
     # Check the number of unique combinations
     unique_combinations = df[column_names].drop_duplicates()
