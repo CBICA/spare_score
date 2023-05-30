@@ -174,3 +174,6 @@ cython_debug/
 # Except sample data, models:
 !spare_scores/data/*.csv
 !spare_scores/mdl/*.pkl.gz
+
+# Temporary files and folders
+temp/

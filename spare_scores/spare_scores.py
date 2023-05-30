@@ -1,7 +1,6 @@
 import gzip
 import logging
 import pickle
-from dataclasses import dataclass
 from typing import Tuple, Union
 
 import numpy as np
@@ -9,16 +8,9 @@ import pandas as pd
 
 from spare_scores.data_prep import *
 from spare_scores.svm import run_SVM
+from spare_scores.util import *
+from spare_scores.classes import SpareModel, MetaData
 
-
-@dataclass
-class MetaData:
-    """Stores training information on its paired SPARE model"""
-    mdl_type: str
-    kernel: str
-    predictors: list
-    to_predict: str
-    key_var: str
 
 def spare_train(
         df: Union[pd.DataFrame, str], 
@@ -68,7 +60,7 @@ def spare_train(
         return
 
     # Load the data
-    df = _load_df(df)
+    df = load_df(df)
 
     # Assume key_variable (if not given)
     if key_var == '' or key_var is None:
@@ -132,17 +124,17 @@ def spare_train(
                              if a != pos_group] 
                             + [pos_group]]
         param_grid = {
-                      'linear':{'C':    _expspace([-9, 5])},
+                      'linear':{'C':    expspace([-9, 5])},
                       'rbf':{
-                             'C':       _expspace([-9, 5]), 
-                             'gamma':   _expspace([-5, 5])
+                             'C':       expspace([-9, 5]), 
+                             'gamma':   expspace([-5, 5])
                             }
                      }[kernel]
     
     elif mdl_type == 'SVM Regression':
         to_predict_input = to_predict
-        param_grid = {'C':          _expspace([-5, 5]), 
-                      'epsilon':    _expspace([-5, 5])}
+        param_grid = {'C':          expspace([-5, 5]), 
+                      'epsilon':    expspace([-5, 5])}
 
     # Train model
     n_repeats = {'SVM Classification': 5, 'SVM Regression': 1}
@@ -159,7 +151,7 @@ def spare_train(
                                         kernel=kernel, 
                                         n_repeats=1, 
                                         verbose=0)
-        param_grid = {par: _expspace([
+        param_grid = {par: expspace([
                                        np.min(params[f'{par}_optimal']), 
                                        np.max(params[f'{par}_optimal'])
                                     ]) 
@@ -235,7 +227,7 @@ def spare_test(df: Union[pd.DataFrame, str],
     if check_file_exists(output, logger):
         return
 
-    df = _load_df(df)
+    df = load_df(df)
 
     # Load & check for errors / compatibility the trained SPARE model
     mdl, meta_data = load_model(mdl_path) if isinstance(mdl_path, str) \
@@ -301,73 +293,3 @@ def spare_test(df: Union[pd.DataFrame, str],
     if output != '' and output is not None:
         save_file(out_df, output, 'test', logger)
     return out_df
-
-def _expspace(span: list):
-    return np.exp(np.linspace(span[0], 
-                              span[1], 
-                              num=int(span[1])-int(span[0])+1))
-
-def _load_df(df: Union[pd.DataFrame, str]) -> pd.DataFrame:
-    return pd.read_csv(df, low_memory=False) if isinstance(df, str)\
-                                             else df.copy()
-
-def add_file_extension(filename, extension):
-    if not filename.endswith(extension):
-        filename += extension
-    return filename
-
-def check_file_exists(filename, logger):
-    # Make sure that no overwrites happen:
-    if filename is None or filename == '':
-        return False
-    if os.path.exists(filename):
-        print("The output filename " + filename + ", corresponds to an "
-              + "existing file, interrupting execution to avoid overwrite.")
-        logger.info("The output filename " + filename + ", corresponds to an "
-              + "existing file, interrupting execution to avoid overwrite.")
-        return True
-    return False
-
-def save_file(result, output, action, logger):
-    # Add the correct extension:
-    if action == 'train':
-        output = add_file_extension(output, '.pkl.gz')
-    if action == 'test':
-        output = add_file_extension(output, '.csv')
-
-    # Make directory doesn't exist:
-    if not os.path.exists(output):
-        dirname, fname = os.path.split(output)
-        try:
-            os.mkdir(dirname)
-            logger.info("Created directory {dirname}")
-        except FileExistsError:
-            logger.info("Directory of file already exists.")
-        except FileNotFoundError:
-            logger.info("Directory couldn't be created")
-
-    # Create the file:
-    if action == 'train':
-        with gzip.open(output, 'wb') as f:
-            pickle.dump(result, f)
-            logger.info(f'Model {fname} saved to {dirname}/{fname}')
-    
-    if action == 'test':
-        try:
-            result.to_csv(output)
-        except Exception as e:
-            logger.info(e)
-        logger.info(f'Spare scores {fname} saved to {dirname}/{fname}')
-    
-    return
-
-def is_unique_identifier(df, column_names):
-    # Check the number of unique combinations
-    unique_combinations = df[column_names].drop_duplicates()
-    num_unique_combinations = len(unique_combinations)
-
-    # Check the total number of rows
-    num_rows = df.shape[0]
-
-    # Return True if the number of unique combinations is equal to the total number of rows
-    return num_unique_combinations == num_rows
