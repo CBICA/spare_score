@@ -77,6 +77,7 @@ def spare_train(
             logging.info("Assumed primary key is not capable of uniquely " 
                         + "identifying each row of the dataset. Assumed pkey: "
                         + key_var)
+
     # Assume predictors (if not given)
     if data_vars == [] or data_vars is None:
         # Predictors = all_vars - key_var - ignore_vars - to_predict

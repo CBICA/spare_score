@@ -113,24 +113,28 @@ def check_test(df: pd.DataFrame,
     df: a pandas dataframe containing testing data.
     meta_data: a dictionary containing training information on its paired SPARE model.
   """
-  #if not {'ID','Age','Sex'}.issubset(set(df.columns)):
-  #  return logging.error('Please check required columns: ID, Age, Sex.')
+  ############# Removing the hardcoded check for the below cols #############
+  # if not {'ID','Age','Sex'}.issubset(set(df.columns)):
+  #   return logging.error('Please check required columns: ID, Age, Sex.')
   if not set(meta_data['predictors']).issubset(df.columns):
     cols_not_found = sorted(set(meta_data['predictors']) - set(df.columns))
     logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
     return f'Not all predictors exist in the input dataframe: {cols_not_found}'
-  if 'Age' not in df.columns:
-    logging.info('"Age" column not found in the input dataframe.')
-  else:
-    if (np.min(df['Age']) < np.min((meta_data['cv_results']['Age']))) or (
-            np.max(df['Age']) > np.max((meta_data['cv_results']['Age']))):
-      logging.warn('Some participants fall outside the age range of the SPARE model.')
+  ############# Removing the hardcoded Age checks #############
+  # if 'Age' not in df.columns:
+  #   logging.info('"Age" column not found in the input dataframe.')
+  # else:
+  #   if (np.min(df['Age']) < np.min((meta_data['cv_results']['Age']))) or (
+  #           np.max(df['Age']) > np.max((meta_data['cv_results']['Age']))):
+  #     logging.warn('Some participants fall outside the age range of the SPARE model.')
 
   if np.sum(np.sum(pd.isna(df[meta_data['predictors']]))) > 0:
-    logging.warn('Some participants have invalid predictor variables.')
+    logging.warn('Some participants have invalid (missing or NaN values) predictor variables.')
 
+  ############# Removing the hardcoded ID checks #############
   if 'ID' not in df.columns:
-    logging.info('"ID" column not found in the input dataframe. Treating all participants as independent from training.')
+    # logging.info('"ID" column not found in the input dataframe. Treating all participants as independent from training.')
+    pass
   else:
     if np.any(df['ID'].isin(meta_data['cv_results']['ID'])):
       logging.info('Some participants seem to have been in the model training.')

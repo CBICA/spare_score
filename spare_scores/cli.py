@@ -144,7 +144,6 @@ def main():
                         "--key_var", 
                         "--identifier",
                         type=str, 
-                        nargs='+', 
                         default='', 
                         required=False)
 
