@@ -2,10 +2,11 @@ import gzip
 import logging
 import os
 import pickle
-from typing import Union
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
+import pkg_resources
 
 
 def expspace(span: list):
@@ -27,11 +28,11 @@ def check_file_exists(filename, logger):
     if filename is None or filename == '':
         return False
     if os.path.exists(filename):
-        print("The output filename " + filename + ", corresponds to an "
-              + "existing file, interrupting execution to avoid overwrite.")
-        logger.info("The output filename " + filename + ", corresponds to an "
-              + "existing file, interrupting execution to avoid overwrite.")
-        return True
+        err = "The output filename " + filename + ", corresponds to an " +\
+                "existing file, interrupting execution to avoid overwrite."
+        print(err)
+        logger.info(err)
+        return err
     return False
 
 def save_file(result, output, action, logger):
@@ -75,5 +76,34 @@ def is_unique_identifier(df, column_names):
     # Check the total number of rows
     num_rows = df.shape[0]
 
-    # Return True if the number of unique combinations is equal to the total number of rows
+    # Return True if the number of unique combinations is equal to the total 
+    # number of rows
     return num_unique_combinations == num_rows
+
+def load_model(mdl_path: str) -> Tuple[dict, dict]:
+  with gzip.open(mdl_path, 'rb') as f:
+    return pickle.load(f)
+
+def load_examples(file_name: str=''):
+  """Loads example data and models in the package.
+
+  Args:
+    file_name: either name of the example data saved as .csv or
+      name of the SPARE model saved as .pkl.gz.
+
+  Returns:
+    a tuple containing pandas df and 
+  """
+  pkg_path = pkg_resources.resource_filename('spare_scores','')
+  list_data = os.listdir(f'{pkg_path}/data/')
+  list_mdl = os.listdir(f'{pkg_path}/mdl/')
+  if file_name in list_data:
+    return pd.read_csv(f'{pkg_path}/data/{file_name}')
+  elif file_name in list_mdl:
+    return load_model(f'{pkg_path}/mdl/{file_name}')
+  else:
+    logging.info('Available example data:')
+    [logging.info(f' - {a}') for a in list_data]
+    logging.info('Available example SPARE models:')
+    [logging.info(f' - {a}') for a in list_mdl]
+

@@ -6,15 +6,19 @@ from typing import Tuple, Union
 import numpy as np
 import pandas as pd
 
-from spare_scores.data_prep import *
-from spare_scores.svm import run_SVM
-from spare_scores.util import *
-from spare_scores.classes import SpareModel, MetaData
+from spare_scores.classes import MetaData, SpareModel
+from spare_scores.data_prep import (check_test, check_train,
+                                    convert_cat_variables,
+                                    logging_basic_config)
+from spare_scores.util import (check_file_exists, expspace,
+                               is_unique_identifier, load_df, load_model,
+                               save_file)
 
 
 def spare_train(
         df: Union[pd.DataFrame, str], 
         to_predict: str,
+        model_type: str = 'SVM',
         pos_group: str = '',
         key_var: str = '',
         data_vars: list = [],
@@ -57,7 +61,7 @@ def spare_train(
     
     # Make sure that no overwrites happen:
     if check_file_exists(output, logger):
-        return
+        return check_file_exists(output, logger), None
 
     # Load the data
     df = load_df(df)
@@ -86,112 +90,82 @@ def spare_train(
 
     # Check if it contains any errors.
     try:
-        df, predictors, mdl_type = check_train(df, 
+        df, predictors, mdl_task = check_train(df, 
                                             predictors, 
                                             to_predict,
                                             key_var, 
                                             pos_group, 
                                             verbose=verbose)
     except Exception as e:
-        logger.error("Dataset check failed before training was initiated.")
+        err = "Dataset check failed before training was initiated."
+        logger.error(err)
         print(e)
-        return
+        return err, None
     
-    meta_data = MetaData(mdl_type, kernel, predictors, to_predict, key_var)
+    # Create meta data
+    meta_data = MetaData(model_type, mdl_task, kernel, predictors, to_predict, key_var)
     meta_data.key_var = key_var
 
     # Convert categorical variables
-    cat_vars = [var 
-                for var in df[predictors].columns 
-                if df[var].dtype.name == 'O']
-    meta_data.categorical_var_map = {var: None for var in cat_vars}
-    for var in cat_vars:
-        if len(df[var].unique()) <= 2:
-            meta_data.categorical_var_map[var] = {df[var].unique()[0]:  1, 
-                                                  df[var].unique()[-1]: 2}
-            df[var] = df[var].map(meta_data.categorical_var_map[var])
-        
-        elif len(df[var].unique()) > 2:
-            raise ValueError('Categorical variables with more than 2 '
-                             + 'categories are currently not supported.')
-        
-    # Prepare parameters
-    if mdl_type == 'SVM Classification':
-        meta_data.pos_group = pos_group
-        to_predict_input = [to_predict,
-                            [a 
-                             for a in df[to_predict].unique() 
-                             if a != pos_group] 
-                            + [pos_group]]
-        param_grid = {
-                      'linear':{'C':    expspace([-9, 5])},
-                      'rbf':{
-                             'C':       expspace([-9, 5]), 
-                             'gamma':   expspace([-5, 5])
-                            }
-                     }[kernel]
-    
-    elif mdl_type == 'SVM Regression':
-        to_predict_input = to_predict
-        param_grid = {'C':          expspace([-5, 5]), 
-                      'epsilon':    expspace([-5, 5])}
-
-    # Train model
-    n_repeats = {'SVM Classification': 5, 'SVM Regression': 1}
-    if len(df.index) > 1000:
-        logger.info('Due to large dataset, first performing parameter tuning '
-                     + 'with 500 randomly sampled data points.')
-        
-        sampled_df = df.sample(n=500, random_state=2023).reset_index(drop=True)
-        _ , _ , _ , params, _ = run_SVM(sampled_df, 
-                                        predictors, 
-                                        to_predict_input, 
-                                        param_grid=param_grid, 
-                                        key_var=key_var,
-                                        kernel=kernel, 
-                                        n_repeats=1, 
-                                        verbose=0)
-        param_grid = {par: expspace([
-                                       np.min(params[f'{par}_optimal']), 
-                                       np.max(params[f'{par}_optimal'])
-                                    ]) 
-                           for par in param_grid}
-    
-    logger.info(f'Training {mdl_type} model...')
     try:
-        df['predicted']\
-        , mdl\
-        , meta_data.stats\
-        , meta_data.params\
-        , meta_data.cv_folds = run_SVM(df, 
-                                    predictors, 
-                                    to_predict_input, 
-                                    param_grid=param_grid, 
-                                    key_var=key_var,
-                                    kernel=kernel, 
-                                    n_repeats=n_repeats[mdl_type], 
-                                    verbose=verbose)
-    except Exception as e:
-        logger.info('\033[91m' + '\033[1m' 
-                    + '\n\n\nspare_train(): run_SVM() failed.'
-                    + '\033[0m')
-        print(e)
-        print("Please consider ignoring (-iv/--ignore_vars) any variables "
-              + "that might not be needed for the training of the model, as "
-              + "they could be causing problems.\n\n\n")
-        return 
+        df, meta_data = convert_cat_variables(df, predictors, meta_data)
+    except ValueError:
+        err = "Categorical variables could not be converted, because " \
+            + "they were not binary."
+        logger.error(err)
+        return err, None
     
+    # Create the model
+    try:
+        spare_model = SpareModel('SVM', 
+                                predictors, 
+                                to_predict, 
+                                key_var,
+                                verbose=1,
+                                parameters={'kernel':      kernel, 
+                                            'k':           5,
+                                            'n_repeats':   1, 
+                                            'task':        mdl_task, 
+                                            'param_grid':  None})
+    except NotImplementedError:
+        err = "SPARE model " + model_type + " is not implemented yet."
+        logger.error(err)
+        return err, None
+    except ValueError as e:
+        logger.error(e)
+        print(e)
+        return e, None
+    
+    # Train the model
+    try:
+        trained = spare_model.train_model(df, pos_group=pos_group)
+    except Exception as e:
+        logger.critical(e)
+        print(e)
+        return e, None
+    
+    # Save the results
+    if trained is None:
+        err = "No training output was produced."
+        logger.critical(err)
+        return err, None
+    
+    df['predicted']     = trained['predicted']
+    model               = trained['model']
+    meta_data.params    = trained['best_params']
+    meta_data.stats     = trained['stats']
+    meta_data.cv_folds  = trained['CV_folds']
+
     meta_data.cv_results = df[list(dict.fromkeys([key_var, 
                                                   to_predict, 
                                                   'predicted']))]
-    
-    result = mdl, vars(meta_data)
+    result = model, vars(meta_data)
 
     # Save model
     if output != '' and output is not None:
         save_file(result, output, 'train', logger)
         
-    return result
+    return "Succesfully trained model", result
 
 def spare_test(df: Union[pd.DataFrame, str],
                mdl_path: Union[str, Tuple[dict, dict]],
@@ -225,22 +199,33 @@ def spare_test(df: Union[pd.DataFrame, str],
 
     # Make sure that no overwrites happen:
     if check_file_exists(output, logger):
-        return
+        return check_file_exists(output, logger), None
 
     df = load_df(df)
 
     # Load & check for errors / compatibility the trained SPARE model
     mdl, meta_data = load_model(mdl_path) if isinstance(mdl_path, str) \
                                           else mdl_path
-    check_test(df, meta_data)
+    
+    try:
+        check, cols = check_test(df, meta_data)
+    except Exception as e:
+        logger.error(e)
+        print(e)
+        return e, None
+
+    if cols is not None and cols != []:
+        print(check)
+        logger.error(check)
+        return check, None
 
     # Assume key_variable (if not given)
     if key_var == '' or key_var is None:
         key_var = df.columns[0]
         if not is_unique_identifier(df, key_var):
             logging.info("Assumed primary key(s) are not capable of uniquely " 
-                        + "identifying each row of the dataset. Assumed pkeys: "
-                        + key_var)
+                        + "identifying each row of the dataset. Assumed "
+                        + "primary key(s) are: " + key_var)
 
     # Convert categorical variables
     for var, map_dict in meta_data.get('categorical_var_map',{}).items():
@@ -250,10 +235,13 @@ def spare_test(df: Union[pd.DataFrame, str],
             df[var] = df[var].map(map_dict)
         else:
             expected_var = list(map_dict.keys())
-            logger.error(f'Column "{var}" expected {expected_var}, but '
-                          + f'received {list(df[var].unique())}')
+            err = f'Column "{var}" expected {expected_var}, but ' \
+                + f'received {list(df[var].unique())}'
+            logger.error(err)
+            return err, None
 
-    # Output model description
+    ###########################################################################
+    # TODO: Output model description
     n = len(meta_data['cv_results'].index)
     if 'Age' in meta_data['cv_results'].keys():
         a1 = int(np.floor(np.min((meta_data['cv_results']['Age']))))
@@ -265,31 +253,62 @@ def spare_test(df: Union[pd.DataFrame, str],
     stats = '{:.3f}'.format(np.mean(meta_data['stats'][stats_metric]))
     logger.info(f'Model Info: training N = {n} / ages = {a1} - {a2} / '
                  + f'expected {stats_metric} = {stats}')
+    ###########################################################################
+
+    # Figure out model type and task:
+    if 'mdl_task' not in meta_data.keys(): # Backwards compatibility
+        model_task = 'Classification' if 'Classification'\
+                         in meta_data['mdl_type'] else 'Regression'
+        model_type = 'SVM' if 'SVM' in meta_data['mdl_type'] else 'MLP'
+    else:
+        model_task = meta_data['mdl_task']
+        model_type = meta_data['mdl_type']
+
+    # Create model instance based on saved model:
+    predictors = meta_data['predictors']
+    target = meta_data['to_predict']
+    params = meta_data['params']
+    spare_model = SpareModel(model_type, 
+                             predictors, 
+                             target, 
+                             key_var, 
+                             verbose=verbose)
     
-    # Calculate SPARE scores
-    n_ensemble = len(mdl['scaler'])
-    ss = np.zeros([len(df.index), n_ensemble])
-    for i in range(n_ensemble):
-        X = mdl['scaler'][i].transform(df[meta_data['predictors']])
-        if meta_data['mdl_type'] == 'SVM Regression':
-            ss[:, i] = mdl['mdl'][i].predict(X)
-            ss[:, i] = (ss[:, i] - mdl['bias_correct']['int'][i]) \
-                       / mdl['bias_correct']['slope'][i]
-        else:
-            ss[:, i] = mdl['mdl'][i].decision_function(X)
-        
-        if key_var in df.columns:
-            index_to_nan = df[key_var].isin(meta_data['cv_results'][key_var]\
-                                   .drop(meta_data['cv_folds'][i]))
-            ss[index_to_nan, i] = np.nan
-    ss_mean = np.nanmean(ss, axis=1)
-    ss_mean[np.all(np.isnan(ss),axis=1)] = np.nan
+    # Set the model attributes to the ones that were saved to the instance 
+    # during training:
+    try:
+        spare_model.set_parameters(**params)
+        spare_model.set_parameters(**{
+                                        'mdl': mdl,
+                                        'task': model_task,
+                                        'cv_results': meta_data['cv_results'],
+                                        'cv_folds': meta_data['cv_folds']
+                                    })
+    except Exception as e:
+        logger.critical(e)
+        print(e)
+        return e, None
     
+    # Predict
+    try:
+        predicted = spare_model.apply_model(df)
+    except Exception as e:
+        logger.critical(e)
+        print(e)
+        return e, None
+    
+    # Save the results
+    if predicted is None:
+        err = "No testing output was produced."
+        logger.critical(err)
+        return err, None
+
     d = {}
-    d['SPARE_scores'] = ss_mean
-    # Unique primary key:
-    out_df = pd.DataFrame(data=d, index=df[key_var])
+    d[key_var] = df[key_var]
+    d['SPARE_scores'] = predicted
+    out_df = pd.DataFrame(data=d)
     
     if output != '' and output is not None:
         save_file(out_df, output, 'test', logger)
-    return out_df
+    
+    return 'Sucessfully applied model' , out_df

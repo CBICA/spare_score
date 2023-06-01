@@ -59,7 +59,11 @@ def main():
         -pg,            classification). String. Required for training.
         --pos_group]
 
-        [KERNEL]        The kernel for the training. 'linear' or 'rbf' (only 
+        [MODEL_TYPE]    The type of model to be used for training. String.
+        [-mt,           'SVM' or 'MLP'. Required for training.
+        --model_type]
+
+        [KERNEL]        The kernel for SVM training. 'linear' or 'rbf' (only 
         -k,             linear is supported currently in regression).
         --kernel]
 
@@ -193,6 +197,17 @@ def main():
                         default=None, 
                         required=False)
     
+    # MODEL_TYPE argument
+    help = "The type of model to be used for training. String. "\
+            + "'SVM' or 'MLP'. Required for training."
+    parser.add_argument("-mt",
+                        "--model_type",
+                        type=str,
+                        help=help,
+                        choices=['SVM', 'MLP'],
+                        default='SVM',
+                        required=False)
+    
     # KERNEL argument
     help = "The kernel for the training. 'linear' or 'rbf' (only linear is "\
             + "supported currently in regression)."
@@ -250,6 +265,7 @@ def main():
 
         spare_train(arguments.input, 
                     arguments.target, 
+                    arguments.model_type,
                     arguments.pos_group, 
                     arguments.key_var,
                     arguments.data_vars, 
