@@ -52,11 +52,11 @@ optional arguments:
         [-m, --model,   filepath string of a .pkl.gz file. Required for testing
         --model_file]
 
-        [KEY_VARS]      The list of key variables to be used for training. This
-        [-kv,           could be a list of strings that can uniquely identify a
-        --key_vars,     row of the dataset. 
-        --identifiers]  For example (if a row_ID doesn't exist), it could be: 
-                        --key_vars PTID Age ScanID.
+        [KEY_VAR]       The key variable to be used for training. This could 
+        [-kv,           be a string of a column name that can uniquely 
+        --key_var,      identify a row of the dataset. 
+        --identifier]   For example (if a row_ID doesn't exist), it could be: 
+                        --key_var PTID
                         If not given, the first column of the dataset is 
                         considered the primary key of the dataset. Required for
                         training.
@@ -80,14 +80,24 @@ optional arguments:
         -pg,            classification). String. Required for training.
         --pos_group]
 
-        [KERNEL]        The kernel for the training. 'linear' or 'rbf' (only 
+        [MODEL_TYPE]    The type of model to be used for training. String.
+        [-mt,           'SVM' or 'MLP'. Required for training.
+        --model_type]
+
+        [KERNEL]        The kernel for SVM training. 'linear' or 'rbf' (only 
         -k,             linear is supported currently in regression).
         --kernel]
+
+        [SPARE_VAR]     The name of the column to be used for SPARE score. If 
+        [-sv,           not given, the column will be named 'SPARE_score'.
+        --spare_var]
 
         [VERBOSE]       Verbosity. Int.
         [-v,            0: Warnings
         --verbose,      1: Info 
         --verbosity]    2: Debug
+                        3: Errors
+                        4: Critical
 
         [LOGS]          Where to save log file. If not given, logs will be
         [-l,            printed out.
