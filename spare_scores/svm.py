@@ -257,12 +257,3 @@ class SVMModel:
 
     def output_stats(self):
         [logging.info(f'>> {key} = {np.mean(value):#.4f} \u00B1 {np.std(value):#.4f}') for key, value in self.stats.items()]
-
-@ignore_warnings(category=ConvergenceWarning)
-def run_SVM(df, predictors, to_predict, param_grid, key_var, kernel='linear', k=5, n_repeats=1, verbose=1):
-
-    logging_basic_config(verbose, content_only=True)
-    SVM_mdl = SVMModel(predictors, to_predict, key_var, verbose=verbose, param_grid=param_grid,  kernel=kernel, k=k, n_repeats=n_repeats)
-    SVM_mdl.fit(df)  
-    return SVM_mdl.y_hat, SVM_mdl.mdl, SVM_mdl.stats, SVM_mdl.params, [a[1] for a in SVM_mdl.folds]
-    

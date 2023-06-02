@@ -117,7 +117,7 @@ def spare_train(
     
     # Create the model
     try:
-        spare_model = SpareModel('SVM', 
+        spare_model = SpareModel(model_type, 
                                 predictors, 
                                 to_predict, 
                                 key_var,
@@ -217,7 +217,7 @@ def spare_test(df: Union[pd.DataFrame, str],
     if cols is not None and cols != []:
         print(check)
         logger.error(check)
-        return check, None
+        return check, cols
 
     # Assume key_variable (if not given)
     if key_var == '' or key_var is None:
