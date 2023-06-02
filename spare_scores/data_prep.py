@@ -89,9 +89,9 @@ def check_test(df: pd.DataFrame,
     
     if not set(meta_data['predictors']).issubset(df.columns):
         cols_not_found = sorted(set(meta_data['predictors']) - set(df.columns))
-        logging.error(f'Not all predictors exist in the input dataframe: {cols_not_found}')
-        return (f'Not all predictors exist in '
-                + 'the input dataframe: {cols_not_found}', cols_not_found)
+        err = 'Not all predictors exist in the input dataframe: ' + str(cols_not_found)
+        logging.error(err)
+        return (err, cols_not_found)
     
     ############# Removing the hardcoded Age checks #############
     # if 'Age' not in df.columns:

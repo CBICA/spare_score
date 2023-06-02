@@ -54,14 +54,22 @@ def spare_train(
                     printed out.
 
     Returns:
-        a tuple of two dictionaries: first to contain SPARE model coefficients,
-                                     and second to contain model information.
+        A dictionary with three keys, 'status_code', 'status' and 'data'. 
+        'status' is either'OK' or the error message. 'data' is a dictionary 
+        containing the trained model and metadata if successful, or 
+        None / error object if unsuccessful. 'status_code' is either 0, 1 or 2.
+        0 is success, 1 is warning, 2 is error.
     """
+
+    res = {'status_code': None, 'status': None, 'data': None}
+
     logger = logging_basic_config(verbose=verbose, filename=logs)
     
     # Make sure that no overwrites happen:
     if check_file_exists(output, logger):
-        return check_file_exists(output, logger), None
+        res['status'] = check_file_exists(output, logger)
+        res['status_code'] = 2
+        return res
 
     # Load the data
     df = load_df(df)
@@ -100,7 +108,9 @@ def spare_train(
         err = "Dataset check failed before training was initiated."
         logger.error(err)
         print(e)
-        return err, None
+        res['status'] = err
+        res['status_code'] = 2
+        return res
     
     # Create meta data
     meta_data = MetaData(model_type, mdl_task, kernel, predictors, to_predict, key_var)
@@ -113,7 +123,9 @@ def spare_train(
         err = "Categorical variables could not be converted, because " \
             + "they were not binary."
         logger.error(err)
-        return err, None
+        res['status'] = err
+        res['status_code'] = 2
+        return res
     
     # Create the model
     try:
@@ -130,11 +142,15 @@ def spare_train(
     except NotImplementedError:
         err = "SPARE model " + model_type + " is not implemented yet."
         logger.error(err)
-        return err, None
+        res['status'] = err
+        res['status_code'] = 2
+        return res
     except ValueError as e:
         logger.error(e)
         print(e)
-        return e, None
+        res['status'] = err
+        res['status_code'] = 2
+        return res    
     
     # Train the model
     try:
@@ -142,13 +158,17 @@ def spare_train(
     except Exception as e:
         logger.critical(e)
         print(e)
-        return e, None
+        res['status'] = err
+        res['status_code'] = 2
+        return res
     
     # Save the results
     if trained is None:
         err = "No training output was produced."
         logger.critical(err)
-        return err, None
+        res['status'] = err
+        res['status_code'] = 2
+        return res
     
     df['predicted']     = trained['predicted']
     model               = trained['model']
@@ -164,13 +184,17 @@ def spare_train(
     # Save model
     if output != '' and output is not None:
         save_file(result, output, 'train', logger)
-        
-    return "Succesfully trained model", result
+
+    res['status'] = "OK"
+    res['data'] = result  
+    res['status_code'] = 0  
+    return res
 
 def spare_test(df: Union[pd.DataFrame, str],
                mdl_path: Union[str, Tuple[dict, dict]],
                key_var: str = '',
                output: str = '',
+               spare_var: str = 'SPARE_score',
                verbose: int = 1,
                logs: str = '') -> pd.DataFrame:
     """
@@ -188,18 +212,28 @@ def spare_test(df: Union[pd.DataFrame, str],
                     dataset.
         output:     path to save the calculated scores. '.csv' file extension 
                     optional. If None is given, no data will be saved.
+        spare_var:  The name of the variable to be predicted. If not given,
+                    the name 'SPARE_score' will be used.
         verbose:    Verbosity. Int, higher is more verbose. [0,1,2]
         logs:       Where to save log file. If not given, logs will only be 
                     printed out.
 
     Returns:
-        a pandas dataframe containing predicted SPARE scores.
+        A dictionary with three keys, 'status_code', 'status' and 'data'. 
+        'status' is either 'OK' or the error message. 'data' is the pandas 
+        dataframe  containing predicted SPARE scores, or  None / error object 
+        if  unsuccessful. 'status_code' is either 0, 1 or 2.
+        0 is success, 1 is warning, 2 is error.
     """
+    res = {'status_code': None, 'status': None, 'data': None}
+
     logger = logging_basic_config(verbose=verbose, filename=logs)
 
     # Make sure that no overwrites happen:
     if check_file_exists(output, logger):
-        return check_file_exists(output, logger), None
+        res['status'] = check_file_exists(output, logger)
+        res['status_code'] = 2
+        return res
 
     df = load_df(df)
 
@@ -212,12 +246,17 @@ def spare_test(df: Union[pd.DataFrame, str],
     except Exception as e:
         logger.error(e)
         print(e)
-        return e, None
+        res['status'] = err
+        res['status_code'] = 2
+        return res
 
     if cols is not None and cols != []:
         print(check)
         logger.error(check)
-        return check, cols
+        res['status'] = check
+        res['data'] = cols
+        res['status_code'] = 1
+        return res
 
     # Assume key_variable (if not given)
     if key_var == '' or key_var is None:
@@ -238,7 +277,10 @@ def spare_test(df: Union[pd.DataFrame, str],
             err = f'Column "{var}" expected {expected_var}, but ' \
                 + f'received {list(df[var].unique())}'
             logger.error(err)
-            return err, None
+            res['status'] = err
+            res['data'] = list(df[var].unique())
+            res['status_code'] = 1
+            return res
 
     ###########################################################################
     # TODO: Output model description
@@ -287,7 +329,9 @@ def spare_test(df: Union[pd.DataFrame, str],
     except Exception as e:
         logger.critical(e)
         print(e)
-        return e, None
+        res['status'] = err
+        res['status_code'] = 2
+        return res
     
     # Predict
     try:
@@ -295,20 +339,27 @@ def spare_test(df: Union[pd.DataFrame, str],
     except Exception as e:
         logger.critical(e)
         print(e)
-        return e, None
+        res['status'] = err
+        res['status_code'] = 2
+        return res
     
     # Save the results
     if predicted is None:
         err = "No testing output was produced."
         logger.critical(err)
-        return err, None
+        res['status'] = err
+        res['status_code'] = 2
+        return res
 
     d = {}
     d[key_var] = df[key_var]
-    d['SPARE_scores'] = predicted
+    d[spare_var] = predicted
     out_df = pd.DataFrame(data=d)
     
     if output != '' and output is not None:
         save_file(out_df, output, 'test', logger)
     
-    return 'Sucessfully applied model' , out_df
+    res['status'] = 'OK'
+    res['data'] = out_df
+    res['status_code'] = 0
+    return res

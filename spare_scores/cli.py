@@ -67,6 +67,10 @@ def main():
         -k,             linear is supported currently in regression).
         --kernel]
 
+        [SPARE_VAR]     The name of the column to be used for SPARE score. If 
+        [-sv,           not given, the column will be named 'SPARE_score'.
+        --spare_var]
+
         [VERBOSE]       Verbosity. Int.
         [-v,            0: Warnings
         --verbose,      1: Info 
@@ -218,6 +222,16 @@ def main():
                         help=help, 
                         default='linear',
                         required=False)
+    
+    # SPARE_VAR argument
+    help = "The name of the column to be used for SPARE score. If not given, "\
+            + "the column will be named 'SPARE_score'."
+    parser.add_argument("-sv",
+                        "--spare_var",
+                        type=str,
+                        help=help,
+                        default='SPARE_score',
+                        required=False)
         
     # VERBOSE argument
     help = "Verbose"
@@ -288,6 +302,7 @@ def main():
                    arguments.model,
                    arguments.key_var,
                    arguments.output,
+                   arguments.spare_var,
                    arguments.verbose, 
                    arguments.logs)
         return
