@@ -300,7 +300,7 @@ def logging_basic_config(verbose=1, content_only=False, filename=''):
 def convert_cat_variables(df, predictors, meta_data):
     cat_vars = [var 
                 for var in df[predictors].columns 
-                if df[var].dtype.name == 'O']
+                if df[var].dtypes == 'O']
     meta_data.categorical_var_map = {var: None for var in cat_vars}
     for var in cat_vars:
         if len(df[var].unique()) <= 2:
