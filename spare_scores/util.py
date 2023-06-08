@@ -107,3 +107,9 @@ def load_examples(file_name: str=''):
     logging.info('Available example SPARE models:')
     [logging.info(f' - {a}') for a in list_mdl]
 
+def convert_to_number_if_possible(string):
+    try:
+        number = float(string)  # Attempt to convert the string to a float
+        return number
+    except ValueError:
+        return string

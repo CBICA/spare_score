@@ -177,7 +177,6 @@ class SVMModel:
 
         return ss_mean
     
-
     def train_initialize(self, df, to_predict):
         id_unique = df[self.key_var].unique()
         self.folds = list(RepeatedKFold(n_splits=self.k, n_repeats=self.n_repeats, random_state=2022).split(id_unique))
@@ -187,11 +186,11 @@ class SVMModel:
         self.params = self.param_grid.copy()
         self.params.update({f'{par}_optimal': np.zeros(len(self.folds)) for par in self.param_grid.keys()})
         self.y_hat = np.zeros(len(df))
-        if isinstance(to_predict, list):
+        if self.task == 'Classification':
             self.type, self.scoring, metrics = 'SVC', 'roc_auc', ['AUC', 'Accuracy', 'Sensitivity', 'Specificity', 'Precision', 'Recall', 'F1']
-            self.to_predict, self.classify = to_predict[0], to_predict[1]
+            self.to_predict, self.classify = to_predict, list(df[to_predict].unique())
             self.mdl = ([LinearSVC(max_iter=100000)] if self.kernel == 'linear' else [SVC(max_iter=100000, kernel=self.kernel)]) * len(self.folds)
-        else:
+        elif self.task == 'Regression':
             self.type, self.scoring, metrics = 'SVR', 'neg_mean_absolute_error', ['MAE', 'RMSE', 'R2']
             self.to_predict, self.classify = to_predict, None
             self.mdl = [LinearSVR(max_iter=100000)] * len(self.folds)

@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+from spare_scores.util import convert_to_number_if_possible
+
 
 def check_train(df: pd.DataFrame, 
                                 predictors: list,
@@ -46,7 +48,7 @@ def check_train(df: pd.DataFrame,
         if pos_group == '':
             logging.error('"pos_group" not provided (group to assign a positive score).')
             return '"pos_group" not provided (group to assign a positive score).'
-        elif pos_group not in df[to_predict].unique():
+        elif convert_to_number_if_possible(pos_group) not in df[to_predict].unique():
             logging.error('"pos_group" is not one of the two groups in the variable to predict.')
             return '"pos_group" is not one of the two groups in the variable to predict.'
         if np.min(df[to_predict].value_counts()) < 10:

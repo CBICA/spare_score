@@ -118,7 +118,7 @@ def spare_train(
 
     # Convert categorical variables
     try:
-        df, meta_data = convert_cat_variables(df, predictors, meta_data)
+        df, meta_data = convert_cat_variables(df, predictors + [to_predict], meta_data)
     except ValueError:
         err = "Categorical variables could not be converted, because " \
             + "they were not binary."
