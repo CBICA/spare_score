@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from spare_scores.data_prep import logging_basic_config
-# from spare_scores.mlp import MLP_Model
+from spare_scores.mlp import MLP_Model
 from spare_scores.svm import SVMModel
 
 
