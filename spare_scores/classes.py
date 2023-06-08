@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from spare_scores.data_prep import logging_basic_config
-from spare_scores.mlp import MLP_Model
+from spare_scores.mlp import MLPModel
 from spare_scores.svm import SVMModel
 
 
@@ -57,7 +57,7 @@ class SpareModel:
                                   **parameters,)
         
         elif self.model_type == 'MLP':
-            self.model = MLP_Model(predictors,
+            self.model = MLPModel(predictors,
                                    target,
                                    key_var,
                                    verbose,
@@ -105,7 +105,7 @@ class SpareModel:
         logger = logging_basic_config(self.verbose, content_only=True)
         result = None
         try:
-            result = self.model.predict(df[self.predictors])
+            result = self.model.predict(df[self.predictors]) if self.model_type == 'SVM' else self.model.mdl.predict(df[self.predictors])
         except Exception as e:
             logger.info('\033[91m' + '\033[1m'
                         + '\n\n\nspare_test(): Model prediction failed.'

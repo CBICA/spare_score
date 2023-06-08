@@ -175,6 +175,7 @@ def spare_train(
     meta_data.params    = trained['best_params']
     meta_data.stats     = trained['stats']
     meta_data.cv_folds  = trained['CV_folds']
+    meta_data.scaler    = trained['scaler'] if 'scaler' in trained.keys() else None
 
     meta_data.cv_results = df[list(dict.fromkeys([key_var, 
                                                   to_predict, 
@@ -324,8 +325,11 @@ def spare_test(df: Union[pd.DataFrame, str],
                                         'mdl': mdl,
                                         'task': model_task,
                                         'cv_results': meta_data['cv_results'],
-                                        'cv_folds': meta_data['cv_folds']
+                                        'cv_folds': meta_data['cv_folds'],
+                                        'scaler': meta_data['scaler'] 
                                     })
+
+
     except Exception as e:
         logger.critical(e)
         print(e)

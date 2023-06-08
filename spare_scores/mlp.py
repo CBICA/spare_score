@@ -120,12 +120,12 @@ class MLPModel:
         grid_search = GridSearchCV(pipeline_obj, self.param_grid, scoring=scoring, cv = KFold(n_splits = 5, shuffle=True, random_state=10086), refit= True )
         grid_search.fit(X,y)
 
-        self.best_estimator = grid_search.best_estimator_['mlp']
+        self.mdl = grid_search.best_estimator_['mlp']
         self.scaler = grid_search.best_estimator_['scaler']
-        self.best_params = grid_search.best_params_
+        self.params = grid_search.best_params_
 
         X_scale = self.scaler.transform(X)
-        self.y_hat = self.best_estimator.predict(X_scale)
+        self.y_hat = self.mdl.predict(X_scale)
 
         self.stats = {metric: [] for metric in metrics}
 
@@ -148,10 +148,11 @@ class MLPModel:
 
 
         result = {'predicted':self.y_hat, 
-                  'model':self.best_estimator, 
+                  'model':self.mdl, 
                   'stats':self.stats, 
-                  'best_params':self.best_params,
-                  'CV_folds':0}
+                  'best_params':self.params,
+                  'CV_folds': None,
+                  'scaler': self.scaler}
     
         if self.task == 'Regression':
             print('>>MAE = ', self.stats['MAE'][0])
@@ -159,9 +160,13 @@ class MLPModel:
             print('>>R2 = ', self.stats['R2'][0])
 
         else:
+            print('>>AUC = ', self.stats['AUC'][0])
             print('>>Accuracy = ', self.stats['Accuracy'][0])
             print('>>Sensityvity = ', self.stats['Sensitivity'][0])
             print('>>Specificity = ', self.stats['Specificity'][0])
+            print('>>Precision = ', self.stats['Precision'][0])
+            print('>>Recall = ', self.stats['Recall'][0])
+            print('>>F1 = ', self.stats['F1'][0])
 
         return result 
     
@@ -170,7 +175,7 @@ class MLPModel:
         X = df[self.predictors]
         X_transformed = self.scaler.transform(X)
 
-        y_pred = self.best_estimator(X_transformed)
+        y_pred = self.mdl(X_transformed)
 
         return y_pred
 
@@ -178,7 +183,9 @@ class MLPModel:
         if len(y_test.unique()) == 2:
             fpr, tpr, thresholds = metrics.roc_curve(y_test, y_score, pos_label=1)
             self.stats['AUC'].append(metrics.auc(fpr, tpr))
-            tn, fp, fn, tp = metrics.confusion_matrix(y_test, (y_score >= thresholds[np.argmax(tpr - fpr)])*2-1).ravel()
+
+            #tn, fp, fn, tp = metrics.confusion_matrix(y_test, (y_score >= thresholds[np.argmax(tpr - fpr)])*2-1).ravel()
+            tn, fp, fn, tp = metrics.confusion_matrix(y_test, y_score).ravel()
             self.stats['Accuracy'].append((tp + tn) / (tp + tn + fp + fn))
             self.stats['Sensitivity'].append(tp/(tp+fp))
             self.stats['Specificity'].append(tn/(tn+fn))
@@ -190,7 +197,7 @@ class MLPModel:
             self.stats['MAE'].append(metrics.mean_absolute_error(y_test, y_score))
             self.stats['RMSE'].append(metrics.mean_squared_error(y_test, y_score, squared=False))
             self.stats['R2'].append(metrics.r2_score(y_test, y_score))
-        logging.debug('   > ' + ' / '.join([f'{key}={value[-1]:#.4f}' for key, value in self.stats.items()]))
+        #logging.debug('   > ' + ' / '.join([f'{key}={value[-1]:#.4f}' for key, value in self.stats.items()]))
 
     def output_stats(self):
         [logging.info(f'>> {key} = {np.mean(value):#.4f} \u00B1 {np.std(value):#.4f}') for key, value in self.stats.items()]
