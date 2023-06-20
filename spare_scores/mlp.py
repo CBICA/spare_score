@@ -175,7 +175,7 @@ class MLPModel:
         X = df[self.predictors]
         X_transformed = self.scaler.transform(X)
 
-        y_pred = self.mdl(X_transformed)
+        y_pred = self.mdl.predict(X_transformed)
 
         return y_pred
 

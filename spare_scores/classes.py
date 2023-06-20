@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from spare_scores.data_prep import logging_basic_config
 from spare_scores.mlp import MLPModel
 from spare_scores.svm import SVMModel
+from spare_scores.mlp_torch import MLPTorchModel
 
 
 class SpareModel:
@@ -62,6 +63,12 @@ class SpareModel:
                                    key_var,
                                    verbose,
                                    **parameters)
+        elif self.model_type == 'MLPTorch':
+            self.model = MLPTorchModel(predictors,
+                                   target,
+                                   key_var,
+                                   verbose,
+                                   **parameters)
         else:
             logger.err(f"Model type {self.model_type} not supported.")
             raise NotImplementedError("Only SVM is supported currently.")
@@ -105,7 +112,7 @@ class SpareModel:
         logger = logging_basic_config(self.verbose, content_only=True)
         result = None
         try:
-            result = self.model.predict(df[self.predictors]) if self.model_type == 'SVM' else self.model.mdl.predict(df[self.predictors])
+            result = self.model.predict(df[self.predictors]) #if self.model_type in ['SVM','MLPTorch'] else self.model.mdl.predict(df[self.predictors])
         except Exception as e:
             logger.info('\033[91m' + '\033[1m'
                         + '\n\n\nspare_test(): Model prediction failed.'

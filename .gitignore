@@ -82,6 +82,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+.ipynb 
 
 # IPython
 profile_default/
@@ -179,3 +180,8 @@ cython_debug/
 
 # Temporary files and folders
 temp/
+
+# images
+.png 
+.jpeg
+.jpg 

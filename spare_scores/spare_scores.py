@@ -6,7 +6,7 @@ from typing import Tuple, Union
 import numpy as np
 import pandas as pd
 
-from spare_scores.classes import MetaData, SpareModel
+from spare_scores.classes import MetaData, SpareModel, MLPTorchModel
 from spare_scores.data_prep import (check_test, check_train,
                                     convert_cat_variables,
                                     logging_basic_config)
@@ -302,7 +302,13 @@ def spare_test(df: Union[pd.DataFrame, str],
     if 'mdl_task' not in meta_data.keys(): # Backwards compatibility
         model_task = 'Classification' if 'Classification'\
                          in meta_data['mdl_type'] else 'Regression'
-        model_type = 'SVM' if 'SVM' in meta_data['mdl_type'] else 'MLP'
+        
+        if 'SVM' in meta_data['mdl_type']:
+            model_type = 'SVM'
+        elif 'MLP' in meta_data['mdl_type']:
+            model_type = 'MLP'
+        else:
+            model_type = 'MLPTorch'
     else:
         model_task = meta_data['mdl_task']
         model_type = meta_data['mdl_type']

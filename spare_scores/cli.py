@@ -60,7 +60,7 @@ def main():
         --pos_group]
 
         [MODEL_TYPE]    The type of model to be used for training. String.
-        [-mt,           'SVM' or 'MLP'. Required for training.
+        [-mt,           'SVM', 'MLP' 'MLPTorch'. Required for training.
         --model_type]
 
         [KERNEL]        The kernel for SVM training. 'linear' or 'rbf' (only 
@@ -208,7 +208,7 @@ def main():
                         "--model_type",
                         type=str,
                         help=help,
-                        choices=['SVM', 'MLP'],
+                        choices=['SVM', 'MLP', 'MLPTorch'],
                         default='SVM',
                         required=False)
     
