@@ -16,7 +16,11 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 
-from tqdm import tqdm
+from ray import tune
+from ray.air import Checkpoint, session
+from ray.tune.schedulers import ASHAScheduler
+from functools import partial
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class MLPDataset(Dataset):
@@ -31,7 +35,7 @@ class MLPDataset(Dataset):
         return self.X[idx], self.y[idx]
 
 class SimpleMLP(nn.Module):
-    def __init__(self, num_features = 147, hidden_size = 256, classification = True, dropout = 0.2, use_bn = False):
+    def __init__(self, num_features = 147, hidden_size = 256, classification = True, dropout = 0.2, use_bn = False, bn = 'bn'):
         super(SimpleMLP, self).__init__()
 
         self.num_features   = num_features
@@ -41,9 +45,13 @@ class SimpleMLP(nn.Module):
         self.use_bn         = use_bn
 
         self.linear1 = nn.Linear(self.num_features, self.hidden_size)
+        self.norm1 = nn.InstanceNorm1d(self.hidden_size , eps=1e-15) if bn != 'bn' else nn.BatchNorm1d(self.hidden_size, eps=1e-15)
+
         self.linear2 = nn.Linear(self.hidden_size,  self.hidden_size//2)
-        self.norm = nn.InstanceNorm1d(self.hidden_size //2 , eps=1e-15) 
+        self.norm2 = nn.InstanceNorm1d(self.hidden_size //2 , eps=1e-15) if bn != 'bn' else nn.BatchNorm1d(self.hidden_size //2, eps=1e-15)
+
         self.linear3 = nn.Linear(self.hidden_size//2 , 1)
+
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(p = 0.2)
         self.sigmoid = nn.Sigmoid()
@@ -51,12 +59,14 @@ class SimpleMLP(nn.Module):
     def forward(self, x):
         ## first layer
         x = self.linear1(x)
+        if self.use_bn:
+            x = self.norm1(x)
         x = self.dropout(self.relu(x))
 
         ## second layer
         x = self.linear2(x)
         if self.use_bn:
-            x = self.norm(x)
+            x = self.norm2(x)
         x = self.relu(x)
         x = self.dropout(x)
 
@@ -102,7 +112,7 @@ class MLPTorchModel:
         self.key_var = key_var
         self.verbose = verbose
 
-        valid_parameters = ['task']
+        valid_parameters = ['task', 'gpu', 'cpu', 'bs', 'num_epoches']
 
         for parameter in kwargs.keys():
             if parameter not in valid_parameters:
@@ -120,6 +130,30 @@ class MLPTorchModel:
                     self.task = kwargs[parameter]
                 continue
 
+            if parameter == 'gpu':
+                try:
+                    self.gpu = int(kwargs[parameter])
+                except ValueError:
+                    print('Parameter: # of gpu should be integer')
+
+            if parameter == 'cpu':
+                try:
+                    self.gpu = int(kwargs[parameter])
+                except ValueError:
+                    print('Parameter: # of gpu should be integer')
+
+            if parameter == 'bs':
+                try:
+                    self.batch_size = int(kwargs[parameter])
+                except ValueError:
+                    print('Parameter: # of gpu should be integer')
+
+            if parameter == 'num_epoches':
+                try:
+                    self.num_epochs = int(kwargs[parameter])
+                except ValueError:
+                    print('Parameter: # of gpu should be integer')
+
             self.__dict__.update({parameter: kwargs[parameter]})
 
         # Set default values for the parameters if not provided
@@ -127,51 +161,37 @@ class MLPTorchModel:
         if 'task' not in kwargs.keys():
             self.task = 'Regression'
 
+        if 'gpu' not in kwargs.keys():
+            self.gpu = 1
+
+        if 'cpu' not in kwargs.keys():
+            self.cpu = 1
+
+        if 'batch_size' not in kwargs.keys():
+            self.batch_size = 128
+
+        if 'num_epochs' not in kwargs.keys():
+            self.num_epochs = 100
+
         if device != 'cuda':
             print('You are not using the GPU! Check your device')
 
         ################################## MODEL SETTING ##################################################
         self.classification = True if self.task == 'Classification' else False
-        self.TARGET = self.to_predict
-        self.mdl = SimpleMLP(num_features = len(predictors), classification= self.classification).to(device)
-        self.batch_size = 128
-        self.num_epochs = 100
-        self.loss_fn = nn.BCELoss() if self.classification else nn.L1Loss()
-        self.optimizer = optim.Adam(self.mdl.parameters(), lr = 3e-4)
-        self.evaluation_metric = 'Accuracy' if self.task == 'Classification' else 'MAE' 
-        self.scaler = None
-        self.stats  = None
-        self.param  = None
+        self.mdl        = None
+        self.scaler     = None
+        self.stats      = None
+        self.param      = None
+        self.train_dl   = None
+        self.val_dl     = None
+        self.config     = {
+                            "hidden_size": tune.choice([128, 256, 512]),
+                            "dropout": tune.choice([0.1, 0.2, 0.25, 0.5]),
+                            "lr": tune.loguniform(1e-4, 1e-1),
+                            'use_bn' : tune.choice(['False', 'True']),
+                            'bn' : tune.choice(['in', 'bn'])
+                         }
         ################################## MODEL SETTING ##################################################
-
-    
-    def plot_loss(self, train_loss_list, val_loss_list, eval_metric_list, eval_metric_name):
-        '''
-        plot the training loss vs validation loss (figure 1)
-        plot the validation data accuracy (figure 2)
-
-        input:
-            1. train_loss_list: list of training loss
-            2. val_loss_list: list of validation loss
-            3. val_acc_list: list of accuracy loss
-
-        output:
-            Two Plots for loss and accuracy
-        '''
-        plt.subplot(1,2,1)
-        plt.plot(train_loss_list, label = 'Train Loss')
-        plt.plot(val_loss_list, label = 'Val Loss')
-        plt.legend()
-        plt.xlabel('Num of Epoch')
-        plt.ylabel('Loss')
-        plt.title('Train Loss vs Val Loss ')
-        plt.subplot(1,2,2)
-        plt.plot(eval_metric_list)
-        plt.xlabel('Num of Epoch')
-        plt.ylabel(eval_metric_name)
-        plt.title('Evaluation Metric: {}'.format(eval_metric_name))
-        plt.savefig('./loss_curve.png', dpi=300, format='png')
-        plt.show()
 
     def get_all_stats(self, y_hat, y, classification = True):
         """
@@ -221,37 +241,38 @@ class MLPTorchModel:
         return dict 
     
 
+    def train(self, config):
 
-    def train(self, 
-              model, 
-              train_dl, 
-              val_dl, 
-              num_epochs,
-              loss_fn,
-              optimizer,
-              evaluation_metric = 'MAE',
-              detail_flag = False):
+        evaluation_metric = 'Accuracy' if self.task == 'Classification' else 'MAE'
 
+        model = SimpleMLP(num_features =len(self.predictors), hidden_size = int(config['hidden_size']), classification= self.classification, dropout= config['dropout'], use_bn= config['use_bn'], bn = str(config['bn']))
+        optimizer = optim.Adam(model.parameters(), lr = config['lr'])
+        loss_fn = nn.BCELoss() if self.classification else nn.L1Loss()
+
+        device = "cpu"
+        if torch.cuda.is_available():
+            device = "cuda:0"
+            if torch.cuda.device_count() > 1:
+                model = nn.DataParallel(model)
+        model.to(device)
         model.train()
-        best_eval_metric = -np.inf if evaluation_metric == 'Accuracy' else np.inf 
-        classification = True if evaluation_metric == 'Accuracy' else False
-        val_interval  = 1
 
-        best_model_state_dic = None
+        checkpoint = session.get_checkpoint()
 
-        train_loss_list = []
-        val_loss_list = []
-        val_acc_list = []
+        if checkpoint:
+            checkpoint_state = checkpoint.to_dict()
+            start_epoch = checkpoint_state["epoch"]
+            model.load_state_dict(checkpoint_state["net_state_dict"])
+            optimizer.load_state_dict(checkpoint_state["optimizer_state_dict"])
+        else:
+            start_epoch = 0
 
-        for epoch in range(num_epochs):
 
-            if detail_flag:
-                print('epoch: ', epoch + 1)
+        for epoch in range(start_epoch, self.num_epochs):
 
-            total_train_loss = 0
             step = 0
 
-            for _, (x,y) in tqdm(enumerate(train_dl), total = len(train_dl), leave = False):
+            for _, (x,y) in enumerate(self.train_dl):
                 step += 1
                 x = x.to(device)
                 y = y.to(device)
@@ -261,54 +282,45 @@ class MLPTorchModel:
 
                 loss = loss_fn(output, y)
 
-                total_train_loss += loss.item()
-
                 loss.backward()
 
                 optimizer.step()
 
-            total_train_loss = total_train_loss / step 
-            train_loss_list.append(total_train_loss)
-
-            if detail_flag:
-                print('Train loss: {}'.format(total_train_loss))
-
 
             val_step = 0
-            val_total_acc = 0
+            val_total_metric = 0
             val_total_loss = 0
 
-            if (epoch + 1) % val_interval == 0:
-                with torch.no_grad():
-                    for _, (x, y) in tqdm(enumerate(val_dl), total = len(val_dl), leave = False):
-                        val_step += 1
-                        x = x.to(device)
-                        y = y.to(device)
-                        output = model(x.float())
+            with torch.no_grad():
+                for _, (x, y) in enumerate(self.val_dl):
+                    val_step += 1
+                    x = x.to(device)
+                    y = y.to(device)
+                    output = model(x.float())
 
-                        loss = loss_fn(output, y)
-                        val_total_loss += loss.item()
-                        acc = self.get_all_stats(output.cpu().data.numpy(), y.cpu().data.numpy() , classification= classification)[evaluation_metric]
-                        val_total_acc += acc
+                    loss = loss_fn(output, y)
+                    val_total_loss += loss.item()
+                    metric = self.get_all_stats(output.cpu().data.numpy(), y.cpu().data.numpy() , classification= self.classification)[evaluation_metric]
+                    val_total_metric += metric
 
-                    val_total_loss = val_total_loss / val_step
-                    val_total_acc  = val_total_acc / val_step 
+                val_total_loss = val_total_loss / val_step
+                val_total_metric  = val_total_metric / val_step 
 
-                    val_acc_list.append(val_total_acc)
-                    val_loss_list.append(val_total_loss)
-                    
-                    if detail_flag:
-                        print('val metric: {}'.format(val_total_acc))
-                        print('val loss: {}'.format(val_total_loss))
-
-                if val_total_acc >= best_eval_metric and classification:
-                    best_model_state_dic = model.state_dict()
-
-                elif val_total_acc <= best_eval_metric and not classification:
-                    best_model_state_dic = model.state_dict()
+            checkpoint_data = {
+                "epoch": epoch,
+                "net_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+            }
+            checkpoint = Checkpoint.from_dict(checkpoint_data)
 
 
-        return train_loss_list, val_loss_list, val_acc_list, best_model_state_dic
+            session.report(
+                {"loss": val_total_loss, "metric": val_total_metric },
+                checkpoint=checkpoint,
+            )
+
+        print('finish training') 
+        return 
     
    
     def set_parameters(self, **parameters):
@@ -342,20 +354,43 @@ class MLPTorchModel:
         train_ds = MLPDataset(X_train, y_train)
         val_ds   = MLPDataset(X_val, y_val)
 
-        train_dl = DataLoader(train_ds, batch_size = self.batch_size, shuffle = True)
-        val_dl   = DataLoader(val_ds, batch_size = self.batch_size, shuffle = True)
+        self.train_dl = DataLoader(train_ds, batch_size = self.batch_size, shuffle = True)
+        self.val_dl   = DataLoader(val_ds, batch_size = self.batch_size, shuffle = True)
 
-        train_loss_list, val_loss_list, val_acc_list, best_model_state_dic = self.train(self.mdl, train_dl, val_dl, self.num_epochs, self.loss_fn, self.optimizer, self.evaluation_metric, detail_flag = False)
-        self.plot_loss(train_loss_list, val_loss_list, val_acc_list, eval_metric_name = self.evaluation_metric)
+        scheduler = ASHAScheduler(
+            metric="loss",
+            mode="min",
+            max_t=100,
+            grace_period=1,
+            reduction_factor=2,
+        )
 
-        self.mdl.load_state_dict(best_model_state_dic)
+        result = tune.run(
+            partial(self.train),
+            resources_per_trial={"cpu": self.cpu, "gpu": self.gpu},
+            config=self.config,
+            num_samples= 10,
+            scheduler=scheduler
+        )
+
+        best_trial = result.get_best_trial("loss", "min", "last")
+        print(f"Best trial config: {best_trial.config}")
+        print(f"Best trial final validation loss: {best_trial.last_result['loss']}")
+        print(f"Best trial final validation metric: {best_trial.last_result['metric']}")
+        
+        self.mdl = SimpleMLP(num_features = len(self.predictors), hidden_size = int(best_trial.config['hidden_size']), classification= self.classification, dropout= best_trial.config['dropout'], use_bn= best_trial.config['use_bn'], bn = str(best_trial.config['bn']))
+        best_checkpoint = best_trial.checkpoint.to_air_checkpoint()
+        best_checkpoint_data = best_checkpoint.to_dict()
+        self.mdl.load_state_dict(best_checkpoint_data["net_state_dict"])
+        self.mdl.to(device)
         self.mdl.eval()
-
         X_total = self.scaler.transform( np.array(X, dtype = np.float32) )
         X_total = torch.tensor(X_total).to(device)
         
         self.y_pred = self.mdl(X_total).cpu().data.numpy()
         self.stats = self.get_all_stats(self.y_pred, y, classification = self.classification)
+
+        self.param =  best_checkpoint_data["net_state_dict"]
 
         ########################################################################################################### 
 
@@ -366,7 +401,7 @@ class MLPTorchModel:
         result = {'predicted':self.y_pred, 
                   'model':self.mdl, 
                   'stats':self.stats, 
-                  'best_params':best_model_state_dic,
+                  'best_params': self.param,
                   'CV_folds': None,
                   'scaler': self.scaler}
     
@@ -392,9 +427,10 @@ class MLPTorchModel:
         X = self.scaler.transform(np.array(X, dtype = np.float32))
         X = torch.tensor(X).to(device)
 
-        self.mdl.load_state_dict(self.param)
-
+        checkpoint_dict = self.param
+        self.mdl.load_state_dict(checkpoint_dict)
         self.mdl.eval()
+
         y_pred = self.mdl(X).cpu().data.numpy()
 
         return y_pred if self.task == 'Regression' else np.where(y_pred >= 0.5, 1 , 0)
