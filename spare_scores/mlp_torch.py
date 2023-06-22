@@ -361,16 +361,17 @@ class MLPTorchModel:
             metric="loss",
             mode="min",
             max_t=100,
-            grace_period=1,
-            reduction_factor=2,
+            grace_period=15,
+            reduction_factor=2
         )
 
         result = tune.run(
             partial(self.train),
             resources_per_trial={"cpu": self.cpu, "gpu": self.gpu},
             config=self.config,
-            num_samples= 10,
-            scheduler=scheduler
+            num_samples= 15,
+            scheduler=scheduler,
+            stop={"training_iteration": 100}
         )
 
         best_trial = result.get_best_trial("loss", "min", "last")
