@@ -26,7 +26,8 @@ def spare_train(
         kernel: str = 'linear',
         output: str = '',
         verbose: int = 1,
-        logs: str = '') -> Tuple[dict, dict]:
+        logs: str = '', 
+        **kwargs) -> Tuple[dict, dict]:
     """
     Trains a SPARE model, either classification or regression
 
@@ -117,6 +118,11 @@ def spare_train(
     meta_data.key_var = key_var
 
     # Convert categorical variables
+
+    if len(df[to_predict].value_counts().keys()) == 2:
+        if set(df[to_predict].value_counts().keys()) != set([0,1]):
+            df[to_predict] = df[to_predict].apply(lambda x: 1 if x == pos_group else 0)
+
     try:
         df, meta_data = convert_cat_variables(df, predictors + [to_predict], meta_data)
     except ValueError:
@@ -138,7 +144,8 @@ def spare_train(
                                             'k':           5,
                                             'n_repeats':   1, 
                                             'task':        mdl_task, 
-                                            'param_grid':  None})
+                                            'param_grid':  None},
+                                **kwargs)
     except NotImplementedError:
         err = "SPARE model " + model_type + " is not implemented yet."
         logger.error(err)
@@ -151,6 +158,7 @@ def spare_train(
         res['status'] = err
         res['status_code'] = 2
         return res    
+
     
     # Train the model
     try:
@@ -242,6 +250,7 @@ def spare_test(df: Union[pd.DataFrame, str],
     mdl, meta_data = load_model(mdl_path) if isinstance(mdl_path, str) \
                                           else mdl_path
     
+    
     try:
         check, cols = check_test(df, meta_data)
     except Exception as e:
@@ -258,7 +267,7 @@ def spare_test(df: Union[pd.DataFrame, str],
         res['data'] = cols
         res['status_code'] = 1
         return res
-
+    
     # Assume key_variable (if not given)
     if key_var == '' or key_var is None:
         key_var = df.columns[0]
@@ -266,6 +275,7 @@ def spare_test(df: Union[pd.DataFrame, str],
             logging.info("Assumed primary key(s) are not capable of uniquely " 
                         + "identifying each row of the dataset. Assumed "
                         + "primary key(s) are: " + key_var)
+            
 
     # Convert categorical variables
     for var, map_dict in meta_data.get('categorical_var_map',{}).items():
@@ -313,6 +323,7 @@ def spare_test(df: Union[pd.DataFrame, str],
         model_task = meta_data['mdl_task']
         model_type = meta_data['mdl_type']
 
+
     # Create model instance based on saved model:
     predictors = meta_data['predictors']
     target = meta_data['to_predict']
@@ -322,6 +333,7 @@ def spare_test(df: Union[pd.DataFrame, str],
                              target, 
                              key_var, 
                              verbose=verbose)
+
     
     # Set the model attributes to the ones that were saved to the instance 
     # during training:
@@ -334,8 +346,6 @@ def spare_test(df: Union[pd.DataFrame, str],
                                         'cv_folds': meta_data['cv_folds'],
                                         'scaler': meta_data['scaler'] 
                                     })
-
-
     except Exception as e:
         logger.critical(e)
         print(e)
