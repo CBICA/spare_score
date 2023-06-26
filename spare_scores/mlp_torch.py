@@ -6,7 +6,7 @@ from spare_scores.data_prep import logging_basic_config
 import matplotlib.pyplot as plt 
 
 from sklearn.model_selection import train_test_split 
-from sklearn.metrics import confusion_matrix, mean_absolute_error, r2_score, mean_squared_error, roc_auc_score, mean_absolute_error
+from sklearn.metrics import confusion_matrix, mean_absolute_error, r2_score, mean_squared_error, roc_auc_score, mean_absolute_error, roc_curve
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._testing import ignore_warnings
@@ -193,6 +193,13 @@ class MLPTorchModel:
                          }
         ################################## MODEL SETTING ##################################################
 
+    def find_best_threshold(self, y_hat, y):
+        fpr, tpr, thresholds_roc = roc_curve(y, y_hat, pos_label= 1)
+        youden_index = tpr - fpr
+        best_threshold_youden = thresholds_roc[np.argmax(youden_index)]
+
+        return best_threshold_youden
+
     def get_all_stats(self, y_hat, y, classification = True):
         """
         Input: 
@@ -204,10 +211,13 @@ class MLPTorchModel:
         """
         y = np.array(y)
         y_hat = np.array(y_hat)
+
         if classification: 
             auc = roc_auc_score(y, y_hat)
 
-            y_hat = np.where(y_hat >= 0.5, 1 , 0)
+            threshold = self.find_best_threshold(y_hat, y)
+ 
+            y_hat = np.where(y_hat >= threshold, 1 , 0)
             
             tn, fp, fn, tp = confusion_matrix(y, y_hat).ravel()
 
@@ -243,7 +253,7 @@ class MLPTorchModel:
 
     def train(self, config):
 
-        evaluation_metric = 'Accuracy' if self.task == 'Classification' else 'MAE'
+        evaluation_metric = 'Balanced Accuarcy' if self.task == 'Classification' else 'MAE'
 
         model = SimpleMLP(num_features =len(self.predictors), hidden_size = int(config['hidden_size']), classification= self.classification, dropout= config['dropout'], use_bn= config['use_bn'], bn = str(config['bn']))
         optimizer = optim.Adam(model.parameters(), lr = config['lr'])
@@ -423,7 +433,6 @@ class MLPTorchModel:
         return result 
     
     def predict(self, df):
-        
         X = df[self.predictors]
         X = self.scaler.transform(np.array(X, dtype = np.float32))
         X = torch.tensor(X).to(device)
@@ -434,7 +443,7 @@ class MLPTorchModel:
 
         y_pred = self.mdl(X).cpu().data.numpy()
 
-        return y_pred if self.task == 'Regression' else np.where(y_pred >= 0.5, 1 , 0)
+        return y_pred
 
     def output_stats(self):
         [logging.info(f'>> {key} = {np.mean(value):#.4f} \u00B1 {np.std(value):#.4f}') for key, value in self.stats.items()]
