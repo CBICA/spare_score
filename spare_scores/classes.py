@@ -38,7 +38,8 @@ class SpareModel:
                  target, 
                  key_var,
                  verbose=1,
-                 parameters={}):
+                 parameters={},
+                 **kwargs):
         
         logger = logging_basic_config(verbose, content_only=True)
 
@@ -68,7 +69,8 @@ class SpareModel:
                                    target,
                                    key_var,
                                    verbose,
-                                   **parameters)
+                                   **parameters,
+                                   **kwargs)
         else:
             logger.err(f"Model type {self.model_type} not supported.")
             raise NotImplementedError("Only SVM is supported currently.")
