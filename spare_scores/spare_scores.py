@@ -342,9 +342,7 @@ def spare_test(df: Union[pd.DataFrame, str],
         spare_model.set_parameters(**{
                                         'mdl': mdl,
                                         'task': model_task,
-                                        'cv_results': meta_data['cv_results'],
-                                        'cv_folds': meta_data['cv_folds'],
-                                        'scaler': meta_data['scaler'] 
+                                        **{key: meta_data[key] for key in meta_data.keys() if key not in ['mdl', 'task']}
                                     })
     except Exception as e:
         logger.critical(e)
