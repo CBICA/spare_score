@@ -16,11 +16,7 @@ setup(name='spare_scores',
       packages=find_packages(),
       package_data={'spare_scores':['mdl/*.pkl.gz','data/*.csv']},
       include_package_data=True,
-<<<<<<< HEAD
       install_requires=['numpy', 'pandas', 'scikit-learn', 'torch==2.0.0', 'matplotlib', 'ray[all]'],
-=======
-      install_requires=['numpy', 'pandas', 'scikit-learn', 'torch==1.11', 'matplotlib', 'ray'],
->>>>>>> e8ae5cda3ff2af600aaf5536279cf33f933a1829
       entry_points={
         'console_scripts': ['spare_score=spare_scores.cli:main']
         },
