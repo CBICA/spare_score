@@ -217,9 +217,9 @@ class MLPTorchModel:
         if classification: 
             auc = roc_auc_score(y, y_hat)
 
-            threshold = self.find_best_threshold(y_hat, y)
+            self.threshold = self.find_best_threshold(y_hat, y)
  
-            y_hat = np.where(y_hat >= threshold, 1 , 0)
+            y_hat = np.where(y_hat >= self.threshold, 1 , 0)
             
             tn, fp, fn, tp = confusion_matrix(y, y_hat).ravel()
 
@@ -442,6 +442,7 @@ class MLPTorchModel:
             print('>>Precision = ', self.stats['Precision'])
             print('>>Recall = ', self.stats['Recall'])
             print('>>F1 = ', self.stats['F1'])
+            print('>>Threshold = ', self.threshold)
 
         return result 
     
