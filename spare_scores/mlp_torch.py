@@ -369,8 +369,6 @@ class MLPTorchModel:
         self.train_dl = DataLoader(train_ds, batch_size = self.batch_size, shuffle = True)
         self.val_dl   = DataLoader(val_ds, batch_size = self.batch_size, shuffle = True)
 
-        
-
         ray.init(num_cpus = self.cpu, num_gpus = self.gpu, _temp_dir = './tmp', object_store_memory = 19999999905.0)
 
         if self.verbose == 1:
