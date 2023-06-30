@@ -16,13 +16,11 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 
-from ray import tune
-from ray.air import Checkpoint, session
-from ray.tune.schedulers import ASHAScheduler
-from functools import partial
 import ray
-import os
-
+from ray import tune
+from ray.air import session
+from ray.air.checkpoint import Checkpoint
+from ray.tune.schedulers import ASHAScheduler
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class MLPDataset(Dataset):
@@ -369,40 +367,44 @@ class MLPTorchModel:
         self.train_dl = DataLoader(train_ds, batch_size = self.batch_size, shuffle = True)
         self.val_dl   = DataLoader(val_ds, batch_size = self.batch_size, shuffle = True)
 
-        ray.init(num_cpus = self.cpu, num_gpus = self.gpu, _temp_dir = './tmp', object_store_memory = 19999999905.0)
+        #ray.init(num_cpus = self.cpu, num_gpus = self.gpu, _temp_dir = './tmp' , object_store_memory = 19999999905.0)
 
-        if self.verbose == 1:
-            print('Ray Info: ')
-            print(ray.available_resources())
-            print(ray.nodes())
+        # if self.verbose == 1:
+        #     print('Ray Info: ')
+        #     print(ray.available_resources())
+        #     print(ray.nodes())
 
         scheduler = ASHAScheduler(
-            metric="loss",
-            mode="min",
             max_t=100,
             grace_period=15,
             reduction_factor=2
         )
-    
-        result = tune.run(
-            partial(self.train),
-            resources_per_trial={"cpu": self.cpu, "gpu": self.gpu},
-            config=self.config,
-            num_samples= 15,
-            scheduler=scheduler,
-            stop={"training_iteration": 100}
+
+        tuner = tune.Tuner(
+            tune.with_resources(
+                tune.with_parameters(self.train),
+                resources={"cpu": self.cpu, "gpu": self.gpu}
+        ),
+            tune_config=tune.TuneConfig(
+                metric="loss",
+                mode="min",
+                scheduler=scheduler,
+                num_samples=15,
+            ),
+            param_space=self.config,
         )
 
-        ray.shutdown()
+        result = tuner.fit()
 
-        best_trial = result.get_best_trial("loss", "min", "last")
+        #ray.shutdown()
+
+        best_trial = result.get_best_result("loss", "min", "last")
         print(f"Best trial config: {best_trial.config}")
-        print(f"Best trial final validation loss: {best_trial.last_result['loss']}")
-        print(f"Best trial final validation metric: {best_trial.last_result['metric']}")
+        print(f"Best trial final validation loss: {best_trial.metrics['loss']}")
+        print(f"Best trial final validation metric: {best_trial.metrics['metric']}")
         
         self.mdl = SimpleMLP(num_features = len(self.predictors), hidden_size = int(best_trial.config['hidden_size']), classification= self.classification, dropout= best_trial.config['dropout'], use_bn= best_trial.config['use_bn'], bn = str(best_trial.config['bn']))
-        best_checkpoint = best_trial.checkpoint.to_air_checkpoint()
-        best_checkpoint_data = best_checkpoint.to_dict()
+        best_checkpoint_data = best_trial.checkpoint.to_dict()
         self.mdl.load_state_dict(best_checkpoint_data["net_state_dict"])
         self.mdl.to(device)
         self.mdl.eval()
