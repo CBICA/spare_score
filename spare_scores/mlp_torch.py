@@ -341,7 +341,6 @@ class MLPTorchModel:
         best_checkpoint = best_trial.user_attrs['checkpoint']
 
         best_hyperparams = best_checkpoint['trial_params']
-        print(best_hyperparams)
         best_model_state_dict = best_checkpoint['model_state_dict']
         
         self.mdl = SimpleMLP(num_features = len(self.predictors), 
