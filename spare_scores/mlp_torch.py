@@ -295,7 +295,6 @@ class MLPTorchModel:
             }
             trial.set_user_attr('checkpoint', checkpoint)
 
-        print('finish training') 
         return val_total_metric
     
    
