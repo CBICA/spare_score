@@ -294,8 +294,7 @@ class MLPTorchModel:
                 'validation_loss' : val_total_loss
             }
             trial.set_user_attr('checkpoint', checkpoint)
-
-        print('finish training') 
+ 
         return val_total_metric
     
    
