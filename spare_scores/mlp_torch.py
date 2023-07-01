@@ -228,7 +228,7 @@ class MLPTorchModel:
 
         hidden_size = trial.suggest_categorical('hidden_size', [128, 256, 512])
         dropout     = trial.suggest_float('dropout', 0.1, 0.8, step = 0.05)
-        lr          = trial.suggest_loguniform('lr', 1e-4, 1e-1)
+        lr          = trial.suggest_float('lr', 1e-4, 1e-1, log = True)
         use_bn      = trial.suggest_categorical('use_bn', [False, True])
         bn          = trial.suggest_categorical('bn', ['bn', 'in'])
 
@@ -282,19 +282,18 @@ class MLPTorchModel:
                 val_total_loss = val_total_loss / val_step
                 val_total_metric  = val_total_metric / val_step 
 
-            if trial.should_prune() or trial.should_stop():
-                raise optuna.exceptions.TrailPruned()
+            if trial.should_prune():
+                raise optuna.exceptions.TrialPruned()
             
             # save checkpoint 
             trial.report(val_total_loss, epoch)
-            if trial.should_report(epoch):
-                checkpoint = {
-                    'trial_params': trial.params,
-                    'model_state_dict' : model.state_dict(),
-                    'optimizer_state_dict' : optimizer.state_dict(),
-                    'validation_loss' : val_total_loss
-                }
-                trial.set_user_attr('checkpoint', checkpoint)
+            checkpoint = {
+                'trial_params': trial.params,
+                'model_state_dict' : model.state_dict(),
+                'optimizer_state_dict' : optimizer.state_dict(),
+                'validation_loss' : val_total_loss
+            }
+            trial.set_user_attr('checkpoint', checkpoint)
 
         print('finish training') 
         return val_total_metric
@@ -335,13 +334,14 @@ class MLPTorchModel:
         self.val_dl   = DataLoader(val_ds, batch_size = self.batch_size, shuffle = True)
 
         study = optuna.create_study(direction= 'maximize' if self.classification else 'minimize')
-        study.optimize(self.object, n_trials= 50)
+        study.optimize(self.object, n_trials= 100)
 
         # Get the best trial and its checkpoint
         best_trial = study.best_trial
-        best_checkpoint = best_trial.user_attrs['best_checkpoint']
+        best_checkpoint = best_trial.user_attrs['checkpoint']
 
         best_hyperparams = best_checkpoint['trial_params']
+        print(best_hyperparams)
         best_model_state_dict = best_checkpoint['model_state_dict']
         
         self.mdl = SimpleMLP(num_features = len(self.predictors), 
