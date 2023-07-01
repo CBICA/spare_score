@@ -3,7 +3,6 @@ import time
 
 import numpy as np
 from spare_scores.data_prep import logging_basic_config
-import matplotlib.pyplot as plt 
 
 from sklearn.model_selection import train_test_split 
 from sklearn.metrics import confusion_matrix, mean_absolute_error, r2_score, mean_squared_error, roc_auc_score, mean_absolute_error, roc_curve
@@ -16,11 +15,8 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 
-import ray
-from ray import tune
-from ray.air import session
-from ray.air.checkpoint import Checkpoint
-from ray.tune.schedulers import ASHAScheduler
+import optuna
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class MLPDataset(Dataset):
@@ -112,7 +108,7 @@ class MLPTorchModel:
         self.key_var = key_var
         self.verbose = verbose
 
-        valid_parameters = ['task', 'gpu', 'cpu', 'bs', 'num_epoches']
+        valid_parameters = ['task', 'bs', 'num_epoches']
 
         for parameter in kwargs.keys():
             if parameter not in valid_parameters:
@@ -130,29 +126,17 @@ class MLPTorchModel:
                     self.task = kwargs[parameter]
                 continue
 
-            if parameter == 'gpu':
-                try:
-                    self.gpu = int(kwargs[parameter])
-                except ValueError:
-                    print('Parameter: # of gpu should be integer')
-
-            if parameter == 'cpu':
-                try:
-                    self.gpu = int(kwargs[parameter])
-                except ValueError:
-                    print('Parameter: # of gpu should be integer')
-
             if parameter == 'bs':
                 try:
                     self.batch_size = int(kwargs[parameter])
                 except ValueError:
-                    print('Parameter: # of gpu should be integer')
+                    print('Parameter: # of bs should be integer')
 
             if parameter == 'num_epoches':
                 try:
                     self.num_epochs = int(kwargs[parameter])
                 except ValueError:
-                    print('Parameter: # of gpu should be integer')
+                    print('Parameter: # of num_epoches should be integer')
 
             self.__dict__.update({parameter: kwargs[parameter]})
 
@@ -160,12 +144,6 @@ class MLPTorchModel:
 
         if 'task' not in kwargs.keys():
             self.task = 'Regression'
-
-        if 'gpu' not in kwargs.keys():
-            self.gpu = 1
-
-        if 'cpu' not in kwargs.keys():
-            self.cpu = 1
 
         if 'batch_size' not in kwargs.keys():
             self.batch_size = 128
@@ -184,13 +162,6 @@ class MLPTorchModel:
         self.param      = None
         self.train_dl   = None
         self.val_dl     = None
-        self.config     = {
-                            "hidden_size": tune.choice([128, 256, 512]),
-                            "dropout": tune.choice([0.1, 0.2, 0.25, 0.5]),
-                            "lr": tune.loguniform(1e-4, 1e-1),
-                            'use_bn' : tune.choice(['False', 'True']),
-                            'bn' : tune.choice(['in', 'bn'])
-                         }
         ################################## MODEL SETTING ##################################################
 
     def find_best_threshold(self, y_hat, y):
@@ -251,34 +222,29 @@ class MLPTorchModel:
         return dict 
     
 
-    def train(self, config):
+    def object(self, trial):
 
         evaluation_metric = 'Balanced Accuarcy' if self.task == 'Classification' else 'MAE'
 
-        model = SimpleMLP(num_features =len(self.predictors), hidden_size = int(config['hidden_size']), classification= self.classification, dropout= config['dropout'], use_bn= config['use_bn'], bn = str(config['bn']))
-        optimizer = optim.Adam(model.parameters(), lr = config['lr'])
+        hidden_size = trial.suggest_categorical('hidden_size', [128, 256, 512])
+        dropout     = trial.suggest_float('dropout', 0.1, 0.8, step = 0.05)
+        lr          = trial.suggest_loguniform('lr', 1e-4, 1e-1)
+        use_bn      = trial.suggest_categorical('use_bn', [False, True])
+        bn          = trial.suggest_categorical('bn', ['bn', 'in'])
+
+        model = SimpleMLP(num_features =len(self.predictors), 
+                          hidden_size = hidden_size,
+                          classification= self.classification, 
+                          dropout= dropout, 
+                          use_bn= use_bn, 
+                          bn = bn).to(device)
+        
+        optimizer = optim.Adam(model.parameters(), lr = lr)
         loss_fn = nn.BCELoss() if self.classification else nn.L1Loss()
 
-        device = "cpu"
-        if torch.cuda.is_available():
-            device = "cuda:0"
-            if torch.cuda.device_count() > 1:
-                model = nn.DataParallel(model)
-        model.to(device)
         model.train()
 
-        checkpoint = session.get_checkpoint()
-
-        if checkpoint:
-            checkpoint_state = checkpoint.to_dict()
-            start_epoch = checkpoint_state["epoch"]
-            model.load_state_dict(checkpoint_state["net_state_dict"])
-            optimizer.load_state_dict(checkpoint_state["optimizer_state_dict"])
-        else:
-            start_epoch = 0
-
-
-        for epoch in range(start_epoch, self.num_epochs):
+        for epoch in range(self.num_epochs):
 
             step = 0
 
@@ -316,21 +282,22 @@ class MLPTorchModel:
                 val_total_loss = val_total_loss / val_step
                 val_total_metric  = val_total_metric / val_step 
 
-            checkpoint_data = {
-                "epoch": epoch,
-                "net_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-            }
-            checkpoint = Checkpoint.from_dict(checkpoint_data)
-
-
-            session.report(
-                {"loss": val_total_loss, "metric": val_total_metric },
-                checkpoint=checkpoint,
-            )
+            if trial.should_prune() or trial.should_stop():
+                raise optuna.exceptions.TrailPruned()
+            
+            # save checkpoint 
+            trial.report(val_total_loss, epoch)
+            if trial.should_report(epoch):
+                checkpoint = {
+                    'trial_params': trial.params,
+                    'model_state_dict' : model.state_dict(),
+                    'optimizer_state_dict' : optimizer.state_dict(),
+                    'validation_loss' : val_total_loss
+                }
+                trial.set_user_attr('checkpoint', checkpoint)
 
         print('finish training') 
-        return 
+        return val_total_metric
     
    
     def set_parameters(self, **parameters):
@@ -367,45 +334,24 @@ class MLPTorchModel:
         self.train_dl = DataLoader(train_ds, batch_size = self.batch_size, shuffle = True)
         self.val_dl   = DataLoader(val_ds, batch_size = self.batch_size, shuffle = True)
 
-        #ray.init(num_cpus = self.cpu, num_gpus = self.gpu, _temp_dir = './tmp' , object_store_memory = 19999999905.0)
+        study = optuna.create_study(direction= 'maximize' if self.classification else 'minimize')
+        study.optimize(self.object, n_trials= 50)
 
-        # if self.verbose == 1:
-        #     print('Ray Info: ')
-        #     print(ray.available_resources())
-        #     print(ray.nodes())
+        # Get the best trial and its checkpoint
+        best_trial = study.best_trial
+        best_checkpoint = best_trial.user_attrs['best_checkpoint']
 
-        scheduler = ASHAScheduler(
-            max_t=100,
-            grace_period=15,
-            reduction_factor=2
-        )
-
-        tuner = tune.Tuner(
-            tune.with_resources(
-                tune.with_parameters(self.train),
-                resources={"cpu": self.cpu, "gpu": self.gpu}
-        ),
-            tune_config=tune.TuneConfig(
-                metric="loss",
-                mode="min",
-                scheduler=scheduler,
-                num_samples=15,
-            ),
-            param_space=self.config,
-        )
-
-        result = tuner.fit()
-
-        #ray.shutdown()
-
-        best_trial = result.get_best_result("loss", "min", "last")
-        print(f"Best trial config: {best_trial.config}")
-        print(f"Best trial final validation loss: {best_trial.metrics['loss']}")
-        print(f"Best trial final validation metric: {best_trial.metrics['metric']}")
+        best_hyperparams = best_checkpoint['trial_params']
+        best_model_state_dict = best_checkpoint['model_state_dict']
         
-        self.mdl = SimpleMLP(num_features = len(self.predictors), hidden_size = int(best_trial.config['hidden_size']), classification= self.classification, dropout= best_trial.config['dropout'], use_bn= best_trial.config['use_bn'], bn = str(best_trial.config['bn']))
-        best_checkpoint_data = best_trial.checkpoint.to_dict()
-        self.mdl.load_state_dict(best_checkpoint_data["net_state_dict"])
+        self.mdl = SimpleMLP(num_features = len(self.predictors), 
+                             hidden_size = best_hyperparams['hidden_size'], 
+                             classification= self.classification, 
+                             dropout= best_hyperparams['dropout'], 
+                             use_bn= best_hyperparams['use_bn'], 
+                             bn = best_hyperparams['bn'])
+
+        self.mdl.load_state_dict(best_model_state_dict)
         self.mdl.to(device)
         self.mdl.eval()
         X_total = self.scaler.transform( np.array(X, dtype = np.float32) )
@@ -414,7 +360,7 @@ class MLPTorchModel:
         self.y_pred = self.mdl(X_total).cpu().data.numpy()
         self.stats = self.get_all_stats(self.y_pred, y, classification = self.classification)
 
-        self.param =  best_checkpoint_data["net_state_dict"]
+        self.param =  best_model_state_dict
 
         ########################################################################################################### 
 
