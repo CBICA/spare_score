@@ -208,7 +208,6 @@ class MLPTorchModel:
                 specificity = tn / (tn + fp)
                 dict['Sensitivity']       = sensitivity
                 dict['Specificity']       = specificity
-
         else:
             dict = {}
             mae  = mean_absolute_error(y, y_hat)

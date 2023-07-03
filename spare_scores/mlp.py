@@ -99,10 +99,8 @@ class MLPModel:
     @ignore_warnings(category=RuntimeWarning)
     def _fit(self, df):
 
-        df = df.astype('float64')
-
-        X = df[self.predictors]
-        y = df[self.to_predict]
+        X = df[self.predictors].astype('float64')
+        y = df[self.to_predict].astype('float64')
 
         if self.task == 'Regression':
             mlp = MLPRegressor(early_stopping=True, max_iter = 5000)
