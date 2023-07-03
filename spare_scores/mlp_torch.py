@@ -185,11 +185,12 @@ class MLPTorchModel:
         y_hat = np.array(y_hat)
 
         if classification: 
-            auc = roc_auc_score(y, y_hat) 
+            auc = roc_auc_score(y, y_hat) if len(set(y)) != 1 else 0.5
 
             self.threshold = self.find_best_threshold(y_hat, y)
  
             y_hat = np.where(y_hat >= self.threshold, 1 , 0)
+
             
             dict = {}
             dict['Accuracy']          = accuracy_score(y, y_hat)
@@ -318,7 +319,8 @@ class MLPTorchModel:
 
         stratify = y if self.task == 'Classification' else None
 
-        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42, stratify = stratify )
+        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42, stratify= stratify)
+
         X_train = X_train.reset_index(drop = True)
         X_val = X_val.reset_index(drop = True)
 
