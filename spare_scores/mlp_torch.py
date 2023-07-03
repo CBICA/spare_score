@@ -216,6 +216,7 @@ class MLPTorchModel:
             dict['RMSE'] = mrse
             dict['R2']   = r2
 
+        
         return dict 
     
 
