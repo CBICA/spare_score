@@ -6,6 +6,7 @@ from spare_scores.data_prep import logging_basic_config
 
 from sklearn.model_selection import train_test_split 
 from sklearn.metrics import confusion_matrix, mean_absolute_error, r2_score, mean_squared_error, roc_auc_score, mean_absolute_error, roc_curve
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, balanced_accuracy_score
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._testing import ignore_warnings
@@ -184,32 +185,30 @@ class MLPTorchModel:
         y_hat = np.array(y_hat)
 
         if classification: 
-            auc = roc_auc_score(y, y_hat)
+            auc = roc_auc_score(y, y_hat) if len(set(y)) != 1 else 0.5
 
             self.threshold = self.find_best_threshold(y_hat, y)
  
             y_hat = np.where(y_hat >= self.threshold, 1 , 0)
+
             
-            tn, fp, fn, tp = confusion_matrix(y, y_hat).ravel()
-
-            acc = (tp + tn) / (fp + fn + tp + tn)
-            sensitivity = tp / (tp + fn)
-            specificity = tn / (tn + fp)
-            balanced_acc = (sensitivity + specificity) / 2
-            precision   = tp / (tp + fp)
-            recall      = tp / (tp + fn)
-            F1          = 2 * (precision * recall ) / (precision + recall)
-
             dict = {}
-            dict['Accuracy']          = acc
+            dict['Accuracy']          = accuracy_score(y, y_hat)
             dict['AUC']               = auc
-            dict['Sensitivity']       = sensitivity
-            dict['Specificity']       = specificity
-            dict['Balanced Accuarcy'] = balanced_acc
-            dict['Precision']         = precision
-            dict['Recall']            = recall
-            dict['F1']                = F1
-  
+            dict['Sensitivity']       = 0
+            dict['Specificity']       = 0
+            dict['Balanced Accuarcy'] = balanced_accuracy_score(y, y_hat)
+            dict['Precision']         = precision_score(y, y_hat)
+            dict['Recall']            = recall_score(y, y_hat)
+            dict['F1']                = f1_score(y, y_hat)
+
+            if len(set(y)) != 1:
+                tn, fp, fn, tp = confusion_matrix(y, y_hat).ravel()
+                sensitivity = tp / (tp + fn)
+                specificity = tn / (tn + fp)
+                dict['Sensitivity']       = sensitivity
+                dict['Specificity']       = specificity
+
         else:
             dict = {}
             mae  = mean_absolute_error(y, y_hat)
@@ -318,7 +317,10 @@ class MLPTorchModel:
         X = df[self.predictors]
         y = df[self.to_predict].tolist()
 
-        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+        stratify = y if self.task == 'Classification' else None
+
+        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42, stratify= stratify)
+
         X_train = X_train.reset_index(drop = True)
         X_val = X_val.reset_index(drop = True)
 
