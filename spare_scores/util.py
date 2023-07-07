@@ -42,9 +42,9 @@ def save_file(result, output, action, logger):
     if action == 'test':
         output = add_file_extension(output, '.csv')
 
+    dirname, fname = os.path.split(output)
     # Make directory doesn't exist:
     if not os.path.exists(output):
-        dirname, fname = os.path.split(output)
         try:
             os.mkdir(dirname)
             logger.info("Created directory {dirname}")
@@ -64,6 +64,7 @@ def save_file(result, output, action, logger):
             result.to_csv(output)
         except Exception as e:
             logger.info(e)
+        
         logger.info(f'Spare scores {fname} saved to {dirname}/{fname}')
     
     return
