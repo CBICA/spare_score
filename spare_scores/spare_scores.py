@@ -1,149 +1,383 @@
 import gzip
-import pickle
 import logging
+import pickle
+from typing import Tuple, Union
+
 import numpy as np
 import pandas as pd
-from typing import Tuple, Union
-from dataclasses import dataclass
-from spare_scores.svm import run_SVM
-from spare_scores.data_prep import *
+
+from spare_scores.classes import MetaData, SpareModel, MLPTorchModel
+from spare_scores.data_prep import (check_test, check_train,
+                                    convert_cat_variables,
+                                    logging_basic_config)
+from spare_scores.util import (check_file_exists, expspace,
+                               is_unique_identifier, load_df, load_model,
+                               save_file)
 
 
-@dataclass
-class MetaData:
-  """Stores training information on its paired SPARE model
-  """
-  mdl_type: str
-  kernel: str
-  predictors: list
-  to_predict: str
+def spare_train(
+        df: Union[pd.DataFrame, str], 
+        to_predict: str,
+        model_type: str = 'SVM',
+        pos_group: str = '',
+        key_var: str = '',
+        data_vars: list = [],
+        ignore_vars: list = [],
+        kernel: str = 'linear',
+        output: str = '',
+        verbose: int = 1,
+        logs: str = '', 
+        **kwargs) -> Tuple[dict, dict]:
+    """
+    Trains a SPARE model, either classification or regression
 
-def spare_train(df: Union[pd.DataFrame, str], 
-                predictors: list,
-                to_predict: str,
-                pos_group: str = '',
-                kernel: str = 'linear',
-                verbose: int = 1,
-                save_path: str = None) -> Tuple[dict, dict]:
-  """Trains a SPARE model, either classification or regression
+    Args:
+        df:         either a pandas dataframe or a path to a saved csv 
+                    containing training data.
+        to_predict: variable to predict. Binary for classification and 
+                    continuous for regression. Must be one of the columnes in 
+                    df.
+        pos_group:  group to assign a positive SPARE score (only for 
+                    classification).
+        key_var:    The key variable to be used for training. If not 
+                    given, the first column of the dataset is considered the 
+                    primary key of the dataset.
+        data_vars:  a list of predictors for the training. All must be present 
+                    in columns of df. If empty list, then 
+        ignore_vars:The list of predictors to be ignored for training. Can be 
+                    a listkey_var, or empty. 
+        kernel:     'linear' or 'rbf' (only linear is supported currently in 
+                    regression).
+        output:     path to save the trained model. '.pkl.gz' file extension 
+                    optional. If None is given, no model will be saved.
+        verbose:    Verbosity. Int, higher is more verbose. [0,1,2]
+        logs:       Where to save log file. If not given, logs will only be 
+                    printed out.
 
-  Args:
-    df: either a pandas dataframe or a path to a saved csv containing training data.
-    predictors: a list of predictors for the training. All must be present in columns of df.
-    to_predict: variable to predict. Binary for classification and continuous for regression.
-      Must be one of the columnes in df.
-    pos_group: group to assign a positive SPARE score (only for classification).
-    kernel: 'linear' or 'rbf' (only linear is supported currently in regression).
-    save_path: path to save the trained model. '.pkl.gz' file extension expected.
-      If None is given, no model will be saved.
+    Returns:
+        A dictionary with three keys, 'status_code', 'status' and 'data'. 
+        'status' is either'OK' or the error message. 'data' is a dictionary 
+        containing the trained model and metadata if successful, or 
+        None / error object if unsuccessful. 'status_code' is either 0, 1 or 2.
+        0 is success, 1 is warning, 2 is error.
+    """
 
-  Returns:
-    a tuple of two dictionaries: first to contain SPARE model coefficients, and
-      second to contain model information
-  """
-  logging_basic_config(verbose)
-  df = _load_df(df)
-  df, predictors, mdl_type = check_train(df, predictors, to_predict, pos_group, verbose=verbose)
-  meta_data = MetaData(mdl_type, kernel, predictors, to_predict)
+    res = {'status_code': None, 'status': None, 'data': None}
 
-  # Convert categorical variables
-  var_categorical = [var for var in df[predictors].columns if df[var].dtype == 'O']
-  meta_data.categorical_var_map = {var: None for var in var_categorical}
-  for var in var_categorical:
-    if len(df[var].unique()) == 2:
-      meta_data.categorical_var_map[var] = {df[var].unique()[0]: 1, df[var].unique()[1]: 2}
-      df[var] = df[var].map(meta_data.categorical_var_map[var])
-    elif len(df[var].unique()) > 2:
-      raise ValueError('Categorical variables with more than 2 categories are currently not supported.')
+    logger = logging_basic_config(verbose=verbose, filename=logs)
     
-  # Prepare parameters
-  if mdl_type == 'SVM Classification':
-    meta_data.pos_group = pos_group
-    to_predict_input = [to_predict, [a for a in df[to_predict].unique() if a != pos_group] + [pos_group]]
-    param_grid = {'linear':{'C': _expspace([-9, 5])},
-                  'rbf':{'C': _expspace([-9, 5]), 'gamma': _expspace([-5, 5])}}[kernel]
-  elif mdl_type == 'SVM Regression':
-    to_predict_input = to_predict
-    param_grid = {'C': _expspace([-5, 5]), 'epsilon': _expspace([-5, 5])}
+    # Make sure that no overwrites happen:
+    if check_file_exists(output, logger):
+        res['status'] = check_file_exists(output, logger)
+        res['status_code'] = 2
+        return res
 
-  # Train model
-  n_repeats = {'SVM Classification': 5, 'SVM Regression': 1}
-  if len(df.index) > 1000:
-    logging.info('Due to large dataset, first performing parameter tuning with 500 randomly sampled data points.')
-    _, _, _, params, _ = run_SVM(df.sample(n=500, random_state=2022).reset_index(drop=True), predictors,
-              to_predict_input, param_grid=param_grid, kernel=kernel, n_repeats=1, verbose=0)
-    param_grid = {par: _expspace([np.min(params[f'{par}_optimal']), np.max(params[f'{par}_optimal'])]) for par in param_grid}
-  logging.info(f'Training {mdl_type} model...')
-  df['predicted'], mdl, meta_data.stats, meta_data.params, meta_data.cv_folds = run_SVM(df, predictors,
-              to_predict_input, param_grid=param_grid, kernel=kernel, n_repeats=n_repeats[mdl_type], verbose=verbose)
-  meta_data.cv_results = df[list(dict.fromkeys(['ID', 'Age', 'Sex', to_predict, 'predicted']))]
-  
-  # Save model
-  if save_path is not None:
-    save_path = save_path.rstrip('.pkl.gz') + '.pkl.gz'
-    with gzip.open(save_path, 'wb') as f:
-      pickle.dump((mdl, vars(meta_data)), f)
-      logging.info(f'Model saved to {save_path}')
+    # Load the data
+    df = load_df(df)
 
-  return mdl, vars(meta_data)
+    # Assume key_variable (if not given)
+    if key_var == '' or key_var is None:
+        key_var = df.columns[0]
+        if not is_unique_identifier(df, key_var):
+            logging.info("Assumed primary key is not capable of uniquely " 
+                        + "identifying each row of the dataset. Assumed pkey: "
+                        + key_var)
+
+    # Assume predictors (if not given)
+    if data_vars == [] or data_vars is None:
+        # Predictors = all_vars - key_var - ignore_vars - to_predict
+        if ignore_vars == [] or ignore_vars is None:
+            data_vars = list( set(list(df))\
+                              - set([key_var])\
+                              - set([to_predict]))
+        else:
+            data_vars = list( set(list(df))\
+                              - set([key_var])\
+                              - set(ignore_vars)\
+                              - set([to_predict]))
+    predictors = data_vars
+
+    # Check if it contains any errors.
+    try:
+        df, predictors, mdl_task = check_train(df, 
+                                            predictors, 
+                                            to_predict,
+                                            key_var, 
+                                            pos_group, 
+                                            verbose=verbose)
+    except Exception as e:
+        err = "Dataset check failed before training was initiated."
+        logger.error(err)
+        print(e)
+        res['status'] = err
+        res['status_code'] = 2
+        return res
+    
+    # Create meta data
+    meta_data = MetaData(model_type, mdl_task, kernel, predictors, to_predict, key_var)
+    meta_data.key_var = key_var
+
+    # Convert categorical variables
+
+    if len(df[to_predict].value_counts().keys()) == 2:
+        if set(df[to_predict].value_counts().keys()) != set([0,1]):
+            df[to_predict] = df[to_predict].apply(lambda x: 1 if x == pos_group else 0)
+
+    try:
+        df, meta_data = convert_cat_variables(df, predictors + [to_predict], meta_data)
+    except ValueError:
+        err = "Categorical variables could not be converted, because " \
+            + "they were not binary."
+        logger.error(err)
+        res['status'] = err
+        res['status_code'] = 2
+        return res
+    
+    # Create the model
+    try:
+        spare_model = SpareModel(model_type, 
+                                predictors, 
+                                to_predict, 
+                                key_var,
+                                verbose=1,
+                                parameters={'kernel':      kernel, 
+                                            'k':           5,
+                                            'n_repeats':   1, 
+                                            'task':        mdl_task, 
+                                            'param_grid':  None},
+                                **kwargs)
+    except NotImplementedError:
+        err = "SPARE model " + model_type + " is not implemented yet."
+        logger.error(err)
+        res['status'] = err
+        res['status_code'] = 2
+        return res
+    except ValueError as e:
+        logger.error(e)
+        print(e)
+        res['status'] = err
+        res['status_code'] = 2
+        return res    
+
+    
+    # Train the model
+    try:
+        trained = spare_model.train_model(df, pos_group=pos_group)
+    except Exception as e:
+        logger.critical(e)
+        print(e)
+        res['status'] = err
+        res['status_code'] = 2
+        return res
+    
+    # Save the results
+    if trained is None:
+        err = "No training output was produced."
+        logger.critical(err)
+        res['status'] = err
+        res['status_code'] = 2
+        return res
+    
+    df['predicted']     = trained['predicted']
+    model               = trained['model']
+    meta_data.params    = trained['best_params']
+    meta_data.stats     = trained['stats']
+    meta_data.cv_folds  = trained['CV_folds']
+    meta_data.scaler    = trained['scaler'] if 'scaler' in trained.keys() else None
+
+    meta_data.cv_results = df[list(dict.fromkeys([key_var, 
+                                                  to_predict, 
+                                                  'predicted']))]
+    result = model, vars(meta_data)
+
+    # Save model
+    if output != '' and output is not None:
+        save_file(result, output, 'train', logger)
+
+    res['status'] = "OK"
+    res['data'] = result  
+    res['status_code'] = 0  
+    return res
 
 def spare_test(df: Union[pd.DataFrame, str],
                mdl_path: Union[str, Tuple[dict, dict]],
-               verbose: int = 1) -> pd.DataFrame:
-  """Applies a trained SPARE model on a test dataset
+               key_var: str = '',
+               output: str = '',
+               spare_var: str = 'SPARE_score',
+               verbose: int = 1,
+               logs: str = '') -> pd.DataFrame:
+    """
+    Applies a trained SPARE model on a test dataset
 
-  Args:
-    df: either a pandas dataframe or a path to a saved csv containing the test sample.
-    mdl_path: either a path to a saved SPARE model ('.pkl.gz' file extension expected) or
-      a tuple of SPARE model and meta_data.
+    Args:
+        df:         either a pandas dataframe or a path to a saved csv 
+                    containing the test sample.
+        mdl_path:   either a path to a saved SPARE model ('.pkl.gz' file 
+                    extension expected) or a tuple of SPARE model and 
+                    meta_data.
+        key_var:    The of key variable to be used for training. If not 
+                    given, and the saved model does not contain it,the first 
+                    column of the dataset is considered the primary key of the 
+                    dataset.
+        output:     path to save the calculated scores. '.csv' file extension 
+                    optional. If None is given, no data will be saved.
+        spare_var:  The name of the variable to be predicted. If not given,
+                    the name 'SPARE_score' will be used.
+        verbose:    Verbosity. Int, higher is more verbose. [0,1,2]
+        logs:       Where to save log file. If not given, logs will only be 
+                    printed out.
 
-  Returns:
-    a pandas dataframe containing predicted SPARE scores.
-  """
-  logging_basic_config(verbose)
-  df = _load_df(df)
+    Returns:
+        A dictionary with three keys, 'status_code', 'status' and 'data'. 
+        'status' is either 'OK' or the error message. 'data' is the pandas 
+        dataframe  containing predicted SPARE scores, or  None / error object 
+        if  unsuccessful. 'status_code' is either 0, 1 or 2.
+        0 is success, 1 is warning, 2 is error.
+    """
+    res = {'status_code': None, 'status': None, 'data': None}
 
-  # Load trained SPARE model
-  mdl, meta_data = load_model(mdl_path) if isinstance(mdl_path, str) else mdl_path
-  check_test(df, meta_data)
+    logger = logging_basic_config(verbose=verbose, filename=logs)
 
-  # Convert categorical variables
-  for var, map_dict in meta_data.get('categorical_var_map',{}).items():
-    if not isinstance(map_dict, dict):
-      continue
-    if df[var].isin(map_dict.keys()).any():
-      df[var] = df[var].map(map_dict)
+    # Make sure that no overwrites happen:
+    if check_file_exists(output, logger):
+        res['status'] = check_file_exists(output, logger)
+        res['status_code'] = 2
+        return res
+
+    df = load_df(df)
+
+    # Load & check for errors / compatibility the trained SPARE model
+    mdl, meta_data = load_model(mdl_path) if isinstance(mdl_path, str) \
+                                          else mdl_path
+    
+    
+    try:
+        check, cols = check_test(df, meta_data)
+    except Exception as e:
+        logger.error(e)
+        print(e)
+        res['status'] = err
+        res['status_code'] = 2
+        return res
+
+    if cols is not None and cols != []:
+        print(check)
+        logger.error(check)
+        res['status'] = check
+        res['data'] = cols
+        res['status_code'] = 1
+        return res
+    
+    # Assume key_variable (if not given)
+    if key_var == '' or key_var is None:
+        key_var = df.columns[0]
+        if not is_unique_identifier(df, key_var):
+            logging.info("Assumed primary key(s) are not capable of uniquely " 
+                        + "identifying each row of the dataset. Assumed "
+                        + "primary key(s) are: " + key_var)
+            
+
+    # Convert categorical variables
+    for var, map_dict in meta_data.get('categorical_var_map',{}).items():
+        if not isinstance(map_dict, dict):
+            continue
+        if df[var].isin(map_dict.keys()).any():
+            df[var] = df[var].map(map_dict)
+        else:
+            expected_var = list(map_dict.keys())
+            err = f'Column "{var}" expected {expected_var}, but ' \
+                + f'received {list(df[var].unique())}'
+            logger.error(err)
+            res['status'] = err
+            res['data'] = list(df[var].unique())
+            res['status_code'] = 1
+            return res
+
+    ###########################################################################
+    # TODO: Output model description
+    n = len(meta_data['cv_results'].index)
+    if 'Age' in meta_data['cv_results'].keys():
+        a1 = int(np.floor(np.min((meta_data['cv_results']['Age']))))
+        a2 = int(np.ceil(np.max((meta_data['cv_results']['Age']))))
     else:
-      expected_var = list(map_dict.keys())
-      return logging.error(f'Column "{var}" expected {expected_var}, but received {list(df[var].unique())}')
+        a1 = None
+        a2 = None
+    stats_metric = list(meta_data['stats'].keys())[0]
+    stats = '{:.3f}'.format(np.mean(meta_data['stats'][stats_metric]))
+    logger.info(f'Model Info: training N = {n} / ages = {a1} - {a2} / '
+                 + f'expected {stats_metric} = {stats}')
+    ###########################################################################
 
-  # Output model description
-  n = len(meta_data['cv_results'].index)
-  a1 = int(np.floor(np.min((meta_data['cv_results']['Age']))))
-  a2 = int(np.ceil(np.max((meta_data['cv_results']['Age']))))
-  stats_metric = list(meta_data['stats'].keys())[0]
-  stats = '{:.3f}'.format(np.mean(meta_data['stats'][stats_metric]))
-  logging.info(f'Model Info: training N = {n} / ages = {a1} - {a2} / expected {stats_metric} = {stats}')
-  
-  # Calculate SPARE scores
-  n_ensemble = len(mdl['scaler'])
-  ss = np.zeros([len(df.index), n_ensemble])
-  for i in range(n_ensemble):
-    X = mdl['scaler'][i].transform(df[meta_data['predictors']])
-    if meta_data['mdl_type'] == 'SVM Regression':
-      ss[:, i] = mdl['mdl'][i].predict(X)
-      ss[:, i] = (ss[:, i] - mdl['bias_correct']['int'][i]) / mdl['bias_correct']['slope'][i]
+    # Figure out model type and task:
+    if 'mdl_task' not in meta_data.keys(): # Backwards compatibility
+        model_task = 'Classification' if 'Classification'\
+                         in meta_data['mdl_type'] else 'Regression'
+        
+        if 'SVM' in meta_data['mdl_type']:
+            model_type = 'SVM'
+        elif 'MLP' in meta_data['mdl_type']:
+            model_type = 'MLP'
+        else:
+            model_type = 'MLPTorch'
     else:
-      ss[:, i] = mdl['mdl'][i].decision_function(X)
-    if 'ID' in df.columns:
-      ss[df['ID'].isin(meta_data['cv_results']['ID'].drop(meta_data['cv_folds'][i])), i] = np.nan
-  ss_mean = np.nanmean(ss, axis=1)
-  ss_mean[np.all(np.isnan(ss),axis=1)] = np.nan
+        model_task = meta_data['mdl_task']
+        model_type = meta_data['mdl_type']
 
-  return pd.DataFrame(data={'SPARE_scores': ss_mean})
 
-def _expspace(span: list):
-  return np.exp(np.linspace(span[0], span[1], num=int(span[1])-int(span[0])+1))
+    # Create model instance based on saved model:
+    predictors = meta_data['predictors']
+    target = meta_data['to_predict']
+    params = meta_data['params']
+    spare_model = SpareModel(model_type, 
+                             predictors, 
+                             target, 
+                             key_var, 
+                             verbose=verbose)
 
-def _load_df(df: Union[pd.DataFrame, str]) -> pd.DataFrame:
-  return pd.read_csv(df, low_memory=False) if isinstance(df, str) else df.copy()
+    
+    # Set the model attributes to the ones that were saved to the instance 
+    # during training:
+    try:
+        spare_model.set_parameters(**params)
+        spare_model.set_parameters(**{
+                                        'mdl': mdl,
+                                        'task': model_task,
+                                        **{key: meta_data[key] for key in meta_data.keys() if key not in ['mdl', 'task']}
+                                    })
+    except Exception as e:
+        logger.critical(e)
+        print(e)
+        res['status'] = err
+        res['status_code'] = 2
+        return res
+    
+    # Predict
+    try:
+        predicted = spare_model.apply_model(df)
+    except Exception as e:
+        logger.critical(e)
+        print(e)
+        res['status'] = err
+        res['status_code'] = 2
+        return res
+    
+    # Save the results
+    if predicted is None:
+        err = "No testing output was produced."
+        logger.critical(err)
+        res['status'] = err
+        res['status_code'] = 2
+        return res
+
+    d = {}
+    d[key_var] = df[key_var]
+    d[spare_var] = predicted
+    out_df = pd.DataFrame(data=d)
+    
+    if output != '' and output is not None:
+        save_file(out_df, output, 'test', logger)
+    
+    res['status'] = 'OK'
+    res['data'] = out_df
+    res['status_code'] = 0
+    return res
