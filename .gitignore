@@ -185,3 +185,6 @@ temp/
 *.png 
 *.jpeg
 *.jpg 
+
+# Mac related stuff 
+.DS_Store
