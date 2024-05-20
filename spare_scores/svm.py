@@ -189,11 +189,11 @@ class SVMModel:
         if self.task == 'Classification':
             self.type, self.scoring, metrics = 'SVC', 'roc_auc', ['AUC', 'Accuracy', 'Sensitivity', 'Specificity', 'Precision', 'Recall', 'F1']
             self.to_predict, self.classify = to_predict, list(df[to_predict].unique())
-            self.mdl = ([LinearSVC(max_iter=100000)] if self.kernel == 'linear' else [SVC(max_iter=100000, kernel=self.kernel)]) * len(self.folds)
+            self.mdl = ([LinearSVC(max_iter=100000, dual='auto')] if self.kernel == 'linear' else [SVC(max_iter=100000, kernel=self.kernel)]) * len(self.folds)
         elif self.task == 'Regression':
             self.type, self.scoring, metrics = 'SVR', 'neg_mean_absolute_error', ['MAE', 'RMSE', 'R2']
             self.to_predict, self.classify = to_predict, None
-            self.mdl = [LinearSVR(max_iter=100000)] * len(self.folds)
+            self.mdl = [LinearSVR(max_iter=100000, dual='auto')] * len(self.folds)
             self.bias_correct = {'slope':np.zeros((len(self.folds),)), 'int':np.zeros((len(self.folds),))}
         self.stats = {metric: [] for metric in metrics}
         logging.info(f'Training a SPARE model ({self.type}) with {len(df.index)} participants')
