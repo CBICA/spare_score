@@ -61,7 +61,7 @@ def save_file(result, output, action, logger):
     
     if action == 'test':
         try:
-            result.to_csv(output)
+            result.to_csv(output, index = False)
         except Exception as e:
             logger.info(e)
         
