@@ -6,7 +6,7 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
 setup(name='spare_scores',
-      version='1.2.0',
+      version='1.2.1',
       description='Compute characteristic brain signatures of your case population.',
       long_description=long_description,
       long_description_content_type='text/markdown',
@@ -23,6 +23,8 @@ setup(name='spare_scores',
                         'matplotlib', 
                         'optuna'],
       entry_points={
-        'console_scripts': ['spare_score=spare_scores.cli:main']
+        'console_scripts': ["spare_score = spare_scores.cli:main",
+                            "spare_scores = spare_scores.cli:main",
+                            "SPARE = spare_scores.cli:main"]
         },
       )
