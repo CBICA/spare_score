@@ -21,6 +21,18 @@ import optuna
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class MLPDataset(Dataset):
+    """
+        A class for managing datasets that will be used for MLP training
+        Static attributes:
+            X(list): the first dimension of the provided data(input)
+            y(list): the second dimension of the provided data(output)
+        
+        Methods:
+            __getitem__(idx)(getter): 
+                returns the index of both X and y at index: idx(X[idx], y[idx])
+            __len__: 
+                returns the length of the provided dataset
+    """
     def __init__(self, X, y):
         self.X = np.array(X, dtype=np.float32)
         self.y = np.array(y, dtype=np.float32)
@@ -28,11 +40,23 @@ class MLPDataset(Dataset):
     def __len__(self):
         return len(self.y)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int):
         return self.X[idx], self.y[idx]
 
 class SimpleMLP(nn.Module):
-    def __init__(self, num_features = 147, hidden_size = 256, classification = True, dropout = 0.2, use_bn = False, bn = 'bn'):
+    """
+        A class to create a simple MLP model.
+
+        Static attributes:
+            num_features(int): total number of features. Default value = 147.
+            hidden_size(int): number of features that will be passed to normalization layers of the model. Default value = 256.
+            classification(bool): If set to True, then the model will perform classification, otherwise, regression. Default value = True.
+            dropout(float): the dropout value.
+            use_bn(bool): if set to True, then the model will use the normalization layers, otherwise, the model will use the linear layers.
+            bn(str): if set to 'bn' the model will use BatchNorm1d() for the hidden layers, otherwise, it will use InstanceNorm1d().
+
+    """
+    def __init__(self, num_features: int = 147, hidden_size: int = 256, classification: bool = True, dropout: float = 0.2, use_bn: bool = False, bn: str = 'bn'):
         super(SimpleMLP, self).__init__()
 
         self.num_features   = num_features
@@ -101,7 +125,7 @@ class MLPTorchModel:
             Updates the model's parameters with the provided values. This also
             changes the model's attributes, while retaining the original ones.
     """
-    def __init__(self, predictors, to_predict, key_var, verbose=1,**kwargs):
+    def __init__(self, predictors, to_predict, key_var, verbose=1, **kwargs):
         logger = logging_basic_config(verbose, content_only=True)
         
         self.predictors = predictors
