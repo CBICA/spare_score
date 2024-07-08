@@ -19,7 +19,7 @@ setup(name='spare_scores',
       install_requires=['numpy', 
                         'pandas', 
                         'scikit-learn', 
-                        'torch<2.1.1', 
+                        'torch<2.3.1', 
                         'matplotlib', 
                         'optuna'],
       entry_points={
