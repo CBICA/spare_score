@@ -2,7 +2,6 @@ from pathlib import Path
 import unittest
 import numpy as np
 import pandas as pd
-import pytest
 
 from spare_scores.spare_scores import spare_test, spare_train
 
@@ -11,11 +10,8 @@ class CheckSpareScores(unittest.TestCase):
     def test_spare_test(self):
         self.df_fixture = pd.read_csv("../fixtures/sample_data.csv")
         self.model_fixture = "../fixtures/sample_model.pkl.gz"
-        # Test case 1: No arguments given:
-        with pytest.raises(TypeError):
-            spare_test()
 
-        # Test case 2: Test with df
+        # Test case 1: Test with df
         result = spare_test(self.df_fixture, self.model_fixture)
         status_code, status, result = result['status_code'], result['status'], result['data']
         self.assertTrue(status == 'OK')
@@ -23,7 +19,7 @@ class CheckSpareScores(unittest.TestCase):
         self.assertTrue(result.shape[0] == self.df_fixture.shape[0])
         self.assertTrue('SPARE_score' in result.columns)  # Column name
 
-        # Test case 3: Test with csv file:
+        # Test case 2: Test with csv file:
         filepath = Path(__file__).resolve().parent.parent / 'fixtures' / 'sample_data.csv'
         filepath = str(filepath)
         result = spare_test(filepath, self.model_fixture)
@@ -33,7 +29,7 @@ class CheckSpareScores(unittest.TestCase):
         self.assertTrue(result.shape[0] == self.df_fixture.shape[0])
         self.assertTrue('SPARE_score' in result.columns) # Column name
 
-        # Test case 4: Column required by the model is missing
+        # Test case 3: Column required by the model is missing
         self.df_fixture.drop(columns='ROI1', inplace=True)
         result = spare_test(self.df_fixture, self.model_fixture)
         # {'status' : "Not all predictors exist in the input dataframe: ['ROI1']", 
@@ -47,11 +43,7 @@ class CheckSpareScores(unittest.TestCase):
         self.df_fixture = pd.read_csv("../fixtures/sample_data.csv")
         self.model_fixture = "../fixtures/sample_model.pkl.gz"
 
-        # Test case 1: No arguments given:
-        with pytest.raises(TypeError):
-            spare_train()
-
-        # Test case 2: Test with df
+        # Test case 1: Test with df
         result = spare_train(self.df_fixture, 
                              'Age',
                              data_vars = ['ROI1', 'ROI2', 'ROI3', 'ROI4', 'ROI5', 

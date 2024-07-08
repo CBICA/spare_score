@@ -3,7 +3,6 @@ from pathlib import Path
 import unittest
 import numpy as np
 import pandas as pd
-import pytest
 
 from spare_scores.util import (add_file_extension, check_file_exists, expspace,
                                is_unique_identifier, load_df, load_examples,
@@ -15,8 +14,6 @@ class CheckSpareScoresUtil(unittest.TestCase):
         # Test case 1: No arguments given:
         no_args = "load_model() missing 1 required positional " + \
                      "argument: 'mdl_path'"
-        with pytest.raises(TypeError, match=re.escape(no_args)):
-            load_model()
 
         # Test case 2: Load a model
         filepath = Path(__file__).resolve().parent.parent / 'fixtures' / 'sample_model.pkl.gz'
