@@ -11,21 +11,19 @@ from spare_scores.util import convert_to_number_if_possible
 
 
 def check_train(df: pd.DataFrame, 
-                                predictors: list,
-                                to_predict: str,
-                                key_var: str,
-                                pos_group: str = '',
-                                verbose: int = 1) -> Tuple[pd.DataFrame, list, str]:
+                predictors: list,
+                to_predict: str,
+                pos_group: str = '') -> Tuple[pd.DataFrame, list, str]:
     """Checks training dataframe for errors.
 
     Args:
-        df: a pandas dataframe containing training data.
-        predictors: a list of predictors for SPARE model training.
-        to_predict: variable to predict.
-        pos_group: group to assign a positive SPARE score (only for classification).
+        df(pandas.DataFrame): a pandas dataframe containing training data.
+        predictors(list): a list of predictors for SPARE model training.
+        to_predict(str): variable to predict.
+        pos_group(str): group to assign a positive SPARE score (only for classification).
 
     Returns:
-        a tuple containing 1) filtered dataframe, 2) filtered predictors, 3) SPARE model type.
+        Tuple[pandas.DataFrame, list, str]: a tuple containing 1)filtered dataframe, 2)filtered predictors, 3)SPARE model type.
     """
     # GAI 26/04/2023: Removed check for existence of these columns
     # if not {'ID','Age','Sex'}.issubset(set(df.columns)):
@@ -77,13 +75,12 @@ def check_train(df: pd.DataFrame,
     return df, predictors, mdl_task
 
 def check_test(df: pd.DataFrame, 
-                             meta_data: dict,
-                             verbose: int = 1):
+               meta_data: dict):
     """Checks testing dataframe for errors.
 
     Args:
-        df: a pandas dataframe containing testing data.
-        meta_data: a dictionary containing training information on its paired SPARE model.
+        df(pandas.DataFrame): a pandas dataframe containing testing data.
+        meta_data(dict): a dictionary containing training information on its paired SPARE model.
     """
     ############# Removing the hardcoded check for the below cols #############
     # if not {'ID','Age','Sex'}.issubset(set(df.columns)):
@@ -106,31 +103,27 @@ def check_test(df: pd.DataFrame,
     if np.sum(np.sum(pd.isna(df[meta_data['predictors']]))) > 0:
         logging.warn('Some participants have invalid (missing or NaN values) predictor variables.')
 
-    ############# Removing the hardcoded ID checks #############
-    if 'ID' not in df.columns:
-        # logging.info('"ID" column not found in the input dataframe. Treating all participants as independent from training.')
-        pass
-    else:
+    if 'ID' in df.columns:
         if np.any(df['ID'].isin(meta_data['cv_results']['ID'])):
             logging.info('Some participants seem to have been in the model training.')
+
     return 'OK', None
 
 def smart_unique(df1: pd.DataFrame,
-                                 df2: pd.DataFrame=None,
-                                 to_predict: str=None,
-                                 verbose: int=1) -> Union[pd.DataFrame, tuple]:
+                df2: pd.DataFrame=None,
+                to_predict: str=None) -> Union[pd.DataFrame, tuple]:
     """Select unique data points in a way that optimizes SPARE training.
     For SPARE regression, preserve data points with extreme values.
     For SPARE classification, preserve data points that help age match.
 
     Args:
-        df1: a pandas dataframe.
-        df2: a pandas dataframe (optional) if df1 and df2 are two groups to classify.
-        to_predict: variable to predict. Binary for classification and continuous for regression.
+        df1(pandas.DataFrame)
+        df2(pandas.DataFrame): optional, if df1 and df2 are two groups to classify.
+        to_predict(str): variable to predict. Binary for classification and continuous for regression.
             Must be one of the columnes in df. Ignored if df2 is given.
 
     Returns:
-        a trimmed pandas dataframe or a tuple of two dataframes with only one time point per ID.
+        pandas.DataFrame: a trimmed pandas dataframe or a tuple of two dataframes with only one time point per ID.
     """
     assert (isinstance(df2, pd.DataFrame) or (df2 is None)), (
         'Either provide a 2nd pandas dataframe for the 2nd argument or specify it with "to_predict"')
@@ -191,20 +184,20 @@ def age_sex_match(df1: pd.DataFrame,
     """Match two groups for age and sex.
 
     Args:
-        df1: a pandas dataframe.
-        df2: a pandas dataframe (optional) if df1 and df2 are two groups to classify.
-        to_match: a binary variable of two groups. Must be one of the columns in df.
+        df1(pandas.DataFrame)
+        df2(pandas.DataFrame): optional, if df1 and df2 are two groups to classify.
+        to_match(str): a binary variable of two groups. Must be one of the columns in df.
             Ignored if df2 is given.
             If to_match is 'Sex', then only perform age matching.
-        p_threshold: minimum p-value for matching.
-        verbose: whether to output messages.
-        age_out_percentage: percentage of the larger group to randomly select a participant to
+        p_threshold(float): minimum p-value for matching. Default value = 0.15
+        ----------- verbose: whether to output messages.(Will be deprecated later)
+        age_out_percentage(float): percentage of the larger group to randomly select a participant to
             take out from during the age matching. For example, if age_out_percentage = 20 and the
             larger group is significantly older, then exclude one random participant from the fifth
-            quintile based on age.
+            quintile based on age. Default value = 20
 
     Returns:
-        a trimmed pandas dataframe or a tuple of two dataframes with age/sex matched groups.
+        pandas.DataFrame: a trimmed pandas dataframe or a tuple of two dataframes with age/sex matched groups.
     """
     assert (isinstance(df2, pd.DataFrame) or (df2 is None)), (
         'Either provide a 2nd pandas dataframe for the 2nd argument or specify the two groups with "to_match"')
@@ -286,7 +279,15 @@ def age_sex_match(df1: pd.DataFrame,
     else:
         return (df1, df2)
 
-def logging_basic_config(verbose=1, content_only=False, filename=''):
+def logging_basic_config(verbose :int = 1, content_only = False, filename :str = ''):
+    """
+        Basic logging configuration for error exceptions
+
+        Args:
+            verbose(int): input verbose. Default value = 1
+            content_only(bool): If set to True it will output only the needed content. Default value = False
+            filename(str): input filename. Default value = ''
+    """
     logging_level = {0:logging.WARNING, 1:logging.INFO, 2:logging.DEBUG, 3:logging.ERROR, 4:logging.CRITICAL}
     fmt = ' %(message)s' if content_only else '%(levelname)s (%(funcName)s): %(message)s'
     if filename != '' and filename is not None:
