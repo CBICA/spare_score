@@ -103,27 +103,15 @@ class SimpleMLP(nn.Module):
 
 class MLPTorchModel:
     """
-    A class for managing MLP models.
+        A class for managing MLP models.
 
-    Static attributes:
-        predictors (list): List of predictors used for modeling.
-        to_predict (str): Target variable for modeling.
-        key_var (str): Key variable for modeling.
+        Static attributes:
+            predictors (list): List of predictors used for modeling.
+            to_predict (str): Target variable for modeling.
+            key_var (str): Key variable for modeling.
 
-    Additionally, the class can be initialized with any number of keyword
-    arguments. These will be added as attributes to the class.
-
-    Methods:
-        train_model(df, **kwargs):
-            Trains the model using the provided dataframe.
-        
-        apply_model(df):
-            Applies the trained model on the provided dataframe and returns
-            the predictions.
-        
-        set_parameters(**parameters):
-            Updates the model's parameters with the provided values. This also
-            changes the model's attributes, while retaining the original ones.
+        Additionally, the class can be initialized with any number of keyword
+        arguments. These will be added as attributes to the class.
     """
     def __init__(self, predictors, to_predict, key_var, verbose=1, **kwargs):
         logger = logging_basic_config(verbose, content_only=True)
