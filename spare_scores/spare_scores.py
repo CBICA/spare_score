@@ -61,7 +61,6 @@ def spare_train(
         None / error object if unsuccessful. 'status_code' is either 0, 1 or 2.
         0 is success, 1 is warning, 2 is error.
     """
-
     res = {'status_code': None, 'status': None, 'data': None}
 
     logger = logging_basic_config(verbose=verbose, filename=logs)
@@ -102,9 +101,7 @@ def spare_train(
         df, predictors, mdl_task = check_train(df, 
                                             predictors, 
                                             to_predict,
-                                            key_var, 
-                                            pos_group, 
-                                            verbose=verbose)
+                                            pos_group)
     except Exception as e:
         err = "Dataset check failed before training was initiated."
         logger.error(err)
