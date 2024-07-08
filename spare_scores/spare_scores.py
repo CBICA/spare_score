@@ -101,6 +101,7 @@ def spare_train(
         df, predictors, mdl_task = check_train(df, 
                                             predictors, 
                                             to_predict,
+                                            verbose,
                                             pos_group)
     except Exception as e:
         err = "Dataset check failed before training was initiated."
