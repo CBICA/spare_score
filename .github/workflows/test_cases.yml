@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
     build:
-        runs-on: macos-latest
+        runs-on: ubuntu-latest
 
         steps:
         - name: Checkout repository
@@ -15,7 +15,6 @@ jobs:
         - name: Install dependencies 
           run: |
             python -m pip install --upgrade pip
-            pip3 install pytest --break-system-packages
             pip install .
         
         - name: Run unit tests
