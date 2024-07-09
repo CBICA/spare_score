@@ -17,6 +17,7 @@ jobs:
           with:
               auto-update-conda: true
               python-version: 3.8
+              miniconda-version: "latest"
         - name: Create conda env
           run: conda create -n spare python=3.8
         - name: Activate conda env
