@@ -15,6 +15,7 @@ jobs:
         - name: Install dependencies
           run: |
             brew install --cask miniconda
+            brew install --cask anaconda
             conda create -n spare python=3.8
             conda init zsh
             conda activate spare
