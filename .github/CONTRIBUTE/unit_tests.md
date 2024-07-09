@@ -1,11 +1,3 @@
----
-name: Unit testing guide
-about: How to write unit tests 
-title: "[UNIT_TESTS] "
-labels: ''
-assignees: ''
----
-
 ### **How to write unit tests**
 * As explained at the [contribution guide](contribute.md) it's a good practice to write test cases for any additions you make. For our test cases we use the unittest python3 library. The following is an example of a unit test with unittest library:
 

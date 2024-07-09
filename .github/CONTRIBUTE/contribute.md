@@ -1,11 +1,3 @@
----
-name: Contribution guide
-about: How to contribute
-title: "[CONTRIBUTE] "
-labels: ''
-assignees: ''
----
-
 ### **How to contribute?**
 * Open a pull request exaplaining your addition/fix. You can also see the [Bug report](../ISSUE_TEMPLATE/bug_report.md)
 
