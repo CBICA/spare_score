@@ -20,8 +20,6 @@ import optuna
 
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 
-print(f"WORKING ON #### {device} #######")
-
 class MLPDataset(Dataset):
     """
         A class for managing datasets that will be used for MLP training
