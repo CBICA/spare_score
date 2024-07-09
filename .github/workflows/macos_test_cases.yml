@@ -14,6 +14,7 @@ jobs:
             pthon-version: '3.8'
         - name: Install dependencies
           run: |
+            brew install --cask miniconda
             conda create -n spare python=3.8
             conda activate spare
             conda install pip
