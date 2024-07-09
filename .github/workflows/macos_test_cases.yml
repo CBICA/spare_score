@@ -20,12 +20,10 @@ jobs:
               miniconda-version: "latest"
         - name: Create conda env
           run: conda create -n spare python=3.8
-        - name: Activate conda env
-          run: echo "conda activate spare" >> $GITHUB_ENV
         - name: Install pip
           run: conda run -n spare conda install pip
         - name: Install spare scores
-          run: conda run -n spare pip install spare_sores
+          run: conda run -n spare pip install spare_scores
         - name: Run unit tests
           run: |
             cd tests/unit && python -m unittest discover -s . -p "*.py"
