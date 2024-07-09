@@ -14,7 +14,7 @@ assignees: ''
 * Last but not least, some documentation will be good for the users to learn how to use your code. You can add your documentation at the [docs](../../docs/) folder.
 
 ### **Good practices**
-* We have automated test cases that are located at the [tests](../../tests/) folder. The workflow will automatically run the test cases on your PR, but, before creating a PR make sure your test cases run correctly localy using this command ```cd tests/unit && python -m unittest discover -s . -p "*.py"```
+* We have automated test cases that are located at the [tests](../../tests/) folder. The workflow will automatically run the test cases on your PR, but, before creating a PR make sure your test cases run correctly locally using this command ```cd tests/unit && python -m unittest discover -s . -p "*.py"```
 
 * Make sure that you add any new libraries that you may use at [dev-dependencies](../../dev-dependencies.txt) as well as updating the [setup.py](../../setup.py) file(if needed).
 
