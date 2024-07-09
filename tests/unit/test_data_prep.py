@@ -1,8 +1,9 @@
 import pandas as pd
 import unittest
+import sys
 
-from spare_scores.data_prep import check_test, check_train
-
+sys.path.append('../../spare_scores/') # check_test and check_train were imported from the build, but now they are updated
+from data_prep import check_test, check_train # If updates go through, it can be updated to spare_scores.data_prep
 
 class CheckDataPrep(unittest.TestCase):
 

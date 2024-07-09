@@ -1,6 +1,7 @@
-name: spare_scores test cases
+name: spare_scores test cases on ubuntu
 
-on: [push, pull_request]
+# workflow dispatch has been added for testing purposes
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
     build:
@@ -10,7 +11,7 @@ jobs:
         - name: Checkout repository
           uses: actions/checkout@v2
           with:
-            python-version: '3.9.17'
+            python-version: '3.8'
         
         - name: Install dependencies 
           run: |

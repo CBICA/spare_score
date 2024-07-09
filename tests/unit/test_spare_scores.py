@@ -4,12 +4,13 @@ import numpy as np
 import pandas as pd
 
 from spare_scores.spare_scores import spare_test, spare_train
+from spare_scores.util import load_df, load_model
 
 class CheckSpareScores(unittest.TestCase):
 
     def test_spare_test(self):
-        self.df_fixture = pd.read_csv("../fixtures/sample_data.csv")
-        self.model_fixture = "../fixtures/sample_model.pkl.gz"
+        self.df_fixture = load_df("../fixtures/sample_data.csv")
+        self.model_fixture = load_model("../fixtures/sample_model.pkl.gz")
 
         # Test case 1: Test with df
         result = spare_test(self.df_fixture, self.model_fixture)
@@ -40,8 +41,8 @@ class CheckSpareScores(unittest.TestCase):
 
 
     def test_spare_train(self):
-        self.df_fixture = pd.read_csv("../fixtures/sample_data.csv")
-        self.model_fixture = "../fixtures/sample_model.pkl.gz"
+        self.df_fixture = load_df("../fixtures/sample_data.csv")
+        self.model_fixture = load_model("../fixtures/sample_model.pkl.gz")
 
         # Test case 1: Test with df
         result = spare_train(self.df_fixture, 
@@ -52,12 +53,15 @@ class CheckSpareScores(unittest.TestCase):
 
         status, result = result['status'], result['data']
 
-        #metadata = result[1] # For some reason, this is None
-        #self.assertTrue(status == 'OK')
-        #self.assertTrue(metadata['mdl_type'] == self.model_fixture[1]['mdl_type'])
-        #self.assertTrue(metadata['kernel'] == self.model_fixture[1]['kernel'])
-        #self.assertTrue(set(metadata['predictors']) == set(self.model_fixture[1]['predictors']))
-        #self.assertTrue(metadata['to_predict'] == self.model_fixture[1]['to_predict'])
-        #self.assertTrue(metadata['categorical_var_map'] == self.model_fixture[1]['categorical_var_map'])
+        metadata = result[1] # For some reason, this is None
+        self.assertTrue(status == 'OK')
+        self.assertTrue(metadata['mdl_type'] == self.model_fixture[1]['mdl_type'])
+        self.assertTrue(metadata['kernel'] == self.model_fixture[1]['kernel'])
+        self.assertTrue(set(metadata['predictors']) == set(self.model_fixture[1]['predictors']))
+        self.assertTrue(metadata['to_predict'] == self.model_fixture[1]['to_predict'])
+        self.assertTrue(metadata['categorical_var_map'] == self.model_fixture[1]['categorical_var_map'])
+
+
+
 
 
