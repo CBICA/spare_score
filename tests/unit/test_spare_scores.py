@@ -63,5 +63,3 @@ class CheckSpareScores(unittest.TestCase):
 
 
 
-
-

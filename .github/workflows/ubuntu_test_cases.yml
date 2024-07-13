@@ -25,7 +25,7 @@ jobs:
         - name: Install spare scores
           run: conda run -n spare pip install spare_scores
         - name: Download dependencies
-          run: pip install setuptools && pip install . 
+          run: pip install -r dev-dependencies.txt && pip install .
         - name: Run unit tests
           run: |
             cd tests/unit && python -m unittest discover -s . -p "*.py"

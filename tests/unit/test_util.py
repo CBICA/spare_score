@@ -3,10 +3,12 @@ from pathlib import Path
 import unittest
 import numpy as np
 import pandas as pd
+import logging
+import os
 
 from spare_scores.util import (add_file_extension, check_file_exists, expspace,
                                is_unique_identifier, load_df, load_examples,
-                               load_model, save_file)
+                               load_model, save_file, convert_to_number_if_possible)
 
 class CheckSpareScoresUtil(unittest.TestCase):
     def test_load_model(self):
@@ -42,19 +44,86 @@ class CheckSpareScoresUtil(unittest.TestCase):
         self.assertTrue(np.allclose(expspace(span), expected_result))
 
     def test_check_file_exists(self):
-        pass
+        # test case 1: filename=None
+        logger = logging.getLogger(__name__) 
+        result = check_file_exists(None, logger)
+        self.assertFalse(result)
+
+        # test case 2: filename=''
+        result = check_file_exists('', logger)
+        self.assertFalse(result)
+
+        # test case 3: filename exists
+        result = check_file_exists("test_util.py", logger)
+        err_msg = 'The output filename test_util.py, corresponds to an existing file, interrupting execution to avoid overwrite.'
+        self.assertTrue(result == err_msg)
 
     def test_save_file(self):
-        pass
+        # test case 1: testing training  output file that don't exist
+        result = pd.DataFrame(data={'Var1': [10,20,30,40],
+                  'Var2': [20,30,40,50],
+                  'Var3': [30,40,50,60]
+        })
+        output = "test_file"
+        action = 'train'
+        logger = logging.getLogger(__name__)
+        logging.basicConfig(filename=output)
+        save_file(result, output, action, logger)
+        self.assertTrue(os.path.exists(output+'.pkl.gz'))
+        os.remove(output+'.pkl.gz')
+
+        # test case 2: testing testing output file that don't exist
+        output = "test_file"
+        action = 'test'
+        save_file(result, output, action, logger)
+        self.assertTrue(os.path.exists(output+'.csv'))
+        os.remove(output+'.csv')
 
     def test_is_unique_identifier(self):
-        pass
+        # test case 1: testing with a unique identifier 
+        df = {'ID': [0,1,2,3,4],
+              'Var1': [10,20,30,40,50],
+              'Var2':[22,23,24,25,26]
+        }
+
+        self.df_fixture = pd.DataFrame(data=df)
+        self.assertTrue(is_unique_identifier(self.df_fixture, ['Var1']))
+        self.assertTrue(is_unique_identifier(self.df_fixture, ['Var1', 'Var2']))
+        self.assertTrue(is_unique_identifier(self.df_fixture, ['ID', 'Var1', 'Var2']))
+
+        # test case 2: testing with a non unique identifier
+        df = {'ID': [0,1,2,0,4],
+              'Var1': [10,20,30,10,50],
+              'Var2':[10,22,33,10,50]
+        }
+        self.df_fixture = pd.DataFrame(data=df)
+        self.assertFalse(is_unique_identifier(self.df_fixture, ['Var1', 'Var2']))
+
 
     def test_load_model(self):
-        pass
+        # test case 1: testing opening existing model
+        model = load_model("../../spare_scores/mdl/mdl_SPARE_BA_hMUSE_single.pkl.gz")
+        self.assertFalse(model is None)
 
     def test_load_examples(self):
-        pass
+        # test case 1: testing loading example csv
+        file_name = "example_data.csv"
+        result = load_examples(file_name)
+        self.assertTrue(isinstance(result, pd.DataFrame))
+
+        # test case 2: testing loading model
+        file_name = "mdl_SPARE_BA_hMUSE_single.pkl.gz"
+        result = load_examples(file_name)
+        self.assertFalse(result is None and isinstance(result, pd.DataFrame))
+
+    def test_convert_to_number_if_possible(self):
+        # test case 1: valid convertion to integer
+        num = "254"
+        self.assertTrue(convert_to_number_if_possible(num) == 254)
+
+        # test case 2: non valid convertion to integer
+        num = "CBICA"
+        self.assertTrue(convert_to_number_if_possible(num) == num)
 
     def test_load_df(self):
         # Test case 1: Input is a string (CSV file path)
