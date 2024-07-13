@@ -8,10 +8,10 @@ jobs:
         runs-on: ["ubuntu-latest"]
 
         steps:
-        - name: Checkout repository
-          uses: actions/checkout@v3
+        - uses: actions/checkout@v4
+        - uses: actions/setup-python@v5
           with:
-            pthon-version: '3.8'
+            python-version: '3.8'
         - name: Set-up miniconda for macos and ubuntu
           uses: conda-incubator/setup-miniconda@v2
           with:
@@ -25,7 +25,8 @@ jobs:
         - name: Install spare scores
           run: conda run -n spare pip install spare_scores
         - name: Download dependencies
-          run: pip install setuptools && pip install . 
+          run:  pip install setuptools && pip install .
         - name: Run unit tests
           run: |
             cd tests/unit && python -m unittest discover -s . -p "*.py"
+
