@@ -29,3 +29,4 @@ jobs:
         - name: Run unit tests
           run: |
             cd tests/unit && python -m unittest discover -s . -p "*.py"
+
