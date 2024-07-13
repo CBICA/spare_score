@@ -76,6 +76,7 @@ def is_unique_identifier(df, column_names):
 
     # Check the total number of rows
     num_rows = df.shape[0]
+
     # Return True if the number of unique combinations is equal to the total 
     # number of rows
     return num_unique_combinations == num_rows
@@ -114,12 +115,13 @@ def convert_to_number_if_possible(string):
         Args:
             string(str): the input string 
         Returns:
-            float: if the string is numeric 
-            str: otherwise
+            float: if the exception is not raised
+            str: if the exception is raised
     """
-    if string.isnumeric():
-        return float(string)
-    else: 
+    try:
+        number = float(string)  # Attempt to convert the string to a float
+        return number
+    except ValueError:
         return string
     
 
