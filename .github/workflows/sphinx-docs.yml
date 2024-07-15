@@ -1,20 +1,16 @@
-name: Docs
+name: Deploy static cntent to Pages
 on:
   push:
-    branches:
-      - "main"
-  pull_request:
-  workflow_dispatch:
-
-
+    branches: ["main"]
+  
 jobs:
   build-docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.8'
+          python-version: '3.12'
       - name: Install dependencies
         run: |
           pip install -e .
@@ -22,14 +18,18 @@ jobs:
       - name: Sphinx build
         run: |
           cd docs/
-          sphinx-apidoc -o ./source ../spare_scores
-          sphinx-build source _build
+          make clean html
           cd ..
+          sphinx-apidoc -o docs spare_scores/
+          cd docs/
+          make html
+          cd ..
+
       - name: Upload pages artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         
         with:
-          path: docs/_build
+          path: docs/_build/html
           retention-days: 90
   
   deploy-docs:
@@ -52,5 +52,5 @@ jobs:
     steps:
      - name: Deploy artifact to GitHub Pages
        id: deployment
-       uses: actions/deploy-pages@v1
+       uses: actions/deploy-pages@v4
          
