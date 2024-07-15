@@ -88,11 +88,12 @@ def load_examples(file_name: str=''):
   """Loads example data and models in the package.
 
   Args:
-    file_name: either name of the example data saved as .csv or
+      :param file_name: either name of the example data saved as .csv or
       name of the SPARE model saved as .pkl.gz.
-
-  Returns:
-    a tuple containing pandas df and 
+      :type file_name: str
+        
+      :return: the resulted dataframe
+      :rtype: pandas.DataFrame
   """
   pkg_path = pkg_resources.resource_filename('spare_scores','')
   list_data = os.listdir(f'{pkg_path}/data/')
@@ -112,10 +113,11 @@ def convert_to_number_if_possible(string):
         Converts the the input string to a float if possible
 
         Args:
-            string(str): the input string 
-        Returns:
-            float: if the string is numeric 
-            str: otherwise
+            :param string: the input string 
+            :type string: str
+
+            :return: float if the string is numeric, the same string if it's not
+            :rtype: float or str
     """
     if string.isnumeric():
         return float(string)

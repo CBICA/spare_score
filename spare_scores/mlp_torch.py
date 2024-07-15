@@ -24,23 +24,27 @@ class MLPDataset(Dataset):
     """
         A class for managing datasets that will be used for MLP training
         Static attributes:
-            X(list): the first dimension of the provided data(input)
-            y(list): the second dimension of the provided data(output)
-        
-        Methods:
-            __getitem__(idx)(getter): 
-                returns the index of both X and y at index: idx(X[idx], y[idx])
-            __len__: 
-                returns the length of the provided dataset
+            :param X: the first dimension of the provided data(input)
+            :type X: list
+            :param y: the second dimension of the provided data(output)
+            :type y: list
     """
     def __init__(self, X, y):
         self.X = np.array(X, dtype=np.float32)
         self.y = np.array(y, dtype=np.float32)
 
     def __len__(self):
+        """
+            returns the length of the provided dataset
+        """
         return len(self.y)
 
     def __getitem__(self, idx: int):
+        """
+            (getter)returns the index of both X and y at index: idx(X[idx], y[idx])
+            :param idx: the index
+            :type idx: int
+        """
         return self.X[idx], self.y[idx]
 
 class SimpleMLP(nn.Module):
@@ -48,12 +52,18 @@ class SimpleMLP(nn.Module):
         A class to create a simple MLP model.
 
         Static attributes:
-            num_features(int): total number of features. Default value = 147.
-            hidden_size(int): number of features that will be passed to normalization layers of the model. Default value = 256.
-            classification(bool): If set to True, then the model will perform classification, otherwise, regression. Default value = True.
-            dropout(float): the dropout value.
-            use_bn(bool): if set to True, then the model will use the normalization layers, otherwise, the model will use the linear layers.
-            bn(str): if set to 'bn' the model will use BatchNorm1d() for the hidden layers, otherwise, it will use InstanceNorm1d().
+            :param num_features: total number of features. Default value = 147.
+            :type num_features: int
+            :param hidden_size: number of features that will be passed to normalization layers of the model. Default value = 256.
+            :type hidden_size: int
+            :param classification: If set to True, then the model will perform classification, otherwise, regression. Default value = True.
+            :type classification: bool
+            :param dropout: the dropout value.
+            :type dropout: float
+            :param use_bn: if set to True, then the model will use the normalization layers, otherwise, the model will use the linear layers.
+            :type use_bn: bool
+            :param bn: if set to 'bn' the model will use BatchNorm1d() for the hidden layers, otherwise, it will use InstanceNorm1d().
+            :type bn: str
 
     """
     def __init__(self, num_features: int = 147, hidden_size: int = 256, classification: bool = True, dropout: float = 0.2, use_bn: bool = False, bn: str = 'bn'):
@@ -106,9 +116,12 @@ class MLPTorchModel:
         A class for managing MLP models.
 
         Static attributes:
-            predictors (list): List of predictors used for modeling.
-            to_predict (str): Target variable for modeling.
-            key_var (str): Key variable for modeling.
+            :param predictors: List of predictors used for modeling.
+            :type predictors: list
+            :param to_predict: Target variable for modeling.
+            :type to_predict: str
+            :param key_var: Key variable for modeling.
+            :type key_var: str
 
         Additionally, the class can be initialized with any number of keyword
         arguments. These will be added as attributes to the class.
@@ -187,11 +200,13 @@ class MLPTorchModel:
     def get_all_stats(self, y_hat, y, classification = True):
         """
         Input: 
-            y:     ground truth y (1: AD, 0: CN) -> numpy 
-            y_hat: predicted y -> numpy, notice y_hat is predicted value [0.2, 0.8, 0.1 ...]
-
-        Output:
-            A dictionary contains: Acc, F1, Sensitivity, Specificity, Balanced Acc, Precision, Recall
+            :param y: ground truth y (1: AD, 0: CN) -> numpy 
+            :type y: list
+            :param y_hat:predicted y -> numpy, notice y_hat is predicted value [0.2, 0.8, 0.1 ...]
+            :type y_hat: list
+            
+            :return: A dictionary with the Accuracy, F1 score, Sensitivity, Specificity, Balanced Accuracy, Precision, Recall
+            :rtype: dict
         """
         y = np.array(y)
         y_hat = np.array(y_hat)

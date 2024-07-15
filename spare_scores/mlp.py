@@ -20,29 +20,15 @@ class MLPModel:
     A class for managing MLP models.
 
     Static attributes:
-        predictors (list): List of predictors used for modeling.
-        to_predict (str): Target variable for modeling.
-        key_var (str): Key variable for modeling.
+        :param predictors: List of predictors used for modeling.
+        :type predictors: list
+        :param to_predict: Target variable for modeling.
+        :type to_predict: str
+        :param key_var: Key variable for modeling.
+        :type key_var: str
 
     Additionally, the class can be initialized with any number of keyword
     arguments. These will be added as attributes to the class.
-
-    Methods:
-        fit(df, verbose):
-            Trains the model using the provided dataframe and default parameters.
-            Args:
-                df(pandas.DataFrame): the provided dataframe.
-                verbose(int) 
-            Returns:
-                dict: A dictionary with the results from training.
-        
-        predict(df):
-            Predicts the result of the provided dataframe using the trained model.
-            Args:
-                df(pandas.DataFrame): the provided dataframe.
-            Returns:
-                list: The predictions from the trained model regarding the provided dataframe.
-
     """
     def __init__(self, predictors, to_predict, key_var, verbose=1, **kwargs):
         logger = logging_basic_config(verbose, content_only=True)
@@ -136,6 +122,18 @@ class MLPModel:
 
     @ignore_warnings(category= (ConvergenceWarning,UserWarning))
     def fit(self, df, verbose=1) -> dict:
+        """
+        Trains the model using the provided dataframe and default parameters.
+
+            Args:
+                :param df: the provided dataframe.
+                :type df: pandas.DataFrame
+                :param verbose: the verbosity level
+                :type verbose: int
+
+                :return: A dictionary with the results from training.
+                :rtype: dict
+        """
         logger = logging_basic_config(verbose, content_only=True)
         
         
@@ -174,6 +172,17 @@ class MLPModel:
         return result 
     
     def predict(self, df):
+        """
+            Predicts the result of the provided dataframe using the trained model.
+
+            Args:
+                :param df: the provided dataframe.
+                :type df: pandas.DataFrame
+
+                :return: The predictions from the trained model regarding the provided dataframe.
+                :rtype: list
+
+        """
 
         X = df[self.predictors]
         X_transformed = self.scaler.transform(X)
