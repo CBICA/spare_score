@@ -15,15 +15,46 @@ def expspace(span: list):
                               num=int(span[1])-int(span[0])+1))
 
 def load_df(df: Union[pd.DataFrame, str]) -> pd.DataFrame:
+    """
+        Fast loader for dataframes
+
+        :param df: Either pd.DataFrame or path to the .csv file
+        :type df: Union[pd.DataFrame, str]
+
+        :return: The dataframe
+        :rtype: pd.DataFrame
+    """
     return pd.read_csv(df, low_memory=False) if isinstance(df, str)\
                                              else df.copy()
 
 def add_file_extension(filename, extension):
+    """
+        Adds file extension to needed file
+
+        :param filename: The path to the file
+        :type filename: str
+        :param extension: The wanted extension(i.e. .txt, .csv, etc)
+        :type extension: str
+
+        :return: The filename 
+        :rtype: str
+    """
     if not filename.endswith(extension):
         filename += extension
     return filename
 
 def check_file_exists(filename, logger):
+    """
+        Checks if file exists
+
+        :param filename: The file that will be searched
+        :type filename: str
+        :param logger: Output logger
+        :type logger: logging.basicConfig
+
+        :return: True if file exists, False otherwise
+        :rtype: bool
+    """
     # Make sure that no overwrites happen:
     if filename is None or filename == '':
         return False
@@ -36,6 +67,19 @@ def check_file_exists(filename, logger):
     return False
 
 def save_file(result, output, action, logger):
+    """
+        Saves the results in a file depending the action
+        
+        :param result: The results that will be dumped into the file
+        :type result: Either .csv or pandas.DataFrame depending on the action
+        :param output: The output filename
+        :type output: str
+        :param action: Either 'train' or 'test' depending on the action
+        :type action: str
+        :param logger: Output logger
+        :type logger: logging.basicConfig
+
+    """
     # Add the correct extension:
     if action == 'train':
         output = add_file_extension(output, '.pkl.gz')
@@ -70,6 +114,19 @@ def save_file(result, output, action, logger):
     return
 
 def is_unique_identifier(df, column_names):
+    """
+        Checks if the passed dataframe is a unique identifier
+
+        :param df: The passed dataframe
+        :type df: pandas.DataFrame
+        :param column_names: The passed column names
+        :type column_names: list
+
+        :return: True if the passed data frame is a unique identifier
+                 False otherwise
+        :rtype: bool
+
+    """
     # Check the number of unique combinations
     unique_combinations = df[column_names].drop_duplicates()
     num_unique_combinations = len(unique_combinations)
@@ -81,8 +138,15 @@ def is_unique_identifier(df, column_names):
     return num_unique_combinations == num_rows
 
 def load_model(mdl_path: str) -> Tuple[dict, dict]:
-  with gzip.open(mdl_path, 'rb') as f:
-    return pickle.load(f)
+    """
+        Loads the model from the passed path
+
+        :param mdl_path: the path to the weights of the model
+        :type mdl_path: str
+    """
+    
+    with gzip.open(mdl_path, 'rb') as f:
+        return pickle.load(f)
 
 def load_examples(file_name: str=''):
   """Loads example data and models in the package.
