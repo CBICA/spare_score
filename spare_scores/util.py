@@ -172,7 +172,7 @@ def load_examples(file_name: str=''):
     logging.info('Available example SPARE models:')
     [logging.info(f' - {a}') for a in list_mdl]
 
-def convert_to_number_if_possible(string: str) -> float | str:
+def convert_to_number_if_possible(string: str) -> Union[float,str]:
     """
         Converts the the input string to a float if possible
 
