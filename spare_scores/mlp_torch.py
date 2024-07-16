@@ -88,7 +88,7 @@ class SimpleMLP(nn.Module):
         self.dropout = nn.Dropout(p = 0.2)
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         ## first layer
         x = self.linear1(x)
         if self.use_bn:
@@ -127,7 +127,7 @@ class MLPTorchModel:
         Additionally, the class can be initialized with any number of keyword
         arguments. These will be added as attributes to the class.
     """
-    def __init__(self, predictors: list, to_predict: str, key_var: str, verbose: int = 1, **kwargs):
+    def __init__(self, predictors: list, to_predict: str, key_var: str, verbose: int = 1, **kwargs) -> None:
         logger = logging_basic_config(verbose, content_only=True)
         
         self.predictors = predictors
@@ -191,16 +191,16 @@ class MLPTorchModel:
         self.val_dl     = None
         ################################## MODEL SETTING ##################################################
 
-    def find_best_threshold(self, y_hat: list, y: list ):
+    def find_best_threshold(self, y_hat: list, y: list):
         fpr, tpr, thresholds_roc = roc_curve(y, y_hat, pos_label= 1)
         youden_index = tpr - fpr
         best_threshold_youden = thresholds_roc[np.argmax(youden_index)]
 
         return best_threshold_youden
 
-    def get_all_stats(self, y_hat, y, classification: bool = True):
+    def get_all_stats(self, y_hat, y, classification: bool = True) -> dict:
         """
-        Input: 
+        Args: 
             :param y: ground truth y (1: AD, 0: CN) -> numpy 
             :type y: list
             :param y_hat:predicted y -> numpy, notice y_hat is predicted value [0.2, 0.8, 0.1 ...]
@@ -220,36 +220,36 @@ class MLPTorchModel:
             y_hat = np.where(y_hat >= self.threshold, 1 , 0)
 
             
-            dict = {}
-            dict['Accuracy']          = accuracy_score(y, y_hat)
-            dict['AUC']               = auc
-            dict['Sensitivity']       = 0
-            dict['Specificity']       = 0
-            dict['Balanced Accuarcy'] = balanced_accuracy_score(y, y_hat)
-            dict['Precision']         = precision_score(y, y_hat)
-            dict['Recall']            = recall_score(y, y_hat)
-            dict['F1']                = f1_score(y, y_hat)
+            res_dict = {}
+            res_dict['Accuracy']          = accuracy_score(y, y_hat)
+            res_dict['AUC']               = auc
+            res_dict['Sensitivity']       = 0
+            res_dict['Specificity']       = 0
+            res_dict['Balanced Accuarcy'] = balanced_accuracy_score(y, y_hat)
+            res_dict['Precision']         = precision_score(y, y_hat)
+            res_dict['Recall']            = recall_score(y, y_hat)
+            res_dict['F1']                = f1_score(y, y_hat)
 
             if len(set(y)) != 1:
                 tn, fp, fn, tp = confusion_matrix(y, y_hat).ravel()
                 sensitivity = tp / (tp + fn)
                 specificity = tn / (tn + fp)
-                dict['Sensitivity']       = sensitivity
-                dict['Specificity']       = specificity
+                res_dict['Sensitivity']       = sensitivity
+                res_dict['Specificity']       = specificity
         else:
-            dict = {}
+            res_dict = {}
             mae  = mean_absolute_error(y, y_hat)
             mrse = mean_squared_error(y, y_hat, squared=False)
             r2   = r2_score(y, y_hat)
-            dict['MAE']  = mae
-            dict['RMSE'] = mrse
-            dict['R2']   = r2
+            res_dict['MAE']  = mae
+            res_dict['RMSE'] = mrse
+            res_dict['R2']   = r2
 
         
-        return dict 
+        return res_dict 
     
 
-    def object(self, trial):
+    def object(self, trial) -> float:
 
         evaluation_metric = 'Balanced Accuarcy' if self.task == 'Classification' else 'MAE'
 
@@ -332,7 +332,7 @@ class MLPTorchModel:
             self.__dict__.update(parameters)
         
     @ignore_warnings(category= (ConvergenceWarning,UserWarning))
-    def fit(self, df: pd.DataFrame, verbose: int = 1, **kwargs):
+    def fit(self, df: pd.DataFrame, verbose: int = 1, **kwargs) -> dict:
         logger = logging_basic_config(verbose, content_only=True)
         
         

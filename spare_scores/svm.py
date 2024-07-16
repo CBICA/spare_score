@@ -41,7 +41,7 @@ class SVMModel:
             Updates the model's parameters with the provided values. This also
             changes the model's attributes, while retaining the original ones.
     """
-    def __init__(self, predictors: list, to_predict: str, key_var: str, verbose: int = 1, **kwargs):
+    def __init__(self, predictors: list, to_predict: str, key_var: str, verbose: int = 1, **kwargs) -> None:
         logger = logging_basic_config(verbose, content_only=True)
         
         self.predictors = predictors
@@ -109,11 +109,11 @@ class SVMModel:
                 self.param_grid = {'C':         expspace([-5, 5]), 
                                    'epsilon':   expspace([-5, 5])}
         
-    def set_parameters(self, **parameters):
+    def set_parameters(self, **parameters) -> None:
         self.__dict__.update(parameters)
 
     @ignore_warnings(category=ConvergenceWarning)
-    def fit(self, df: pd.DataFrame, verbose: int = 1, **kwargs):
+    def fit(self, df: pd.DataFrame, verbose: int = 1, **kwargs) -> dict:
         logger = logging_basic_config(verbose, content_only=True)
         
         # Make sure that only the relevant columns are passed
@@ -153,7 +153,7 @@ class SVMModel:
     
         return result 
     
-    def predict(self, df: pd.DataFrame, verbose: int = 1):
+    def predict(self, df: pd.DataFrame, verbose: int = 1) -> np.ndarray:
         # Unpack the model
         self.scaler = self.mdl['scaler']
         if 'bias_correct' in self.mdl.keys():
@@ -181,7 +181,7 @@ class SVMModel:
 
         return ss_mean
     
-    def train_initialize(self, df: pd.DataFrame, to_predict: str):
+    def train_initialize(self, df: pd.DataFrame, to_predict: str) -> None:
         id_unique = df[self.key_var].unique()
         self.folds = list(RepeatedKFold(n_splits=self.k, n_repeats=self.n_repeats, random_state=2022).split(id_unique))
         if len(id_unique) < len(df):
@@ -202,7 +202,7 @@ class SVMModel:
         self.stats = {metric: [] for metric in metrics}
         logging.info(f'Training a SPARE model ({self.type}) with {len(df.index)} participants')
 
-    def run_CV(self, df: pd.DataFrame, **kwargs):
+    def run_CV(self, df: pd.DataFrame, **kwargs) -> None:
         for i, fold in enumerate(self.folds):
             if i % self.n_repeats == 0:
                 logging.info(f'  FOLD {int(i/self.n_repeats+1)}...')
@@ -222,7 +222,7 @@ class SVMModel:
             self.mdl['bias_correct'] = self.bias_correct
         
 
-    def prepare_sample(self, df: pd.DataFrame, fold, scaler, classify=None):
+    def prepare_sample(self, df: pd.DataFrame, fold, scaler, classify=None) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         X_train, X_test = scaler.fit_transform(df.loc[fold[0], self.predictors]), scaler.transform(df.loc[fold[1], self.predictors])
         y_train, y_test = df.loc[fold[0], self.to_predict], df.loc[fold[1], self.to_predict]
         if classify is not None:
@@ -234,7 +234,7 @@ class SVMModel:
         gs.fit(X_train, y_train)
         return gs.best_estimator_.fit(X_train, y_train)
 
-    def get_stats(self, y_test, y_score):
+    def get_stats(self, y_test, y_score) -> None:
         if len(y_test.unique()) == 2:
             fpr, tpr, thresholds = metrics.roc_curve(y_test, y_score, pos_label=1)
             self.stats['AUC'].append(metrics.auc(fpr, tpr))
@@ -258,5 +258,5 @@ class SVMModel:
             self.y_hat[fold[1]] = (self.y_hat[fold[1]] - interc) / slope
         return slope, interc
 
-    def output_stats(self):
+    def output_stats(self) -> None:
         [logging.info(f'>> {key} = {np.mean(value):#.4f} \u00B1 {np.std(value):#.4f}') for key, value in self.stats.items()]
