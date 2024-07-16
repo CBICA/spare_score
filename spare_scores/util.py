@@ -27,7 +27,7 @@ def load_df(df: Union[pd.DataFrame, str]) -> pd.DataFrame:
     return pd.read_csv(df, low_memory=False) if isinstance(df, str)\
                                              else df.copy()
 
-def add_file_extension(filename, extension):
+def add_file_extension(filename: str, extension: str):
     """
         Adds file extension to needed file
 
@@ -43,7 +43,7 @@ def add_file_extension(filename, extension):
         filename += extension
     return filename
 
-def check_file_exists(filename, logger):
+def check_file_exists(filename: str, logger):
     """
         Checks if file exists
 
@@ -113,7 +113,7 @@ def save_file(result, output, action, logger):
     
     return
 
-def is_unique_identifier(df, column_names):
+def is_unique_identifier(df: pd.DataFrame, column_names: list):
     """
         Checks if the passed dataframe is a unique identifier
 
@@ -172,7 +172,7 @@ def load_examples(file_name: str=''):
     logging.info('Available example SPARE models:')
     [logging.info(f' - {a}') for a in list_mdl]
 
-def convert_to_number_if_possible(string):
+def convert_to_number_if_possible(string: str):
     """
         Converts the the input string to a float if possible
 

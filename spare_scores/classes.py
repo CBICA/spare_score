@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import pandas as pd
 
 from spare_scores.data_prep import logging_basic_config
 from spare_scores.mlp import MLPModel
@@ -39,12 +40,12 @@ class SpareModel:
             changes the model's attributes, while retaining the original ones.
     """
     def __init__(self, 
-                 model_type, 
-                 predictors, 
-                 target, 
-                 key_var,
-                 verbose=1,
-                 parameters={},
+                 model_type: str, 
+                 predictors: list, 
+                 target: str, 
+                 key_var: str,
+                 verbose: int = 1,
+                 parameters: dict = {},
                  **kwargs):
         
         logger = logging_basic_config(verbose, content_only=True)
@@ -90,7 +91,7 @@ class SpareModel:
         return self.__dict__.copy()
         
 
-    def train_model(self, df, **kwargs):
+    def train_model(self, df: pd.DataFrame, **kwargs):
 
         logger = logging_basic_config(self.verbose, content_only=True)
 
@@ -115,7 +116,7 @@ class SpareModel:
         
         return result
 
-    def apply_model(self, df):
+    def apply_model(self, df: pd.DataFrame):
 
         logger = logging_basic_config(self.verbose, content_only=True)
         result = None

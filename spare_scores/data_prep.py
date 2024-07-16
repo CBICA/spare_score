@@ -189,12 +189,12 @@ def smart_unique(df1: pd.DataFrame,
     return pd.concat([df1, df2], ignore_index=True) if no_df2 else (df1, df2)
 
 def age_sex_match(df1: pd.DataFrame,
-                                    df2: pd.DataFrame = None,
-                                    to_match: str = None,
-                                    p_threshold: float = 0.15,
-                                    verbose: int = 1,
-                                    age_out_percentage: float = 20) -> pd.DataFrame:
-    """
+                  df2: pd.DataFrame = None,
+                  to_match: str = None,
+                  p_threshold: float = 0.15,
+                  verbose: int = 1,
+                  age_out_percentage: float = 20) -> pd.DataFrame:
+    """ 
     Match two groups for age and sex.
 
     Args:
@@ -328,7 +328,7 @@ def logging_basic_config(verbose :int = 1, content_only = False, filename :str =
         logging.basicConfig(level=logging_level[verbose], format=fmt, force=True)
     return logging.getLogger()
         
-def convert_cat_variables(df, predictors, meta_data):
+def convert_cat_variables(df: pd.DataFrame, predictors: list, meta_data):
     cat_vars = [var 
                 for var in df[predictors].columns 
                 if df[var].dtypes == 'O']

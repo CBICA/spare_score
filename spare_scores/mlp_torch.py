@@ -2,6 +2,7 @@ import logging
 import time
 
 import numpy as np
+import pandas as pd
 from spare_scores.data_prep import logging_basic_config
 
 from sklearn.model_selection import train_test_split 
@@ -29,7 +30,7 @@ class MLPDataset(Dataset):
             :param y: the second dimension of the provided data(output)
             :type y: list
     """
-    def __init__(self, X, y):
+    def __init__(self, X: list, y: list):
         self.X = np.array(X, dtype=np.float32)
         self.y = np.array(y, dtype=np.float32)
 
@@ -126,7 +127,7 @@ class MLPTorchModel:
         Additionally, the class can be initialized with any number of keyword
         arguments. These will be added as attributes to the class.
     """
-    def __init__(self, predictors, to_predict, key_var, verbose=1, **kwargs):
+    def __init__(self, predictors: list, to_predict: str, key_var: str, verbose: int = 1, **kwargs):
         logger = logging_basic_config(verbose, content_only=True)
         
         self.predictors = predictors
@@ -190,14 +191,14 @@ class MLPTorchModel:
         self.val_dl     = None
         ################################## MODEL SETTING ##################################################
 
-    def find_best_threshold(self, y_hat, y):
+    def find_best_threshold(self, y_hat: list, y: list ):
         fpr, tpr, thresholds_roc = roc_curve(y, y_hat, pos_label= 1)
         youden_index = tpr - fpr
         best_threshold_youden = thresholds_roc[np.argmax(youden_index)]
 
         return best_threshold_youden
 
-    def get_all_stats(self, y_hat, y, classification = True):
+    def get_all_stats(self, y_hat, y, classification: bool = True):
         """
         Input: 
             :param y: ground truth y (1: AD, 0: CN) -> numpy 
@@ -331,7 +332,7 @@ class MLPTorchModel:
             self.__dict__.update(parameters)
         
     @ignore_warnings(category= (ConvergenceWarning,UserWarning))
-    def fit(self, df, verbose=1, **kwargs):
+    def fit(self, df: pd.DataFrame, verbose: int = 1, **kwargs):
         logger = logging_basic_config(verbose, content_only=True)
         
         
@@ -419,7 +420,7 @@ class MLPTorchModel:
 
         return result 
     
-    def predict(self, df):
+    def predict(self, df: pd.DataFrame):
         X = df[self.predictors]
         X = self.scaler.transform(np.array(X, dtype = np.float32))
         X = torch.tensor(X).to(device)

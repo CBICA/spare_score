@@ -2,6 +2,7 @@ import logging
 import time
 
 import numpy as np
+import pandas as pd
 from sklearn import metrics
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import GridSearchCV,KFold
@@ -30,7 +31,7 @@ class MLPModel:
     Additionally, the class can be initialized with any number of keyword
     arguments. These will be added as attributes to the class.
     """
-    def __init__(self, predictors, to_predict, key_var, verbose=1, **kwargs):
+    def __init__(self, predictors: list, to_predict: str, key_var: str, verbose: int = 1, **kwargs):
         logger = logging_basic_config(verbose, content_only=True)
         
         self.predictors = predictors
@@ -88,7 +89,7 @@ class MLPModel:
         self.__dict__.update(parameters)
 
     @ignore_warnings(category=RuntimeWarning)
-    def _fit(self, df):
+    def _fit(self, df: pd.DataFrame):
 
         X = df[self.predictors].astype('float64')
         y = df[self.to_predict].astype('float64')
@@ -121,7 +122,7 @@ class MLPModel:
         self.get_stats(y, self.y_hat)
 
     @ignore_warnings(category= (ConvergenceWarning,UserWarning))
-    def fit(self, df, verbose=1) -> dict:
+    def fit(self, df:pd.DataFrame, verbose: int = 1) -> dict:
         """
         Trains the model using the provided dataframe and default parameters.
 
@@ -171,7 +172,7 @@ class MLPModel:
 
         return result 
     
-    def predict(self, df):
+    def predict(self, df: pd.DataFrame):
         """
             Predicts the result of the provided dataframe using the trained model.
 
