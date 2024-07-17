@@ -109,6 +109,15 @@ def load_examples(file_name: str=''):
     [logging.info(f' - {a}') for a in list_mdl]
 
 def convert_to_number_if_possible(string):
+    """
+        Converts the the input string to a float if possible
+
+        Args:
+            string(str): the input string 
+        Returns:
+            float: if the exception is not raised
+            str: if the exception is raised
+    """
     try:
         number = float(string)  # Attempt to convert the string to a float
         return number

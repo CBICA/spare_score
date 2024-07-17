@@ -28,18 +28,23 @@ class MLPModel:
     arguments. These will be added as attributes to the class.
 
     Methods:
-        train_model(df, **kwargs):
-            Trains the model using the provided dataframe.
+        fit(df, verbose):
+            Trains the model using the provided dataframe and default parameters.
+            Args:
+                df(pandas.DataFrame): the provided dataframe.
+                verbose(int) 
+            Returns:
+                dict: A dictionary with the results from training.
         
-        apply_model(df):
-            Applies the trained model on the provided dataframe and returns
-            the predictions.
-        
-        set_parameters(**parameters):
-            Updates the model's parameters with the provided values. This also
-            changes the model's attributes, while retaining the original ones.
+        predict(df):
+            Predicts the result of the provided dataframe using the trained model.
+            Args:
+                df(pandas.DataFrame): the provided dataframe.
+            Returns:
+                list: The predictions from the trained model regarding the provided dataframe.
+
     """
-    def __init__(self, predictors, to_predict, key_var, verbose=1,**kwargs):
+    def __init__(self, predictors, to_predict, key_var, verbose=1, **kwargs):
         logger = logging_basic_config(verbose, content_only=True)
         
         self.predictors = predictors
@@ -130,7 +135,7 @@ class MLPModel:
         self.get_stats(y, self.y_hat)
 
     @ignore_warnings(category= (ConvergenceWarning,UserWarning))
-    def fit(self, df, verbose=1, **kwargs):
+    def fit(self, df, verbose=1) -> dict:
         logger = logging_basic_config(verbose, content_only=True)
         
         
@@ -168,7 +173,7 @@ class MLPModel:
 
         return result 
     
-    def predict(self, df, verbose=1):
+    def predict(self, df):
 
         X = df[self.predictors]
         X_transformed = self.scaler.transform(X)
