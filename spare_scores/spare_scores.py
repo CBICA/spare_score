@@ -24,7 +24,7 @@ def spare_train(
     df: Union[pd.DataFrame, str],
     to_predict: str,
     model_type: str = "SVM",
-    pos_group: str = "",
+    pos_group: Any = "",
     key_var: str = "",
     data_vars: list = [],
     ignore_vars: list = [],

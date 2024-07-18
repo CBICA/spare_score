@@ -76,7 +76,7 @@ class CheckSpareScores(unittest.TestCase):
 
         status, result = result["status"], result["data"]
 
-        metadata = result[1]  # For some reason, this is None
+        metadata = result[1]  
         self.assertTrue(status == "OK")
         self.assertTrue(metadata["mdl_type"] == self.model_fixture[1]["mdl_type"])
         self.assertTrue(metadata["kernel"] == self.model_fixture[1]["kernel"])
