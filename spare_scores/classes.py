@@ -1,10 +1,12 @@
 from dataclasses import dataclass
+from typing import Any
+
 import pandas as pd
 
 from spare_scores.data_prep import logging_basic_config
 from spare_scores.mlp import MLPModel
-from spare_scores.svm import SVMModel
 from spare_scores.mlp_torch import MLPTorchModel
+from spare_scores.svm import SVMModel
 
 
 class SpareModel:
@@ -25,9 +27,9 @@ class SpareModel:
         :param parameters: Additional parameters for the model.
         :type parameters: dict
 
-    Additionally, the class can be initialized with any number of keyword 
+    Additionally, the class can be initialized with any number of keyword
     arguments. These will be added as attributes to the class.
-        
+
     Methods:
         train_model(df, **kwargs):
             Calls the model's train_model method and returns the result.
@@ -36,101 +38,106 @@ class SpareModel:
             Calls the model's apply_model method and returns the result.
 
         set_parameters(**parameters):
-            Updates the model's parameters with the provided values. This also 
+            Updates the model's parameters with the provided values. This also
             changes the model's attributes, while retaining the original ones.
     """
-    def __init__(self, 
-                 model_type: str, 
-                 predictors: list, 
-                 target: str, 
-                 key_var: str,
-                 verbose: int = 1,
-                 parameters: dict = {},
-                 **kwargs):
-        
+
+    def __init__(
+        self,
+        model_type: str,
+        predictors: list,
+        target: str,
+        key_var: str,
+        verbose: int = 1,
+        parameters: dict = {},
+        **kwargs: Any,
+    ) -> None:
+        super().__init__()
         logger = logging_basic_config(verbose, content_only=True)
 
         self.model_type = model_type
-        self.model = None
+        self.model: Any
         self.predictors = predictors
         self.target = target
         self.key_var = key_var
         self.verbose = verbose
         self.parameters = parameters
 
-        if self.model_type == 'SVM':
-            self.model = SVMModel(predictors,
-                                  target,
-                                  key_var,
-                                  verbose,
-                                  **parameters,)
-        
-        elif self.model_type == 'MLP':
-            self.model = MLPModel(predictors,
-                                   target,
-                                   key_var,
-                                   verbose,
-                                   **parameters)
-        elif self.model_type == 'MLPTorch':
-            self.model = MLPTorchModel(predictors,
-                                   target,
-                                   key_var,
-                                   verbose,
-                                   **parameters,
-                                   **kwargs)
+        if self.model_type == "SVM":
+            self.model = SVMModel(
+                predictors,
+                target,
+                key_var,
+                verbose,
+                **parameters,
+            )
+
+        elif self.model_type == "MLP":
+            self.model = MLPModel(predictors, target, key_var, verbose, **parameters)
+        elif self.model_type == "MLPTorch":
+            self.model = MLPTorchModel(
+                predictors, target, key_var, verbose, **parameters, **kwargs
+            )
         else:
             logger.err(f"Model type {self.model_type} not supported.")
             raise NotImplementedError("Only SVM is supported currently.")
-    
-    def set_parameters(self, **parameters):
+
+    def set_parameters(self, **parameters: Any) -> None:
         self.parameters = parameters
         self.__dict__.update(parameters)
         self.model.set_parameters(**parameters)
-    
-    def get_parameters(self):
-        return self.__dict__.copy()
-        
 
-    def train_model(self, df: pd.DataFrame, **kwargs):
+    def get_parameters(self) -> Any:
+        return self.__dict__.copy()
+
+    def train_model(self, df: pd.DataFrame, **kwargs: Any) -> Any:
 
         logger = logging_basic_config(self.verbose, content_only=True)
 
         try:
-            result = self.model.fit(df[self.predictors 
-                                       + [self.key_var]
-                                       + [self.target]], 
-                                    self.verbose,
-                                    **kwargs)
+            result = self.model.fit(
+                df[self.predictors + [self.key_var] + [self.target]],
+                self.verbose,
+                **kwargs,
+            )
         except Exception as e:
-            err = '\033[91m\033[1m' \
-                + 'spare_train(): Model fit failed.'\
-                + '\033[0m\n'
+            err = "\033[91m\033[1m" + "spare_train(): Model fit failed." + "\033[0m\n"
             logger.error(err)
 
             err += str(e)
-            err += "\n\nPlease consider ignoring (-iv/--ignore_vars) any " \
-                + "variables that might not be needed for the training of " \
+            err += (
+                "\n\nPlease consider ignoring (-iv/--ignore_vars) any "
+                + "variables that might not be needed for the training of "
                 + "the model, as they could be causing problems.\n\n\n"
+            )
             print(err)
             raise Exception(err)
-        
+
         return result
 
-    def apply_model(self, df: pd.DataFrame):
+    def apply_model(self, df: pd.DataFrame) -> Any:
 
         logger = logging_basic_config(self.verbose, content_only=True)
         result = None
         try:
-            result = self.model.predict(df[self.predictors]) #if self.model_type in ['SVM','MLPTorch'] else self.model.mdl.predict(df[self.predictors])
+            result = self.model.predict(
+                df[self.predictors]
+            )  # if self.model_type in ['SVM','MLPTorch'] else self.model.mdl.predict(df[self.predictors])
         except Exception as e:
-            logger.info('\033[91m' + '\033[1m'
-                        + '\n\n\nspare_test(): Model prediction failed.'
-                        + '\033[0m')
+            logger.info(
+                "\033[91m"
+                + "\033[1m"
+                + "\n\n\nspare_test(): Model prediction failed."
+                + "\033[0m"
+            )
             print(e)
-            print("Please consider ignoring (-iv/--ignore_vars) any variables "
+            print(
+                "Please consider ignoring (-iv/--ignore_vars) any variables "
                 + "that might not be needed for the training of the model, as "
-                + "they could be causing problems.\n\n\n")
+                + "they could be causing problems.\n\n\n"
+            )
         return result
+
 
 @dataclass
 class MetaData:
@@ -150,9 +157,15 @@ class MetaData:
        :param key_var: Key variable for modeling.
        :type key_var: str
     """
+
     mdl_type: str
     mdl_task: str
     kernel: str
     predictors: list
     to_predict: str
     key_var: str
+    params: Any = None
+    stats: Any = None
+    cv_folds: Any = None
+    scaler: Any = None
+    cv_results: Any = None
