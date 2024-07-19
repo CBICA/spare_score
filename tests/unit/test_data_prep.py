@@ -16,7 +16,7 @@ from data_prep import (  # If updates go through, it can be updated to spare_sco
     smart_unique,
 )
 
-from spare_scores.util import load_df
+from util import load_df
 
 
 class CheckDataPrep(unittest.TestCase):

@@ -8,6 +8,8 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from data_prep import logging_basic_config
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -23,9 +25,8 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils._testing import ignore_warnings
 from torch.utils.data import DataLoader, Dataset
-
-from spare_scores.data_prep import logging_basic_config
 
 device = (
     "cuda"
@@ -383,7 +384,7 @@ class MLPTorchModel:
         else:
             self.__dict__.update(parameters)
 
-    # @ignore_warnings(category=(ConvergenceWarning, UserWarning))
+    @ignore_warnings(category=(ConvergenceWarning, UserWarning))  # type: ignore
     def fit(self, df: pd.DataFrame, verbose: int = 1, **kwargs: Any) -> dict:
         logger = logging_basic_config(verbose, content_only=True)
 

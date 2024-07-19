@@ -6,16 +6,14 @@ from typing import Any, Tuple, Union
 import numpy as np
 import pandas as pd
 from scipy import stats
-
-from spare_scores.util import convert_to_number_if_possible
+from util import convert_to_number_if_possible
 
 
 def check_train(
     df: pd.DataFrame,
     predictors: list,
     to_predict: str,
-    verbose: int = 1,  # this needs to be removed(non used). If i remove
-    # it, then there are bugs to the test cases(check_train() unexpected argument verbose)
+    verbose: int = 1,  # this needs to be removed(non used)
     pos_group: str = "",
 ) -> Union[str, Tuple[pd.DataFrame, list, str]]:
     """Checks training dataframe for errors.

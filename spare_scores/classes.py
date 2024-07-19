@@ -2,11 +2,10 @@ from dataclasses import dataclass
 from typing import Any
 
 import pandas as pd
-
-from spare_scores.data_prep import logging_basic_config
-from spare_scores.mlp import MLPModel
-from spare_scores.mlp_torch import MLPTorchModel
-from spare_scores.svm import SVMModel
+from data_prep import logging_basic_config
+from mlp import MLPModel
+from mlp_torch import MLPTorchModel
+from svm import SVMModel
 
 
 class SpareModel:

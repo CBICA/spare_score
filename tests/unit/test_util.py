@@ -1,13 +1,14 @@
 import logging
 import os
-import re
+import sys
 import unittest
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from spare_scores.util import (
+sys.path.append("../spare_scores")
+from util import (
     add_file_extension,
     check_file_exists,
     convert_to_number_if_possible,

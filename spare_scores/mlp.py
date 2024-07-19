@@ -4,13 +4,14 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from data_prep import logging_basic_config
 from sklearn import metrics
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-
-from spare_scores.data_prep import logging_basic_config
+from sklearn.utils._testing import ignore_warnings
 
 
 class MLPModel:
@@ -105,7 +106,7 @@ class MLPModel:
     def set_parameters(self, **parameters: Any) -> None:
         self.__dict__.update(parameters)
 
-    # @ignore_warnings(category=RuntimeWarning)
+    @ignore_warnings(category=RuntimeWarning)  # type: ignore
     def _fit(self, df: pd.DataFrame) -> None:
 
         X = df[self.predictors].astype("float64")
@@ -152,7 +153,7 @@ class MLPModel:
 
         self.get_stats(y, self.y_hat)
 
-    # @ignore_warnings(category=(ConvergenceWarning, UserWarning))
+    @ignore_warnings(category=(ConvergenceWarning, UserWarning))  # type: ignore
     def fit(self, df: pd.DataFrame, verbose: int = 1) -> dict:
         """
         Trains the model using the provided dataframe and default parameters.

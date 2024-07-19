@@ -4,13 +4,12 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from data_prep import logging_basic_config
 from sklearn import metrics
 from sklearn.model_selection import GridSearchCV, RepeatedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, LinearSVC, LinearSVR
-
-from spare_scores.data_prep import logging_basic_config
-from spare_scores.util import expspace
+from util import expspace
 
 
 class SVMModel:
@@ -150,7 +149,7 @@ class SVMModel:
             sampled_df = df.sample(n=500, random_state=2023)
             sampled_df = sampled_df.reset_index(drop=True)
             self.train_initialize(sampled_df, self.to_predict)
-            self.run_CV(sampled_df, **kwargs)
+            self.run_CV(sampled_df)
             # Use the optimal parameters to train the model on the full data
             param_grid = {
                 par: expspace(
@@ -166,7 +165,7 @@ class SVMModel:
         # Train the model on the full data, with the optimal parameters
         logger.info("Training SVM model...")
         self.train_initialize(df, self.to_predict)
-        self.run_CV(df, **kwargs)
+        self.run_CV(df)
         training_time = time.time() - start_time
         self.stats["training_time"] = round(training_time, 4)
 
