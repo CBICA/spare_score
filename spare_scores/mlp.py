@@ -17,17 +17,16 @@ from sklearn.utils._testing import ignore_warnings
 class MLPModel:
     """
     A class for managing MLP models.
-
-    Static attributes:
-        :param predictors: List of predictors used for modeling.
-        :type predictors: list
-        :param to_predict: Target variable for modeling.
-        :type to_predict: str
-        :param key_var: Key variable for modeling.
-        :type key_var: str
-
     Additionally, the class can be initialized with any number of keyword
     arguments. These will be added as attributes to the class.
+
+    :param predictors: List of predictors used for modeling.
+    :type predictors: list
+    :param to_predict: Target variable for modeling.
+    :type to_predict: str
+    :param key_var: Key variable for modeling.
+    :type key_var: str
+
     """
 
     def __init__(
@@ -158,14 +157,14 @@ class MLPModel:
         """
         Trains the model using the provided dataframe and default parameters.
 
-            Args:
-                :param df: the provided dataframe.
-                :type df: pandas.DataFrame
-                :param verbose: the verbosity level
-                :type verbose: int
+        :param df: the provided dataframe.
+        :type df: pandas.DataFrame
+        :param verbose: the verbosity level
+        :type verbose: int
 
-                :return: A dictionary with the results from training.
-                :rtype: dict
+        :return: A dictionary with the results from training.
+        :rtype: dict
+
         """
         logger = logging_basic_config(verbose, content_only=True)
 
@@ -208,12 +207,11 @@ class MLPModel:
         """
         Predicts the result of the provided dataframe using the trained model.
 
-        Args:
-            :param df: the provided dataframe.
-            :type df: pandas.DataFrame
+        :param df: the provided dataframe.
+        :type df: pandas.DataFrame
 
-            :return: The predictions from the trained model regarding the provided dataframe.
-            :rtype: np.ndarray
+        :return: The predictions from the trained model regarding the provided dataframe.
+        :rtype: np.ndarray
 
         """
 

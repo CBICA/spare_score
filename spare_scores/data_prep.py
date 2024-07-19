@@ -16,20 +16,21 @@ def check_train(
     verbose: int = 1,  # this needs to be removed(non used)
     pos_group: str = "",
 ) -> Union[str, Tuple[pd.DataFrame, list, str]]:
-    """Checks training dataframe for errors.
+    """
+    Checks training dataframe for errors.
 
-    Args:
-        :param df: a pandas dataframe containing training data.
-        :type df: pandas.DataFrame
-        :param predictors: a list of predictors for SPARE model training.
-        :type predictors: list
-        :param to_predict: variable to predict.
-        :type to_predict: str
-        :param pos_group: group to assign a positive SPARE score (only for classification).
-        :type pos_group: str
+    :param df: a pandas dataframe containing training data.
+    :type df: pandas.DataFrame
+    :param predictors: a list of predictors for SPARE model training.
+    :type predictors: list
+    :param to_predict: variable to predict.
+    :type to_predict: str
+    :param pos_group: group to assign a positive SPARE score (only for classification).
+    :type pos_group: str
 
-        :return: a tuple containing 1) the filtered dataframe, 2) filtered predictors, 3)SPARE model type.
-        :rtype: [pandas.DataFrame, list, str]
+    :return: a tuple containing 1) the filtered dataframe, 2) filtered predictors, 3)SPARE model type.
+    :rtype: [pandas.DataFrame, list, str]
+
     """
     # GAI 26/04/2023: Removed check for existence of these columns
     # if not {'ID','Age','Sex'}.issubset(set(df.columns)):
@@ -101,11 +102,11 @@ def check_test(
     """
     Checks testing dataframe for errors.
 
-    Args:
-        :param df: a pandas dataframe containing testing data.
-        :type df: pandas.DataFrame
-        :param meta_data: a dictionary containing training information on its paired SPARE model.
-        :type meta_data: dict
+    :param df: a pandas dataframe containing testing data.
+    :type df: pandas.DataFrame
+    :param meta_data: a dictionary containing training information on its paired SPARE model.
+    :type meta_data: dict
+
     """
     # if not {'ID','Age','Sex'}.issubset(set(df.columns)):
     #   return logging.error('Please check required columns: ID, Age, Sex.')
@@ -143,17 +144,17 @@ def smart_unique(
     For SPARE regression, preserve data points with extreme values.
     For SPARE classification, preserve data points that help age match.
 
-    Args:
-        :param df1: the passed dataframe
-        :type df1: pandas.DataFrame
-        :param df2: optional, if df1 and df2 are two groups to classify.
-        :type df2: pandas.DataFrame
-        :param to_predict: variable to predict. Binary for classification and continuous for regression.
-            Must be one of the columnes in df. Ignored if df2 is given.
-        :type to_predict: str
+    :param df1: the passed dataframe
+    :type df1: pandas.DataFrame
+    :param df2: optional, if df1 and df2 are two groups to classify.
+    :type df2: pandas.DataFrame
+    :param to_predict: variable to predict. Binary for classification and continuous for regression.
+        Must be one of the columnes in df. Ignored if df2 is given.
+    :type to_predict: str
 
-        :return: a trimmed pandas dataframe or a tuple of two dataframes with only one time point per ID.
-        :rtype: pandas.DataFrame
+    :return: a trimmed pandas dataframe or a tuple of two dataframes with only one time point per ID.
+    :rtype: pandas.DataFrame
+
     """
     assert isinstance(df2, pd.DataFrame) or (
         df2 is None
@@ -227,33 +228,35 @@ def age_sex_match(
     """
     Match two groups for age and sex.
 
-    Args:
-        :param df1: the passed dataframe
-        :type df1: pandas.DataFrame
-        :param df2: optional, if df1 and df2 are two groups to classify.
-        :type df2: pandas.DataFrame
-        :param to_match: a binary variable of two groups.
-                         Must be one of the columns in df.
-                         Ignored if df2 is given.If to_match
-                         is 'Sex', then only perform age matching.
-        :type to_match: str
-        :param p_threshold: minimum p-value for matching. Default value = 0.15
-        :type p_threshold: float
-        :param verbose: whether to output messages.(Will be deprecated later)
-        :type verbose: int
-        :param age_out_percentage: percentage of the larger group to
-                                   randomly select a participant to
-                                   take out from during the age matching.
-                                   For example, if age_out_percentage = 20 and the
-                                   larger group is significantly older, then exclude
-                                   one random participant from the fifth
-                                   quintile based on age. Default value = 20
-        :type age_out_percentage: float
 
-        :return: a trimmed pandas dataframe or a tuple of two dataframes
-                 with age/sex matched groups.
-        :rtype: pandas.DataFrame
+    :param df1: the passed dataframe
+    :type df1: pandas.DataFrame
+    :param df2: optional, if df1 and df2 are two groups to classify.
+    :type df2: pandas.DataFrame
+    :param to_match: a binary variable of two groups.
+                     Must be one of the columns in df.
+                     Ignored if df2 is given.If to_match
+                     is 'Sex', then only perform age matching.
+    :type to_match: str
+    :param p_threshold: minimum p-value for matching. Default value = 0.15
+    :type p_threshold: float
+    :param verbose: whether to output messages.(Will be deprecated later)
+    :type verbose: int
+    :param age_out_percentage: percentage of the larger group to
+                               randomly select a participant to
+                               take out from during the age matching.
+                               For example, if age_out_percentage = 20 and the
+                               larger group is significantly older, then exclude
+                               one random participant from the fifth
+                               quintile based on age. Default value = 20
+    :type age_out_percentage: float
+
+    :return: a trimmed pandas dataframe or a tuple of two dataframes
+             with age/sex matched groups.
+    :rtype: pandas.DataFrame
+
     """
+
     assert isinstance(df2, pd.DataFrame) or (
         df2 is None
     ), 'Either provide a 2nd pandas dataframe for the 2nd argument or specify the two groups with "to_match"'
@@ -356,13 +359,13 @@ def logging_basic_config(
     """
     Basic logging configuration for error exceptions
 
-    Args:
-        :param verbose: input verbose. Default value = 1
-        :type verbose: int
-        :param content_only: If set to True it will output only the needed content. Default value = False
-        :type content_only: bool
-        :param filename: input filename. Default value = ''
-        :type filename: str
+    :param verbose: input verbose. Default value = 1
+    :type verbose: int
+    :param content_only: If set to True it will output only the needed content. Default value = False
+    :type content_only: bool
+    :param filename: input filename. Default value = ''
+    :type filename: str
+
     """
     logging_level = {
         0: logging.WARNING,

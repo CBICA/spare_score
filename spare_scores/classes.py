@@ -11,21 +11,6 @@ from svm import SVMModel
 class SpareModel:
     """
     A class for managing different spare models.
-
-    Static attributes:
-        :param model_type: Type of model to be used.
-        :type model_type: str
-        :predictors: List of predictors used for modeling.
-        :type predictors: list
-        :param target: Target variable for modeling.
-        :type target: str
-        :param key_var: key variable for modeling
-        :type key_var: str
-        :param verbose: Verbosity level.
-        :type verbose: int
-        :param parameters: Additional parameters for the model.
-        :type parameters: dict
-
     Additionally, the class can be initialized with any number of keyword
     arguments. These will be added as attributes to the class.
 
@@ -39,6 +24,20 @@ class SpareModel:
         set_parameters(**parameters):
             Updates the model's parameters with the provided values. This also
             changes the model's attributes, while retaining the original ones.
+
+    :param model_type: Type of model to be used.
+    :type model_type: str
+    :predictors: List of predictors used for modeling.
+    :type predictors: list
+    :param target: Target variable for modeling.
+    :type target: str
+    :param key_var: key variable for modeling
+    :type key_var: str
+    :param verbose: Verbosity level.
+    :type verbose: int
+    :param parameters: Additional parameters for the model.
+    :type parameters: dict
+
     """
 
     def __init__(
@@ -141,20 +140,20 @@ class SpareModel:
 @dataclass
 class MetaData:
     """
-    Stores training information on its paired SPARE model
-    Attributes:
-       :param mdl_type: Type of model to be used.
-       :type mdl_type: str
-       :param mdl_task: Task of the model to be used.
-       :type mdl_task: str
-       :param kernel: Kernel used for SVM.
-       :type kernel: str
-       :param predictors: List of predictors used for modeling.
-       :type predictors: list
-       :param to_predict: Target variable for modeling.
-       :type to_predict: str
-       :param key_var: Key variable for modeling.
-       :type key_var: str
+     Stores training information on its paired SPARE model
+
+    :param mdl_type: Type of model to be used.
+    :type mdl_type: str
+    :param mdl_task: Task of the model to be used.
+    :type mdl_task: str
+    :param kernel: Kernel used for SVM.
+    :type kernel: str
+    :param predictors: List of predictors used for modeling.
+    :type predictors: list
+    :param to_predict: Target variable for modeling.
+    :type to_predict: str
+    :param key_var: Key variable for modeling.
+    :type key_var: str
     """
 
     mdl_type: str

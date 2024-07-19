@@ -30,44 +30,44 @@ def spare_train(
     """
     Trains a SPARE model, either classification or regression
 
-    Args:
-        :param df: either a pandas dataframe or a path to a saved csv
-                    containing training data.
-        :type df: pandas.DataFrame
-        :param to_predict: variable to predict. Binary for classification and
-                    continuous for regression. Must be one of the columnes in
-                    df.
-        :type to_predict: str
-        :param pos_group: group to assign a positive SPARE score (only for
-                    classification).
-        :type pos_group: str
-        :param key_var: The key variable to be used for training. If not
-                    given, the first column of the dataset is considered the
-                    primary key of the dataset.
-        :type key_var: str
-        :param data_vars:  a list of predictors for the training. All must be present
-                    in columns of df.
-        :type data_vars: list
-        :param ignore_vars:The list of predictors to be ignored for training. Can be
-                    a listkey_var, or empty.
-        :type ignore_vars: list
-        :param kernel: 'linear' or 'rbf' (only linear is supported currently in
-                    regression).
-        :type kernel: str
-        :param output: path to save the trained model. '.pkl.gz' file extension
-                    optional. If None is given, no model will be saved.
-        :type output: str
-        :param verbose:    Verbosity. Int, higher is more verbose. [0,1,2]
-        :type verbose: int
-        :param logs: Where to save log file. If not given, logs will only be printed out.
-        :type logs: str
+    :param df: either a pandas dataframe or a path to a saved csv
+                containing training data.
+    :type df: pandas.DataFrame
+    :param to_predict: variable to predict. Binary for classification and
+                continuous for regression. Must be one of the columnes in
+                df.
+    :type to_predict: str
+    :param pos_group: group to assign a positive SPARE score (only for
+                classification).
+    :type pos_group: str
+    :param key_var: The key variable to be used for training. If not
+                given, the first column of the dataset is considered the
+                primary key of the dataset.
+    :type key_var: str
+    :param data_vars:  a list of predictors for the training. All must be present
+                in columns of df.
+    :type data_vars: list
+    :param ignore_vars:The list of predictors to be ignored for training. Can be
+                a listkey_var, or empty.
+    :type ignore_vars: list
+    :param kernel: 'linear' or 'rbf' (only linear is supported currently in
+                regression).
+    :type kernel: str
+    :param output: path to save the trained model. '.pkl.gz' file extension
+                optional. If None is given, no model will be saved.
+    :type output: str
+    :param verbose:    Verbosity. Int, higher is more verbose. [0,1,2]
+    :type verbose: int
+    :param logs: Where to save log file. If not given, logs will only be printed out.
+    :type logs: str
 
-        :return: A dictionary with three keys, 'status_code', 'status' and 'data'.
-                 'status' is either'OK' or the error message. 'data' is a dictionary
-                 containing the trained model and metadata if successful, or
-                 None / error object if unsuccessful. 'status_code' is either 0, 1 or 2.
-                 0 is success, 1 is warning, 2 is error.
-        :rtype: dict
+    :return: A dictionary with three keys, 'status_code', 'status' and 'data'.
+             'status' is either'OK' or the error message. 'data' is a dictionary
+             containing the trained model and metadata if successful, or
+             None / error object if unsuccessful. 'status_code' is either 0, 1 or 2.
+             0 is success, 1 is warning, 2 is error.
+    :rtype: dict
+
     """
     res = {"status_code": int, "status": Any, "data": Any}
 
@@ -221,37 +221,37 @@ def spare_test(
     """
     Applies a trained SPARE model on a test dataset
 
-    Args:
-        :param df:  either a pandas dataframe or a path to a saved csv
-                    containing the test sample.
-        :type df: pandas.DataFrame
-        :param mdl_path: either a path to a saved SPARE model ('.pkl.gz' file
-                    extension expected) or a tuple of SPARE model and
-                    meta_data.
-        :type mdl_path: str
-        :param key_var: The of key variable to be used for training. If not
-                    given, and the saved model does not contain it,the first
-                    column of the dataset is considered the primary key of the
-                    dataset.
-        :type key_var: str
-        :param output: path to save the calculated scores. '.csv' file extension
-                    optional. If None is given, no data will be saved.
-        :type output: str
-        :param spare_var: The name of the variable to be predicted. If not given,
-                    the name 'SPARE_score' will be used.
-        :type spare_var: str
-        :param verbose: Verbosity. Int, higher is more verbose. [0,1,2]
-        :type verbose: int
-        :param logs: Where to save log file. If not given, logs will only be
-                    printed out.
-        :type logs: str
+    :param df:  either a pandas dataframe or a path to a saved csv
+                containing the test sample.
+    :type df: pandas.DataFrame
+    :param mdl_path: either a path to a saved SPARE model ('.pkl.gz' file
+                extension expected) or a tuple of SPARE model and
+                meta_data.
+    :type mdl_path: str
+    :param key_var: The of key variable to be used for training. If not
+                given, and the saved model does not contain it,the first
+                column of the dataset is considered the primary key of the
+                dataset.
+    :type key_var: str
+    :param output: path to save the calculated scores. '.csv' file extension
+                optional. If None is given, no data will be saved.
+    :type output: str
+    :param spare_var: The name of the variable to be predicted. If not given,
+                the name 'SPARE_score' will be used.
+    :type spare_var: str
+    :param verbose: Verbosity. Int, higher is more verbose. [0,1,2]
+    :type verbose: int
+    :param logs: Where to save log file. If not given, logs will only be
+                printed out.
+    :type logs: str
 
-        :return: A dictionary with three keys, 'status_code', 'status' and 'data'.
-                 'status' is either 'OK' or the error message. 'data' is the pandas
-                 dataframe  containing predicted SPARE scores, or  None / error object
-                 if  unsuccessful. 'status_code' is either 0, 1 or 2.
-                 0 is success, 1 is warning, 2 is error.
-        :rtype: dict
+    :return: A dictionary with three keys, 'status_code', 'status' and 'data'.
+             'status' is either 'OK' or the error message. 'data' is the pandas
+             dataframe  containing predicted SPARE scores, or  None / error object
+             if  unsuccessful. 'status_code' is either 0, 1 or 2.
+             0 is success, 1 is warning, 2 is error.
+    :rtype: dict
+
     """
     res = {"status_code": int, "status": Any, "data": Any}
 

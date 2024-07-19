@@ -150,6 +150,7 @@ def load_model(mdl_path: str) -> Any:
 
     :param mdl_path: the path to the weights of the model
     :type mdl_path: str
+
     """
 
     with gzip.open(mdl_path, "rb") as f:
@@ -159,13 +160,13 @@ def load_model(mdl_path: str) -> Any:
 def load_examples(file_name: str = "") -> Any:
     """Loads example data and models in the package.
 
-    Args:
-        :param file_name: either name of the example data saved as .csv or
-        name of the SPARE model saved as .pkl.gz.
-        :type file_name: str
+    :param file_name: either name of the example data saved as .csv or
+    name of the SPARE model saved as .pkl.gz.
+    :type file_name: str
 
-        :return: the resulted dataframe
-        :rtype: None or pandas.DataFrame
+    :return: the resulted dataframe
+    :rtype: None or pandas.DataFrame
+
     """
     pkg_path = pkg_resources.resource_filename("spare_scores", "")
     list_data = os.listdir(f"{pkg_path}/data/")
@@ -188,12 +189,12 @@ def convert_to_number_if_possible(string: str) -> Union[float, str]:
     """
     Converts the the input string to a float if possible
 
-    Args:
-        :param string: the input string
-        :type string: str
+    :param string: the input string
+    :type string: str
 
-        :return: float if the string is numeric, the same string if it's not
-        :rtype: float or str
+    :return: float if the string is numeric, the same string if it's not
+    :rtype: float or str
+
     """
     if string.isnumeric():
         return float(string)

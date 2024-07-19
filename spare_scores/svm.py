@@ -15,15 +15,6 @@ from util import expspace
 class SVMModel:
     """
     A class for managing SVM models.
-
-    Static attributes:
-        :param predictors: List of predictors used for modeling.
-        :type predictors: list
-        :param to_predict: Target variable for modeling.
-        :type to_predict: str
-        :param key_var: Key variable for modeling.
-        :type key_var: str
-
     Additionally, the class can be initialized with any number of keyword
     arguments. These will be added as attributes to the class.
 
@@ -38,6 +29,14 @@ class SVMModel:
         set_parameters(**parameters):
             Updates the model's parameters with the provided values. This also
             changes the model's attributes, while retaining the original ones.
+
+    :param predictors: List of predictors used for modeling.
+    :type predictors: list
+    :param to_predict: Target variable for modeling.
+    :type to_predict: str
+    :param key_var: Key variable for modeling.
+    :type key_var: str
+
     """
 
     def __init__(
