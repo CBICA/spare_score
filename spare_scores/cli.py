@@ -1,8 +1,7 @@
 import argparse
 
 import pkg_resources  # type: ignore
-
-from spare_scores import spare_test, spare_train
+from spare import spare_test, spare_train
 
 VERSION = pkg_resources.require("spare_scores")[0].version
 
