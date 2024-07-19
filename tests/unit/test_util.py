@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-sys.path.append("../spare_scores")
+sys.path.append("../../spare_scores")
 from util import (
     add_file_extension,
     check_file_exists,

@@ -1,11 +1,13 @@
+import sys
 import unittest
 from pathlib import Path
-import sys
+
 import pandas as pd
 
-sys.path.append("../spare_scores")
-from spare_scores import spare_test, spare_train
+sys.path.append("../../spare_scores")
 from util import load_df, load_model
+
+from spare_scores import spare_test, spare_train
 
 
 class CheckSpareScores(unittest.TestCase):
@@ -76,7 +78,7 @@ class CheckSpareScores(unittest.TestCase):
         )
 
         status, result_data = result["status"], result["data"]
-        
+
         metadata = result_data[1]
         self.assertTrue(status == "OK")
         self.assertTrue(metadata["mdl_type"] == self.model_fixture[1]["mdl_type"])
