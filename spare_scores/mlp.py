@@ -14,7 +14,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils._testing import ignore_warnings
 
 
-class MLPModel:
+class MLPModel():
     """
     A class for managing MLP models.
     Additionally, the class can be initialized with any number of keyword

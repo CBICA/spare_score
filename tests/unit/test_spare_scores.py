@@ -60,10 +60,10 @@ class CheckSpareScores(unittest.TestCase):
         self.model_fixture = load_model("../fixtures/sample_model.pkl.gz")
         # Test case 1: Testing spare_train with MLP model
         result = spare_train(
-             self.df_fixture,
-             "Age",
-             model_type="MLP",
-             data_vars=[
+            self.df_fixture,
+            "Age",
+            model_type="MLP",
+            data_vars=[
                 "ROI1",
                 "ROI2",
                 "ROI3",
