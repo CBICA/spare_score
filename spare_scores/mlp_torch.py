@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 from typing import Any, Tuple
 
@@ -28,6 +29,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils._testing import ignore_warnings
 from torch.utils.data import DataLoader, Dataset
 
+os.environ["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] = "0.0"  # for MPS backend
 device = (
     "cuda"
     if torch.cuda.is_available()

@@ -55,11 +55,10 @@ class CheckSpareScores(unittest.TestCase):
         )
         self.assertTrue(result == ["ROI1"])
 
-
     def test_spare_train_MLP(self):
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         self.model_fixture = load_model("../fixtures/sample_model.pkl.gz")
-        # Test case 1: testing training an MLPTorch model 
+        # Test case 1: testing training an MLPTorch model
         result = spare_train(
             self.df_fixture,
             "Age",
