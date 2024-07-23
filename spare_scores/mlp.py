@@ -226,13 +226,23 @@ class MLPModel:
 
         return y_pred
 
-    def get_stats(self, y_test: np.ndarray, y_score: np.ndarray) -> None:
-        if len(y_test.unique()) == 2:
-            fpr, tpr, thresholds = metrics.roc_curve(y_test, y_score, pos_label=1)
+    def get_stats(self, y: np.ndarray, y_hat: np.ndarray) -> None:
+        """
+        Return the stats from the training
+
+        :param y: original labels
+        :type y: np.ndarray
+        :param y_hat: predicted values
+        :type y_hat: np.ndarray
+
+        """
+
+        if len(y.unique()) == 2:
+            fpr, tpr, thresholds = metrics.roc_curve(y, y_hat, pos_label=1)
             self.stats["AUC"].append(metrics.auc(fpr, tpr))
 
             # tn, fp, fn, tp = metrics.confusion_matrix(y_test, (y_score >= thresholds[np.argmax(tpr - fpr)])*2-1).ravel()
-            tn, fp, fn, tp = metrics.confusion_matrix(y_test, y_score).ravel()
+            tn, fp, fn, tp = metrics.confusion_matrix(y, y_hat).ravel()
             self.stats["Accuracy"].append((tp + tn) / (tp + tn + fp + fn))
             self.stats["Sensitivity"].append(tp / (tp + fp))
             self.stats["Specificity"].append(tn / (tn + fn))
@@ -241,12 +251,11 @@ class MLPModel:
             self.stats["Recall"].append(recall)
             self.stats["F1"].append(2 * precision * recall / (precision + recall))
         else:
-            self.stats["MAE"].append(metrics.mean_absolute_error(y_test, y_score))
+            self.stats["MAE"].append(metrics.mean_absolute_error(y, y_hat))
             self.stats["RMSE"].append(
-                metrics.mean_squared_error(y_test, y_score, squared=False)
+                metrics.mean_squared_error(y, y_hat, squared=False)
             )
-            self.stats["R2"].append(metrics.r2_score(y_test, y_score))
-        # logging.debug('   > ' + ' / '.join([f'{key}={value[-1]:#.4f}' for key, value in self.stats.items()]))
+            self.stats["R2"].append(metrics.r2_score(y, y_hat))
 
     def output_stats(self) -> None:
         for key, value in self.stats.items():

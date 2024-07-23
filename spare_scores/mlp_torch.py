@@ -296,8 +296,10 @@ class MLPTorchModel:
         assert self.train_dl is not None
         assert self.val_dl is not None
 
-        hidden_size = trial.suggest_categorical("hidden_size", [128, 256, 512])
-        dropout = trial.suggest_float("dropout", 0.1, 0.8, step=0.05)
+        hidden_size = trial.suggest_categorical(
+            "hidden_size", [x for x in range(32, 512, 32)]
+        )
+        dropout = trial.suggest_float("dropout", 0.1, 0.8, step=0.03)
         lr = trial.suggest_float("lr", 1e-4, 1e-1, log=True)
         use_bn = trial.suggest_categorical("use_bn", [False, True])
         bn = trial.suggest_categorical("bn", ["bn", "in"])
