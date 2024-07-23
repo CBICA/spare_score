@@ -291,7 +291,7 @@ class MLPTorchModel:
 
     def object(self, trial: Any) -> float:
         evaluation_metric = (
-            "Balanced Accuarcy" if self.task == "Classification" else "MAE"
+            "Balanced Accuracy" if self.task == "Classification" else "MAE"
         )
         assert self.train_dl is not None
         assert self.val_dl is not None

@@ -94,8 +94,7 @@ class SpareModel:
 
         try:
             result = self.model.fit(
-                df[self.predictors + [self.key_var] + [self.target]],
-                self.verbose
+                df[self.predictors + [self.key_var] + [self.target]], self.verbose
             )
         except Exception as e:
             err = "\033[91m\033[1m" + "spare_train(): Model fit failed." + "\033[0m\n"
