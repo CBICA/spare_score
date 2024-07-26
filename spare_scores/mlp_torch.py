@@ -488,5 +488,5 @@ class MLPTorchModel:
     def output_stats(self) -> None:
         for key, value in self.stats.items():
             logging.info(
-                f">> {key} = {np.mean(value):#.4f} \u00B1 {np.std(value):#.4f}"
+                f">> {key} = {np.mean(value): #.4f} \u00B1 {np.std(value): #.4f}"
             )

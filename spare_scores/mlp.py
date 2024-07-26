@@ -99,7 +99,7 @@ class MLPModel:
                 "mlp__alpha": [0.001, 0.01, 0.05, 0.1],
                 "mlp__learning_rate": ["constant", "adaptive"],
                 "mlp__early_stopping": [True],
-                "mlp__max_iter": [5000],
+                "mlp__max_iter": [500],
             }
 
     def set_parameters(self, **parameters: Any) -> None:
@@ -112,11 +112,11 @@ class MLPModel:
         y = df[self.to_predict].astype("float64")
 
         if self.task == "Regression":
-            mlp = MLPRegressor(early_stopping=True, max_iter=5000)
+            mlp = MLPRegressor(early_stopping=True, max_iter=500)
             scoring = "neg_mean_absolute_error"
             metrics = ["MAE", "RMSE", "R2"]
         else:
-            mlp = MLPClassifier(early_stopping=True, max_iter=5000)
+            mlp = MLPClassifier(early_stopping=True, max_iter=500)
             scoring = "balanced_accuracy"
             metrics = [
                 "AUC",
@@ -136,7 +136,7 @@ class MLPModel:
             pipeline_obj,
             self.param_grid,
             scoring=scoring,
-            cv=KFold(n_splits=5, shuffle=True, random_state=10086),
+            cv=KFold(n_splits=5, shuffle=True, random_state=42),
             refit=True,
         )
         grid_search.fit(X, y)
@@ -260,5 +260,5 @@ class MLPModel:
     def output_stats(self) -> None:
         for key, value in self.stats.items():
             logging.info(
-                f">> {key} = {np.mean(value):#.4f} \u00B1 {np.std(value):#.4f}"
+                f">> {key} = {np.mean(value): #.4f} \u00B1 {np.std(value): #.4f}"
             )
