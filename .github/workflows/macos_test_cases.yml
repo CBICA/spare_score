@@ -29,5 +29,12 @@ jobs:
         - name: Run unit tests
           run: |
             cd tests/unit && python -m unittest discover -s . -p "*.py"
+        - name: Generate Report
+          run: |
+            pip install coverage
+            cd tests/unit/
+            coverage run -m unittest
+        - name: Upload Coverage to Codecov
+          uses: codecov/codecov-action@v2
 
 
