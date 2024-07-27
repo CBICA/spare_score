@@ -31,9 +31,8 @@ jobs:
             cd tests/unit && python -m unittest discover -s . -p "*.py"
         - name: Generate Coverage Report
           run: |
-            pip install coverage
-            cd tests/unit/
-            coverage run -m unittest
+            pip install pytest-cov
+            cd tests/unit && pytest --cov
         - name: Upload Coverage to Codecov
           uses: codecov/codecov-action@v2
           with:
