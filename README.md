@@ -1,3 +1,4 @@
+[![codecov](https://codecov.io/gh/CBICA/spare_score/graph/badge.svg?token=7yk7pkydHE)](https://codecov.io/gh/CBICA/spare_score)
 
 # Compute SPARE Scores for Your Case
 
