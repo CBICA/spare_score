@@ -16,13 +16,15 @@
         def your_function(param1: type, param2: type, ...) -> return_type:
             """
                 Describe briefly what your function does
+                :param param1: Describe what param1 is used for.
+                :type param1: type of param1
+                :param param2: Describe what param2 is used for.
+                :type param2: type of param2
+                etc.
 
-                Args:
-                    param1(type): Describe what param1 is used for.
-                    param2(type): Describe what param2 is used for.
-                    etc.
-                Return:
-                    return_type: Explain what your function returns.
+                :return: Explain what your function returns
+                :rtype: return type of the function
+
             """
     ```
     - For classes:
@@ -31,19 +33,14 @@
             """
                 Describe briefly what your class does
 
-                Static attributes:
-                    param1(type): Explain what param1 is used for.
-                    param2(type): Explain what param2 is used for.
-                    etc.
-                
-                Methods:
-                    func1(param1, param2, ...):
-                        Here you have to explain what func1 does using the tutorial above.
-                    You have to do the same for every function.
-                
-                Note that you can add more docstrings inside function if you wish.
+                :param param1: Explain what param1 is used for.
+                :type param1: type of param1
+                :param param2: Explain what param2 is used for.
+                :type param2: type of param2 
+                etc.
+
             """
-        def __init__(self, param1: type, param2: type, ...):
+        def __init__(self, param1: type, param2: type, ...) -> None:
             ...
 
         def func1(self, param1: type, param2: type, ...) -> return_type: 
