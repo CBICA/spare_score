@@ -6,24 +6,36 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'spare_scores'
-copyright = '2023, Ashish Singh'
-author = 'Ashish Singh'
-release = '0.1'
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath("../spare_scores/"))
+
+project = "spare-scores"
+copyright = "2024, Gyujoon Hwang, George Aidinis"
+author = "Gyujoon Hwang, George Aidinis"
+release = "2024"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = []
+extensions = [
+    "sphinx.ext.todo",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.autodoc",
+    "sphinx_toolbox.sidebar_links",
+    "sphinx_toolbox.github",
+]
 
-templates_path = ['_templates']
-exclude_patterns = []
-
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-# html_theme = 'alabaster'
-html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
+github_username = "CBICA"
+github_repository = "github.com/CBICA/spare_score"
+
+html_theme = "sphinx_rtd_theme"
+html_static_path = ["_static"]

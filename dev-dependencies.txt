@@ -18,7 +18,7 @@ jsonschema==4.17.3
 kiwisolver==1.4.4
 matplotlib==3.7.1
 msgpack==1.0.5
-numpy==1.23.5
+numpy==1.26.4
 packaging==23.1
 pandas==2.0.3
 Pillow==9.5.0
@@ -36,7 +36,6 @@ requests==2.31.0
 scikit-learn==0.24.2
 scipy==1.8.0
 six==1.16.0
--e git+https://github.com/georgeaidinis/spare_score@3055a393e7aad704dd00dd378e45d695d99deebd#egg=spare_scores
 threadpoolctl==3.1.0
 tomli==2.0.1
 torch==2.3.1
@@ -44,4 +43,4 @@ typing_extensions==4.7.0
 tzdata==2023.3
 urllib3==2.0.3
 zipp==3.15.0
-setuptools==70.3.0
+setuptools==59.8.0
