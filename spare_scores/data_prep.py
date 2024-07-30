@@ -299,7 +299,9 @@ def age_sex_match(
         )[1]
     else:
         p_sex = 1
-    logging.debug(f" Original: P_age: {np.round(p_age,2)}/ P_sex: {np.round(p_sex,2)}")
+    logging.debug(
+        f" Original: P_age: {np.round(p_age, 2)}/ P_sex: {np.round(p_sex, 2)}"
+    )
 
     p_age_all, p_sex_all = np.array(p_age), np.array(p_sex)
     while np.min([p_age, p_sex]) < p_threshold:
@@ -345,7 +347,7 @@ def age_sex_match(
         df1, df2 = df2.copy(), df1.copy()
 
     logging.debug(f" {n_orig - len(df1.index) - len(df2.index)} participants excluded")
-    logging.debug(f" Final: P_age: {np.round(p_age,2)}/ P_sex {np.round(p_sex,2)}")
+    logging.debug(f" Final: P_age: {np.round(p_age, 2)}/ P_sex {np.round(p_sex, 2)}")
     logging.info("Age/Sex matched!")
     if no_df2:
         return pd.concat([df1, df2], ignore_index=True)

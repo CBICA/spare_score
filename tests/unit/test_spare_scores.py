@@ -12,7 +12,7 @@ from spare_scores import spare_test, spare_train
 
 class CheckSpareScores(unittest.TestCase):
 
-    def test_spare_test(self):
+    def test_spare_test_SVM(self):
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         self.model_fixture = load_model("../fixtures/sample_model.pkl.gz")
 
@@ -55,7 +55,71 @@ class CheckSpareScores(unittest.TestCase):
         )
         self.assertTrue(result == ["ROI1"])
 
-    def test_spare_train(self):
+    def test_spare_train_MLP(self): 
+        self.df_fixture = load_df("../fixtures/sample_data.csv")
+        self.model_fixture = load_model("../fixtures/sample_model.pkl.gz")
+        # Test case 1: Testing spare_train with MLP model
+        result = spare_train(
+            self.df_fixture,
+            "Age",
+            model_type="MLP",
+            data_vars=[
+                "ROI1",
+                "ROI2",
+                "ROI3",
+                "ROI4",
+                "ROI5",
+                "ROI6",
+                "ROI7",
+                "ROI8",
+                "ROI9",
+                "ROI10",
+            ],
+        )
+        status, result_data = result["status"], result["data"]
+        metadata = result_data[1]
+        self.assertTrue(status == "OK")
+        self.assertTrue(metadata["mdl_type"] == "MLP")
+        self.assertTrue(metadata["kernel"] == "linear")
+        self.assertTrue(
+            set(metadata["predictors"]) == set(self.model_fixture[1]["predictors"])
+        )
+        self.assertTrue(metadata["to_predict"] == self.model_fixture[1]["to_predict"])
+
+    def test_spare_train_MLPTorch(self):
+        self.df_fixture = load_df("../fixtures/sample_data.csv")
+        self.model_fixture = load_model("../fixtures/sample_model.pkl.gz")
+        # Test case 1: testing training an MLPTorch model
+        result = spare_train(
+            self.df_fixture,
+            "Age",
+            model_type="MLPTorch",
+            data_vars=[
+                "ROI1",
+                "ROI2",
+                "ROI3",
+                "ROI4",
+                "ROI5",
+                "ROI6",
+                "ROI7",
+                "ROI8",
+                "ROI9",
+                "ROI10",
+            ],
+        )
+
+        status, result_data = result["status"], result["data"]
+
+        metadata = result_data[1]
+        self.assertTrue(status == "OK")
+        self.assertTrue(metadata["mdl_type"] == "MLPTorch")
+        self.assertTrue(metadata["kernel"] == "linear")
+        self.assertTrue(
+            set(metadata["predictors"]) == set(self.model_fixture[1]["predictors"])
+        )
+        self.assertTrue(metadata["to_predict"] == self.model_fixture[1]["to_predict"])
+
+    def test_spare_train_SVM(self):
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         self.model_fixture = load_model("../fixtures/sample_model.pkl.gz")
 

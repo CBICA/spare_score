@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 from typing import Any, Tuple
 
@@ -28,6 +29,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils._testing import ignore_warnings
 from torch.utils.data import DataLoader, Dataset
 
+os.environ["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] = "0.0"  # for MPS backend
 device = (
     "cuda"
     if torch.cuda.is_available()
@@ -86,64 +88,43 @@ class SimpleMLP(nn.Module):
 
     def __init__(
         self,
-        num_features: int = 147,
         hidden_size: int = 256,
         classification: bool = True,
-        dropout: Any = 0.2,
+        dropout: float = 0.2,
         use_bn: bool = False,
         bn: str = "bn",
     ) -> None:
         super(SimpleMLP, self).__init__()
 
-        self.num_features = num_features
         self.hidden_size = hidden_size
         self.dropout = dropout
         self.classification = classification
         self.use_bn = use_bn
 
-        self.linear1 = nn.Linear(self.num_features, self.hidden_size)
-        self.norm1 = (
-            nn.InstanceNorm1d(self.hidden_size, eps=1e-15)
-            if bn != "bn"
-            else nn.BatchNorm1d(self.hidden_size, eps=1e-15)
+        def MLPLayer(hidden_size: int) -> nn.Module:
+            """
+            Our model contains 2 MLPLayers(see bellow)
+            """
+            return nn.Sequential(
+                nn.LazyLinear(hidden_size),
+                (
+                    nn.InstanceNorm1d(hidden_size, eps=1e-15)
+                    if bn != "bn"
+                    else nn.BatchNorm1d(hidden_size, eps=1e-15)
+                ),
+                nn.ReLU(),
+                nn.Dropout(p=0.2),
+            )
+
+        self.model = nn.Sequential(
+            MLPLayer(self.hidden_size),
+            MLPLayer(self.hidden_size // 2),
+            nn.LazyLinear(1),
+            nn.Sigmoid() if self.classification else nn.ReLU(),
         )
-
-        self.linear2 = nn.Linear(self.hidden_size, self.hidden_size // 2)
-        self.norm2 = (
-            nn.InstanceNorm1d(self.hidden_size // 2, eps=1e-15)
-            if bn != "bn"
-            else nn.BatchNorm1d(self.hidden_size // 2, eps=1e-15)
-        )
-
-        self.linear3 = nn.Linear(self.hidden_size // 2, 1)
-
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(p=0.2)
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # first layer
-        x = self.linear1(x)
-        if self.use_bn:
-            x = self.norm1(x)
-        x = self.dropout(self.relu(x))
-
-        # second layer
-        x = self.linear2(x)
-        if self.use_bn:
-            x = self.norm2(x)
-        x = self.relu(x)
-        x = self.dropout(x)
-
-        # thrid layer
-        x = self.linear3(x)
-
-        if self.classification:
-            x = self.sigmoid(x)
-        else:
-            x = self.relu(x)
-
-        return x.squeeze()
+        return self.model(x).squeeze()
 
 
 class MLPTorchModel:
@@ -226,8 +207,7 @@ class MLPTorchModel:
 
         if "num_epochs" not in kwargs.keys():
             self.num_epochs = 100
-
-        if device != "cuda":
+        if device != "cuda" and device != "mps":
             print("You are not using the GPU! Check your device")
 
         # Model settings
@@ -240,6 +220,19 @@ class MLPTorchModel:
         self.val_dl: Any
 
     def find_best_threshold(self, y_hat: list, y: list) -> Any:
+        """
+        Returns best threshold value using the roc_curve
+
+        :param y_hat: predicted values
+        :type y_hat: list
+        :param y: original labels
+        :type y: list
+
+        :return: the best threshold value
+        :rtype: Any
+
+        """
+
         fpr, tpr, thresholds_roc = roc_curve(y, y_hat, pos_label=1)
         youden_index = tpr - fpr
         best_threshold_youden = thresholds_roc[np.argmax(youden_index)]
@@ -297,21 +290,21 @@ class MLPTorchModel:
         return res_dict
 
     def object(self, trial: Any) -> float:
-
         evaluation_metric = (
-            "Balanced Accuarcy" if self.task == "Classification" else "MAE"
+            "Balanced Accuracy" if self.task == "Classification" else "MAE"
         )
         assert self.train_dl is not None
         assert self.val_dl is not None
 
-        hidden_size = trial.suggest_categorical("hidden_size", [128, 256, 512])
-        dropout = trial.suggest_float("dropout", 0.1, 0.8, step=0.05)
+        hidden_size = trial.suggest_categorical(
+            "hidden_size", [x for x in range(32, 512, 32)]
+        )
+        dropout = trial.suggest_float("dropout", 0.1, 0.8, step=0.03)
         lr = trial.suggest_float("lr", 1e-4, 1e-1, log=True)
         use_bn = trial.suggest_categorical("use_bn", [False, True])
         bn = trial.suggest_categorical("bn", ["bn", "in"])
 
         model = SimpleMLP(
-            num_features=len(self.predictors),
             hidden_size=hidden_size,
             classification=self.classification,
             dropout=dropout,
@@ -430,7 +423,6 @@ class MLPTorchModel:
         best_model_state_dict = best_checkpoint["model_state_dict"]
 
         self.mdl = SimpleMLP(
-            num_features=len(self.predictors),
             hidden_size=best_hyperparams["hidden_size"],
             classification=self.classification,
             dropout=best_hyperparams["dropout"],
@@ -496,5 +488,5 @@ class MLPTorchModel:
     def output_stats(self) -> None:
         for key, value in self.stats.items():
             logging.info(
-                f">> {key} = {np.mean(value):#.4f} \u00B1 {np.std(value):#.4f}"
+                f">> {key} = {np.mean(value): #.4f} \u00B1 {np.std(value): #.4f}"
             )
