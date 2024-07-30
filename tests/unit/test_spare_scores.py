@@ -1,14 +1,12 @@
-import sys
 import unittest
 from pathlib import Path
 import numpy as np
 import pandas as pd
+import os
+from spare_scores.util import load_df, load_model
+from spare_scores.mlp_torch import MLPDataset
 
-sys.path.append("../../spare_scores")
-from util import load_df, load_model
-from mlp_torch import MLPDataset
-
-from spare_scores import spare_test, spare_train
+from spare_scores.spare import spare_test, spare_train
 
 class CheckMLPDataset(unittest.TestCase):
     def test_len(self):
@@ -101,6 +99,32 @@ class CheckSpareScores(unittest.TestCase):
             set(metadata["predictors"]) == set(self.model_fixture[1]["predictors"])
         )
         self.assertTrue(metadata["to_predict"] == self.model_fixture[1]["to_predict"])
+        
+        # test case 2: testing MLP regression model 
+        result = spare_train(
+            self.df_fixture,
+            "ROI1",
+            model_type="MLP",
+            data_vars = [
+                "ROI2",
+                "ROI3",
+                "ROI4",
+                "ROI5",
+                "ROI6",
+                "ROI7",
+                "ROI8",
+                "ROI9",
+                "ROI10"
+            ]
+        ) 
+        status, result_data = result["status"], result["data"]
+        metadata = result_data[1]
+        print(f"######## {result_data} #########")
+        print(f"######## {metadata} ########")
+        self.assertTrue(status == "OK")
+        self.assertTrue(metadata["mdl_type"] == "MLP")
+        self.assertTrue(metadata["kernel"] == "linear")
+        # self.assertTrue(metadata["to_predict"] == "to_predict")
 
     def test_spare_train_MLPTorch(self):
         self.df_fixture = load_df("../fixtures/sample_data.csv")
@@ -134,6 +158,30 @@ class CheckSpareScores(unittest.TestCase):
             set(metadata["predictors"]) == set(self.model_fixture[1]["predictors"])
         )
         self.assertTrue(metadata["to_predict"] == self.model_fixture[1]["to_predict"])
+        
+        # test case 2: testing MLPTorch regression model
+        result = spare_train(
+            self.df_fixture,
+            "ROI1",
+            model_type="MLPTorch",
+            data_vars = [
+                "ROI2",
+                "ROI3",
+                "ROI4",
+                "ROI5",
+                "ROI6",
+                "ROI7",
+                "ROI8",
+                "ROI9",
+                "ROI10",
+            ]
+        ) 
+        status, result_data = result["status"], result["data"]
+        metadata = result_data[1]
+        self.assertTrue(status == "OK")
+        self.assertTrue(metadata["mdl_type"] == "MLPTorch")
+        self.assertTrue(metadata["kernel"] == "linear")
+        # self.assertTrue(metadata["to_predict"] == "to_predict")
 
     def test_spare_train_SVM(self):
         self.df_fixture = load_df("../fixtures/sample_data.csv")
@@ -171,3 +219,89 @@ class CheckSpareScores(unittest.TestCase):
             metadata["categorical_var_map"]
             == self.model_fixture[1]["categorical_var_map"]
         )
+
+        # test case 2: testing SVM regression model
+        result = spare_train(
+            self.df_fixture,
+            "ROI1",
+            data_vars = [
+                "ROI2",
+                "ROI3",
+                "ROI4",
+                "ROI5",
+                "ROI6",
+                "ROI7",
+                "ROI8",
+                "ROI9",
+                "ROI10"
+            ]
+        ) 
+        status, result_data = result["status"], result["data"]
+        metadata = result_data[1]
+        self.assertTrue(status == "OK")
+        self.assertTrue(metadata["mdl_type"] == "SVM")
+        self.assertTrue(metadata["kernel"] == "linear")
+        # self.assertTrue(metadata["to_predict"] == "to_predict")
+
+    def test_spare_train_SVM_None(self):
+        self.df_fixture = load_df("../fixtures/sample_data.csv")
+        # Test case 1: Training with no data vars
+        result = spare_train(
+            self.df_fixture,
+            "Age"
+        )
+        self.assertTrue(result is not None)
+
+
+    def test_spare_train_SVM2(self):
+        self.df_fixture = load_df("../fixtures/sample_data.csv")
+        # Test case 1: Test overwrites
+        result = spare_train(
+            self.df_fixture,
+            "Age",
+            output="test_util.py"
+        )
+        self.assertTrue(result["status_code"] == 2)
+
+        # Test case 2: Train with non existing output file
+        result = spare_train(
+            self.df_fixture,
+            "Age",
+            data_vars=[
+                "ROI1",
+                "ROI2",
+                "ROI3",
+                "ROI4",
+                "ROI5",
+                "ROI6",
+                "ROI7",
+                "ROI8",
+                "ROI9",
+                "ROI10",
+            ],
+            output="results"
+        )
+        self.assertTrue(os.path.isfile("results.pkl.gz") == True)
+        os.remove("results.pkl.gz")
+
+    def test_spare_train_non_existing_model(self):
+        self.df_fixture = load_df("../fixtures/sample_data.csv")
+        # Test case 1: training with non existing model type
+        result = spare_train(
+            self.df_fixture,
+            "Age",
+            model_type="CNN",
+            data_vars=[
+                "ROI1",
+                "ROI2",
+                "ROI3",
+                "ROI4",
+                "ROI5",
+                "ROI6",
+                "ROI7",
+                "ROI8",
+                "ROI9",
+                "ROI10",
+            ],
+        )
+        self.assertTrue(result["status_code"] == 2)

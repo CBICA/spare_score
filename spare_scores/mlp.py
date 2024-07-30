@@ -4,7 +4,6 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from data_prep import logging_basic_config
 from sklearn import metrics
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import GridSearchCV, KFold
@@ -12,6 +11,8 @@ from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._testing import ignore_warnings
+
+from .data_prep import logging_basic_config
 
 
 class MLPModel:

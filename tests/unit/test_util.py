@@ -1,14 +1,12 @@
 import logging
 import os
-import sys
 import unittest
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-sys.path.append("../../spare_scores")
-from util import (
+from spare_scores.util import (
     add_file_extension,
     check_file_exists,
     convert_to_number_if_possible,
@@ -137,6 +135,12 @@ class CheckSpareScoresUtil(unittest.TestCase):
         result = load_examples(file_name)
         self.assertFalse(result is None and isinstance(result, pd.DataFrame))
 
+        # test case 3: testing with non existant filename
+        file_name = "non_existant"
+        result = load_examples(file_name)
+        self.assertTrue(result is None)
+
+
     def test_convert_to_number_if_possible(self):
         # test case 1: valid convertion to integer
         num = "254"
@@ -200,3 +204,4 @@ class CheckSpareScoresUtil(unittest.TestCase):
         filename = "file.tar.gz"
         extension = ".gz"
         self.assertTrue(add_file_extension(filename, extension) == "file.tar.gz")
+

@@ -23,3 +23,4 @@ ignore:
   - "merge_ROI_demo_and_test.py"
   - "setup.py"
   - "spare_scores/cli.py"
+  - "tests/conftest.py"
