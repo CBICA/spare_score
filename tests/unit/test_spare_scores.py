@@ -1,14 +1,30 @@
 import sys
 import unittest
 from pathlib import Path
-
+import numpy as np
 import pandas as pd
 
 sys.path.append("../../spare_scores")
 from util import load_df, load_model
+from mlp_torch import MLPDataset
 
 from spare_scores import spare_test, spare_train
 
+class CheckMLPDataset(unittest.TestCase):
+    def test_len(self):
+        # test case 1: testing length 
+        self.X = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+        self.Y = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+        self.Dataset = MLPDataset(self.X, self.Y)
+        self.assertTrue(len(self.Dataset) == 8)
+    
+    def test_idx(self):
+        # test case 2: testing getter 
+        self.X = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+        self.Y = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+        self.Dataset = MLPDataset(self.X, self.Y)
+        self.assertTrue(self.Dataset[0] == (1, 1))
+        self.assertTrue(self.Dataset[len(self.Dataset) - 1] == (8, 8))
 
 class CheckSpareScores(unittest.TestCase):
 

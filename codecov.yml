@@ -18,3 +18,8 @@ comment:
   layout: "reach,diff,flags,tree"
   behavior: default
   require_changes: no
+
+ignore:
+  - "merge_ROI_demo_and_test.py"
+  - "setup.py"
+  - "spare_scores/cli.py"
