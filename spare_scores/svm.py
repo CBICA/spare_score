@@ -272,7 +272,7 @@ class SVMModel:
     def run_CV(self, df: pd.DataFrame) -> None:
         for i, fold in enumerate(self.folds):
             if i % self.n_repeats == 0:
-                logging.info(f"  FOLD {int(i/self.n_repeats+1)}...")
+                logging.info(f"  FOLD {int(i / self.n_repeats + 1)}...")
             X_train, X_test, y_train, y_test = self.prepare_sample(
                 df, fold, self.scaler[i], classify=self.classify
             )
@@ -360,5 +360,5 @@ class SVMModel:
     def output_stats(self) -> None:
         for key, value in self.stats.items():
             logging.info(
-                f">> {key} = {np.mean(value):#.4f} \u00B1 {np.std(value):#.4f}"
+                f">> {key} = {np.mean(value): #.4f} \u00B1 {np.std(value): #.4f}"
             )
