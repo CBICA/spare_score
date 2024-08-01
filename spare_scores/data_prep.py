@@ -6,7 +6,8 @@ from typing import Any, Tuple, Union
 import numpy as np
 import pandas as pd
 from scipy import stats
-from util import convert_to_number_if_possible
+
+from .util import convert_to_number_if_possible
 
 
 def check_train(

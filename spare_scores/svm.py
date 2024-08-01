@@ -4,12 +4,13 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from data_prep import logging_basic_config
 from sklearn import metrics
 from sklearn.model_selection import GridSearchCV, RepeatedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, LinearSVC, LinearSVR
-from util import expspace
+
+from .data_prep import logging_basic_config
+from .util import expspace
 
 
 class SVMModel:

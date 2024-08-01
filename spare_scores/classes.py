@@ -2,10 +2,11 @@ from dataclasses import dataclass
 from typing import Any
 
 import pandas as pd
-from data_prep import logging_basic_config
-from mlp import MLPModel
-from mlp_torch import MLPTorchModel
-from svm import SVMModel
+
+from .data_prep import logging_basic_config
+from .mlp import MLPModel
+from .mlp_torch import MLPTorchModel
+from .svm import SVMModel
 
 
 class SpareModel:
@@ -77,7 +78,7 @@ class SpareModel:
                 predictors, target, key_var, verbose, **parameters, **kwargs
             )
         else:
-            logger.err(f"Model type {self.model_type} not supported.")
+            logger.error(f"Model type {self.model_type} not supported.")
             raise NotImplementedError("Only SVM is supported currently.")
 
     def set_parameters(self, **parameters: Any) -> None:
