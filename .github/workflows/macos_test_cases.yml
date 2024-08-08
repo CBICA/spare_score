@@ -33,9 +33,4 @@ jobs:
         run: pip install setuptools && pip install .
       - name: Run unit tests
         run: |
-          cd tests/unit && python -m unittest discover -s . -p "*.py"
-      - name: Generate Coverage Report
-        run: |
-          pip install pytest
-          pip install pytest-cov
-          cd tests/unit && python3 -m pytest --cov=../../ --cov-report=xml
+          python3 -m pytest
