@@ -32,7 +32,12 @@ jobs:
           cd ..
       - name: Download dependencies
         run: pip install setuptools && pip install .
-      - name: Run unit tests
+      - name: Generate Coverage Report
         run: |
-          cd tests/unit
-          python -m pytest
+          pip install pytest-cov
+          cd tests/unit && pytest --cov=../../ --cov-report=xml
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: CBICA/spare_score
