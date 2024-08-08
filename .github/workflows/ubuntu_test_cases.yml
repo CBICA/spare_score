@@ -34,3 +34,8 @@ jobs:
       - name: Run unit tests
         run: |
           cd tests/unit && python -m unittest discover -s . -p "*.py"
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: CBICA/spare_score
