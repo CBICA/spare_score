@@ -1,21 +1,17 @@
 import logging
 import os
-import sys
 import unittest
 
 import pandas as pd
 
-sys.path.append(
-    "../../spare_scores/"
-)  # check_test and check_train were imported from the build, but now they are updated
-from data_prep import (  # If updates go through, it can be updated to spare_scores.data_prep
+from spare_scores.data_prep import (  # If updates go through, it can be updated to spare_scores.data_prep
     age_sex_match,
     check_test,
     check_train,
     logging_basic_config,
     smart_unique,
 )
-from util import load_df
+from spare_scores.util import load_df
 
 
 class CheckDataPrep(unittest.TestCase):
