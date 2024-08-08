@@ -25,6 +25,7 @@ setup(
         "torch<2.3.1",
         "matplotlib",
         "optuna",
+        "pytest"
     ],
     entry_points={
         "console_scripts": [
