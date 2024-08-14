@@ -341,9 +341,7 @@ class SVMModel:
             self.stats["F1"].append(2 * precision * recall / (precision + recall))
         else:
             self.stats["MAE"].append(metrics.mean_absolute_error(y_test, y_score))
-            self.stats["RMSE"].append(
-                metrics.root_mean_squared_error(y_test, y_score)
-            )
+            self.stats["RMSE"].append(metrics.root_mean_squared_error(y_test, y_score))
             self.stats["R2"].append(metrics.r2_score(y_test, y_score))
         logging.debug(
             "   > "
