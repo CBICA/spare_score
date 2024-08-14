@@ -10,14 +10,14 @@ from spare_scores.spare import spare_test, spare_train
 
 class CheckMLPDataset(unittest.TestCase):
     def test_len(self):
-        # test case 1: testing length 
+        # test case 1: testing length
         self.X = np.array([1, 2, 3, 4, 5, 6, 7, 8])
         self.Y = np.array([1, 2, 3, 4, 5, 6, 7, 8])
         self.Dataset = MLPDataset(self.X, self.Y)
         self.assertTrue(len(self.Dataset) == 8)
-    
+
     def test_idx(self):
-        # test case 2: testing getter 
+        # test case 2: testing getter
         self.X = np.array([1, 2, 3, 4, 5, 6, 7, 8])
         self.Y = np.array([1, 2, 3, 4, 5, 6, 7, 8])
         self.Dataset = MLPDataset(self.X, self.Y)
@@ -69,7 +69,7 @@ class CheckSpareScores(unittest.TestCase):
         )
         self.assertTrue(result == ["ROI1"])
 
-    def test_spare_train_MLP(self): 
+    def test_spare_train_MLP(self):
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         self.model_fixture = load_model("../fixtures/sample_model.pkl.gz")
         # Test case 1: Testing spare_train with MLP model
@@ -99,8 +99,8 @@ class CheckSpareScores(unittest.TestCase):
             set(metadata["predictors"]) == set(self.model_fixture[1]["predictors"])
         )
         self.assertTrue(metadata["to_predict"] == self.model_fixture[1]["to_predict"])
-        
-        # test case 2: testing MLP regression model 
+
+        # test case 2: testing MLP regression model
         result = spare_train(
             self.df_fixture,
             "ROI1",
@@ -116,7 +116,7 @@ class CheckSpareScores(unittest.TestCase):
                 "ROI9",
                 "ROI10"
             ]
-        ) 
+        )
         status, result_data = result["status"], result["data"]
         metadata = result_data[1]
         self.assertTrue(status == "OK")
@@ -156,7 +156,7 @@ class CheckSpareScores(unittest.TestCase):
             set(metadata["predictors"]) == set(self.model_fixture[1]["predictors"])
         )
         self.assertTrue(metadata["to_predict"] == self.model_fixture[1]["to_predict"])
-        
+
         # test case 2: testing MLPTorch regression model
         result = spare_train(
             self.df_fixture,
@@ -173,7 +173,7 @@ class CheckSpareScores(unittest.TestCase):
                 "ROI9",
                 "ROI10",
             ]
-        ) 
+        )
         status, result_data = result["status"], result["data"]
         metadata = result_data[1]
         self.assertTrue(status == "OK")
@@ -233,7 +233,7 @@ class CheckSpareScores(unittest.TestCase):
                 "ROI9",
                 "ROI10"
             ]
-        ) 
+        )
         status, result_data = result["status"], result["data"]
         metadata = result_data[1]
         self.assertTrue(status == "OK")
@@ -352,7 +352,7 @@ class CheckSpareScores(unittest.TestCase):
 
         self.assertTrue(result["status_code"] == 2)
         self.assertTrue(result["status"] == "Dataset check failed before training was initiated.")
-        
+
         # Test case 2: testing with a too-small dataset
         data = {
             "Var1": [1,2,3,4,5],
@@ -409,6 +409,3 @@ class CheckSpareScores(unittest.TestCase):
         )
 
         self.assertTrue(result is not None)
-
-
-

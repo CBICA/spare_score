@@ -133,7 +133,6 @@ class CheckSpareScoresUtil(unittest.TestCase):
         result = load_examples(file_name)
         self.assertTrue(result is None)
 
-
     def test_convert_to_number_if_possible(self):
         # test case 1: valid convertion to integer
         num = "254"
