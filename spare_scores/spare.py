@@ -221,7 +221,7 @@ def spare_test(
     spare_var: str = "SPARE_score",
     verbose: int = 1,
     logs: str = "",
-) -> pd.DataFrame:
+) -> dict:
     """
     Applies a trained SPARE model on a test dataset
 

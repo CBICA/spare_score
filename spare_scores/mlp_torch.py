@@ -16,7 +16,7 @@ from sklearn.metrics import (
     confusion_matrix,
     f1_score,
     mean_absolute_error,
-    mean_squared_error,
+    root_mean_squared_error,
     precision_score,
     r2_score,
     recall_score,
@@ -282,7 +282,7 @@ class MLPTorchModel:
         else:
             res_dict = {}
             mae = mean_absolute_error(y, y_hat)
-            mrse = mean_squared_error(y, y_hat, squared=False)
+            mrse = root_mean_squared_error(y, y_hat)
             r2 = r2_score(y, y_hat)
             res_dict["MAE"] = mae
             res_dict["RMSE"] = mrse
