@@ -12,10 +12,13 @@ For detailed documentation, please see here: **[spare_scores](https://cbica.gith
 
 ## Installation
 
+You can install the spare_score package for python 3.8 up to python 3.12
+Please open an issue if you find any bugs for the newer versions of spare_score
+
 ### Conda environment using pip
 
 ```bash
-    conda create -n spare python=3.8
+    conda create -n spare python=3.8 # (up to python=3.12)
     conda activate spare
     conda install pip
     pip install spare_scores
@@ -29,61 +32,66 @@ For detailed documentation, please see here: **[spare_scores](https://cbica.gith
     pip install spare_scores
 ```
 
-### Conda environment from Github repository
+### Manually build spare_score
 
 ```bash
     git clone https://github.com/CBICA/spare_score.git
     cd spare_score
-    pip install .
+    python -m pip install . # for python 3.12
+
+    # for python 3.8...
+    # python setup.py bdist_wheel
+    # cd dist && pip install "$The .wh file"
+
 ```
 
 ## Usage
 
 ```text
-spare_scores  v1.0.0.
+spare_scores  v1.2.1.
 SPARE model training & scores calculation
 required arguments:
         [ACTION]        The action to be performed, either 'train' or 'test'
         [-a, --action]
 
-        [INPUT]         The dataset to be used for training / testing. Can be 
+        [INPUT]         The dataset to be used for training / testing. Can be
         [-i, --input]   a filepath string of a .csv file.
-                        
+
 optional arguments:
-        [OUTPUT]        The filename for the model (as a .pkl.gz) to be saved 
-        [-o, --output]  at, if training. If testing, the filepath of the 
-                        resulting SPARE score dataframe (as a .csv file) to be 
+        [OUTPUT]        The filename for the model (as a .pkl.gz) to be saved
+        [-o, --output]  at, if training. If testing, the filepath of the
+                        resulting SPARE score dataframe (as a .csv file) to be
                         saved. If not given, nothing will be saved.
 
-        [MODEL]         The model to be used (only) for testing. Can be a 
+        [MODEL]         The model to be used (only) for testing. Can be a
         [-m, --model,   filepath string of a .pkl.gz file. Required for testing
         --model_file]
 
-        [KEY_VAR]       The key variable to be used for training. This could 
-        [-kv,           be a string of a column name that can uniquely 
-        --key_var,      identify a row of the dataset. 
-        --identifier]   For example (if a row_ID doesn't exist), it could be: 
+        [KEY_VAR]       The key variable to be used for training. This could
+        [-kv,           be a string of a column name that can uniquely
+        --key_var,      identify a row of the dataset.
+        --identifier]   For example (if a row_ID doesn't exist), it could be:
                         --key_var PTID
-                        If not given, the first column of the dataset is 
+                        If not given, the first column of the dataset is
                         considered the primary key of the dataset. Required for
                         training.
 
         [DATA_VARS]     The list of predictors to be used for training. List.
         [-dv,           If not given, training will assume that all (apart from
-        --data_vars,    the key variables) variables will be used as 
+        --data_vars,    the key variables) variables will be used as
         --predictors]   predictors, with the ignore variables ignored.
 
         [IGNORE_VARS]   The list of predictors to be ignored for training. Can
-        [-iv,           be a list, or empty. 
+        [-iv,           be a list, or empty.
         --ignore_vars,
-        --ignore]  
+        --ignore]
 
         [TARGET]        The characteristic to be predicted in the course of the
-        [-t,            training. String of the name of the column. Required 
+        [-t,            training. String of the name of the column. Required
         --target,       for training.
         --to_predict]
 
-        [POS_GROUP]     Group to assign a positive SPARE score (only for 
+        [POS_GROUP]     Group to assign a positive SPARE score (only for
         -pg,            classification). String. Required for training.
         --pos_group]
 
@@ -91,17 +99,17 @@ optional arguments:
         [-mt,           'SVM' or 'MLP'. Required for training.
         --model_type]
 
-        [KERNEL]        The kernel for SVM training. 'linear' or 'rbf' (only 
+        [KERNEL]        The kernel for SVM training. 'linear' or 'rbf' (only
         -k,             linear is supported currently in regression).
         --kernel]
 
-        [SPARE_VAR]     The name of the column to be used for SPARE score. If 
+        [SPARE_VAR]     The name of the column to be used for SPARE score. If
         [-sv,           not given, the column will be named 'SPARE_score'.
         --spare_var]
 
         [VERBOSE]       Verbosity. Int.
         [-v,            0: Warnings
-        --verbose,      1: Info 
+        --verbose,      1: Info
         --verbosity]    2: Debug
                         3: Errors
                         4: Critical
@@ -110,8 +118,8 @@ optional arguments:
         [-l,            printed out.
         --logs]
 
-        [VERSION]       Display the version of the package. 
-        [-V, --version]        
+        [VERSION]       Display the version of the package.
+        [-V, --version]
 
         [HELP]          Show this help message and exit.
         [-h, --help]
