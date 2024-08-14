@@ -5,7 +5,7 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ["macos-12"]
+    runs-on: ["macos-13"]
 
     steps:
       - uses: actions/checkout@v4
@@ -26,12 +26,6 @@ jobs:
         run: |
           pip install setuptools twine wheel
           python -m pip install .
-      - name: Generate Coverage Report
+      - name: Run unit tests
         run: |
-          pip install pytest-cov
-          cd tests/unit && pytest --cov=../../ --cov-report=xml
-      - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v4.0.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: CBICA/spare_score
+          cd tests/unit && python -m unittest discover -s . -p "*.py"
