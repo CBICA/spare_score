@@ -254,7 +254,7 @@ class MLPModel:
         else:
             self.stats["MAE"].append(metrics.mean_absolute_error(y, y_hat))
             self.stats["RMSE"].append(
-                metrics.root_mean_squared_error(y, y_hat)
+                metrics.mean_squared_error(y, y_hat, squared=False)
             )
             self.stats["R2"].append(metrics.r2_score(y, y_hat))
 

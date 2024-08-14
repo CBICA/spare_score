@@ -342,7 +342,7 @@ class SVMModel:
         else:
             self.stats["MAE"].append(metrics.mean_absolute_error(y_test, y_score))
             self.stats["RMSE"].append(
-                metrics.root_mean_squared_error(y_test, y_score)
+                metrics.mean_squared_error(y_test, y_score, squared=False)
             )
             self.stats["R2"].append(metrics.r2_score(y_test, y_score))
         logging.debug(
