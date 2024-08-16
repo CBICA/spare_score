@@ -3,14 +3,21 @@ from typing import Any, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from classes import MetaData, SpareModel
-from data_prep import (
+
+from .classes import MetaData, SpareModel
+from .data_prep import (
     check_test,
     check_train,
     convert_cat_variables,
     logging_basic_config,
 )
-from util import check_file_exists, is_unique_identifier, load_df, load_model, save_file
+from .util import (
+    check_file_exists,
+    is_unique_identifier,
+    load_df,
+    load_model,
+    save_file,
+)
 
 
 def spare_train(
@@ -105,7 +112,7 @@ def spare_train(
 
     # Check if it contains any errors.
     try:
-        df, predictors, mdl_task = check_train(
+        df, predictors, mdl_task = check_train(  # type: ignore
             df, predictors, to_predict, verbose, pos_group
         )
     except Exception as e:
@@ -200,9 +207,6 @@ def spare_train(
     if output != "" and output is not None:
         save_file(result, output, "train", logger)
 
-    print("###### PRINTING ########")
-    print(result)
-    print("####### END ###########")
     res["status"] = "OK"
     res["data"] = result
     res["status_code"] = 0

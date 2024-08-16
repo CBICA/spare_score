@@ -1,14 +1,12 @@
 import logging
 import os
-import sys
 import unittest
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-sys.path.append("../../spare_scores")
-from util import (
+from spare_scores.util import (
     add_file_extension,
     check_file_exists,
     convert_to_number_if_possible,
@@ -23,11 +21,9 @@ from util import (
 
 class CheckSpareScoresUtil(unittest.TestCase):
     def test_load_model(self):
-        self.model_fixture = "../fixture/sample_model.pkl.gz"
-        # Test case 1: No arguments given:
-        no_args = "load_model() missing 1 required positional " + "argument: 'mdl_path'"
+        self.model_fixture = load_model("../../tests/fixtures/sample_model.pkl.gz")
 
-        # Test case 2: Load a model
+        # Test case 1: Load a model
         filepath = (
             Path(__file__).resolve().parent.parent / "fixtures" / "sample_model.pkl.gz"
         )
@@ -121,11 +117,6 @@ class CheckSpareScoresUtil(unittest.TestCase):
         self.df_fixture = pd.DataFrame(data=df)
         self.assertFalse(is_unique_identifier(self.df_fixture, ["Var1", "Var2"]))
 
-    def test_load_model(self):
-        # test case 1: testing opening existing model
-        model = load_model("../../spare_scores/mdl/mdl_SPARE_BA_hMUSE_single.pkl.gz")
-        self.assertFalse(model is None)
-
     def test_load_examples(self):
         # test case 1: testing loading example csv
         file_name = "example_data.csv"
@@ -133,9 +124,14 @@ class CheckSpareScoresUtil(unittest.TestCase):
         self.assertTrue(isinstance(result, pd.DataFrame))
 
         # test case 2: testing loading model
-        file_name = "mdl_SPARE_BA_hMUSE_single.pkl.gz"
+        file_name = "../../spare_scores/mdl/mdl_SPARE_BA_hMUSE_single.pkl.gz"
         result = load_examples(file_name)
         self.assertFalse(result is None and isinstance(result, pd.DataFrame))
+
+        # test case 3: testing with non existant filename
+        file_name = "non_existant"
+        result = load_examples(file_name)
+        self.assertTrue(result is None)
 
     def test_convert_to_number_if_possible(self):
         # test case 1: valid convertion to integer
