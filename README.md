@@ -35,20 +35,21 @@ Please open an issue if you find any bugs for the newer versions of spare_score
 ### Manually build spare_score
 
 ```bash
+    # for python 3.12
     git clone https://github.com/CBICA/spare_score.git
     cd spare_score
-    python -m pip install . # for python 3.12
+    python -m pip install . 
 
     # for python 3.8...
-    # python setup.py bdist_wheel
-    # cd dist && pip install "$The .wh file"
+    python setup.py bdist_wheel
+    cd dist && pip install ...
 
 ```
 
 ## Usage
 
 ```text
-spare_scores  v1.2.1.
+spare_scores  v1.2.3.
 SPARE model training & scores calculation
 required arguments:
         [ACTION]        The action to be performed, either 'train' or 'test'
