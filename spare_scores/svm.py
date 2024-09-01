@@ -260,7 +260,11 @@ class SVMModel:
                 ["MAE", "RMSE", "R2"],
             )
             self.to_predict, self.classify = to_predict, None
-            self.mdl = [LinearSVR(max_iter=100000, loss='squared_epsilon_insensitive', dual=False)] * len(self.folds)
+            self.mdl = [
+                LinearSVR(
+                    max_iter=100000, loss="squared_epsilon_insensitive", dual=False
+                )
+            ] * len(self.folds)
             self.bias_correct = {
                 "slope": np.zeros((len(self.folds),)),
                 "int": np.zeros((len(self.folds),)),

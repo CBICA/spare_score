@@ -1,7 +1,7 @@
 import logging
 import os
 import time
-from typing import Any, Tuple, List
+from typing import Any, Tuple
 
 import numpy as np
 import optuna
@@ -213,14 +213,14 @@ class MLPTorchModel:
 
         # Model settings
         self.classification = True if self.task == "Classification" else False
-        self.mdl: Any
-        self.scaler: Any
-        self.stats: Any
-        self.param: Any
-        self.train_dl: Any
-        self.val_dl: Any
+        self.mdl: None
+        self.scaler: None
+        self.stats: None
+        self.param: None
+        self.train_dl: None
+        self.val_dl: None
 
-    def find_best_threshold(self, y_hat: list, y: list) -> List:
+    def find_best_threshold(self, y_hat: list, y: list) -> Any:
         """
         Returns best threshold value using the roc_curve
 
