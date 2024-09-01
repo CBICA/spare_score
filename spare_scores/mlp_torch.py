@@ -59,13 +59,13 @@ class MLPDataset(Dataset):
         """
         return len(self.y)
 
-    def __getitem__(self, idx: int) -> Tuple[np.float32, np.float32]:
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         (getter)returns the index of both X and y at index: idx(X[idx], y[idx])
         :param idx: the index
         :type idx: int
         """
-        return self.X[idx], self.y[idx]
+        return torch.tensor(self.X[idx]), torch.tensor(self.y[idx])
 
 
 class SimpleMLP(nn.Module):
