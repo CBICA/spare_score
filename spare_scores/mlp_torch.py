@@ -65,7 +65,9 @@ class MLPDataset(Dataset):
         :param idx: the index
         :type idx: int
         """
-        return torch.tensor(self.X[idx], dtype=torch.float32), torch.tensor(self.y[idx], dtype=torch.float32)
+        return torch.tensor(self.X[idx], dtype=torch.float32), torch.tensor(
+            self.y[idx], dtype=torch.float32
+        )
 
 
 class SimpleMLP(nn.Module):
