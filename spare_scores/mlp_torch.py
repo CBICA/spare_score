@@ -1,7 +1,7 @@
 import logging
 import os
 import time
-from typing import Any, Optional, Tuple
+from typing import Any, Tuple
 
 import numpy as np
 import optuna
@@ -216,9 +216,9 @@ class MLPTorchModel:
         self.mdl: SimpleMLP
         self.scaler: StandardScaler
         self.stats: dict
-        self.param: Optional[Any] = None
-        self.train_dl: Optional[Any] = None
-        self.val_dl: Optional[Any] = None
+        self.param: dict
+        self.train_dl: DataLoader
+        self.val_dl: DataLoader
 
     def find_best_threshold(self, y_hat: list, y: list) -> Any:
         """
