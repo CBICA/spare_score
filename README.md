@@ -1,4 +1,8 @@
 [![codecov](https://codecov.io/gh/CBICA/spare_score/graph/badge.svg?token=7yk7pkydHE)](https://codecov.io/gh/CBICA/spare_score)
+![macos python=3.12 build](https://github.com/github/docs/actions/workflows/macos_test_cases_p3-12.yml/badge.svg)
+![macos python=3.8 build](https://github.com/github/docs/actions/workflows/macos_test_cases_p3-12.yml/badge.svg)
+![ubuntu python=3.12 build](https://github.com/github/docs/actions/workflows/ubuntu_test_cases_p3-12.yml/badge.svg)
+![ubuntu python=3.8 build](https://github.com/github/docs/actions/workflows/ubuntu_test_cases_p3-8.yml/badge.svg)
 
 # Compute SPARE Scores for Your Case
 
@@ -38,7 +42,7 @@ Please open an issue if you find any bugs for the newer versions of spare_score
     # for python 3.12
     git clone https://github.com/CBICA/spare_score.git
     cd spare_score
-    python -m pip install . 
+    python -m pip install .
 
     # for python 3.8...
     python setup.py bdist_wheel
