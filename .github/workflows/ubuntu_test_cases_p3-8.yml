@@ -1,4 +1,4 @@
-name: spare_scores test cases on ubuntu for python 3.8
+name: Ubuntu python=3.8
 
 # workflow dispatch has been added for testing purposes
 on: [push, pull_request, workflow_dispatch]
