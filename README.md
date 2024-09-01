@@ -44,7 +44,7 @@ Please open an issue if you find any bugs for the newer versions of spare_score
     cd spare_score
     python -m pip install .
 
-    # for python 3.8...
+    # for python 3.8
     python setup.py bdist_wheel
     cd dist && pip install ...
 
