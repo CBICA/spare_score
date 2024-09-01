@@ -49,9 +49,9 @@ class MLPDataset(Dataset):
 
     """
 
-    def __init__(self, X: list, y: list):
-        self.X = np.array(X, dtype=torch.Tensor)
-        self.y = np.array(y, dtype=torch.Tensor)
+    def __init__(self, X: list, y: list) -> None:
+        self.X = np.array(X, dtype=np.float32)
+        self.y = np.array(y, dtype=np.float32)
 
     def __len__(self) -> int:
         """
@@ -65,7 +65,7 @@ class MLPDataset(Dataset):
         :param idx: the index
         :type idx: int
         """
-        return self.X[idx], self.y[idx]
+        return torch.tensor(self.X[idx], dtype=torch.float32), torch.tensor(self.y[idx], dtype=torch.float32)
 
 
 class SimpleMLP(nn.Module):
@@ -434,7 +434,7 @@ class MLPTorchModel:
         self.mdl.load_state_dict(best_model_state_dict)
         self.mdl.to(device)
         self.mdl.eval()
-        X_total = self.scaler.transform(np.array(X, dtype=torch.Tensor))
+        X_total = self.scaler.transform(np.array(X, dtype=np.float32))
         X_total = torch.tensor(X_total).to(device)
 
         self.y_pred = self.mdl(X_total).cpu().data.numpy()
@@ -475,7 +475,7 @@ class MLPTorchModel:
 
     def predict(self, df: pd.DataFrame) -> np.ndarray:
         X = df[self.predictors]
-        X = self.scaler.transform(np.array(X, dtype=torch.Tensor))
+        X = self.scaler.transform(np.array(X, dtype=np.float32))
         X = torch.tensor(X).to(device)
 
         checkpoint_dict = self.param
