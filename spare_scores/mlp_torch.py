@@ -1,7 +1,7 @@
 import logging
 import os
 import time
-from typing import Any, Tuple
+from typing import Any, Tuple, List
 
 import numpy as np
 import optuna
@@ -220,7 +220,7 @@ class MLPTorchModel:
         self.train_dl: Any
         self.val_dl: Any
 
-    def find_best_threshold(self, y_hat: list, y: list) -> Any:
+    def find_best_threshold(self, y_hat: list, y: list) -> List:
         """
         Returns best threshold value using the roc_curve
 
@@ -230,7 +230,7 @@ class MLPTorchModel:
         :type y: list
 
         :return: the best threshold value
-        :rtype: Any
+        :rtype: List
 
         """
 
