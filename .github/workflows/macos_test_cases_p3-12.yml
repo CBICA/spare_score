@@ -5,23 +5,13 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ["macos-13"]
+    runs-on: ["macos-latest"]
 
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12.4"
-      - name: Set-up miniconda for macos and ubuntu
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          auto-update-conda: true
-          python-version: 3.12.4
-          miniconda-version: "latest"
-      - name: Create conda env
-        run: conda create -n spare python=3.12
-      - name: Install pip
-        run: conda run -n spare conda install pip
       - name: Install spare scores
         run: |
           pip install setuptools twine wheel
