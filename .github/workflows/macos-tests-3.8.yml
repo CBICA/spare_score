@@ -20,8 +20,6 @@ jobs:
           cd dist
           WHEEL_FILE=$(ls spare_scores*)
           pip install "$WHEEL_FILE"
-      - name: Download dependencies
-        run: pip install setuptools && pip install -r dev-dependencies.txt
       - name: Generate Coverage Report
         run: |
           pip install pytest pytest-cov
