@@ -19,4 +19,5 @@ jobs:
           python -m pip install .
       - name: Run unit tests
         run: |
-          cd tests/unit && python -m pytest --cov=../../
+          pip install pytest pytest-cov
+          cd tests/unit && pytest --cov=../../
