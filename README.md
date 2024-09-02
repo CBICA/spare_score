@@ -1,6 +1,9 @@
 [![codecov](https://codecov.io/gh/CBICA/spare_score/graph/badge.svg?token=7yk7pkydHE)](https://codecov.io/gh/CBICA/spare_score)
-![macos build](https://github.com/CBICA/spare_score/actions/workflows/macos-tests.yml/badge.svg)
-![ubuntu build](https://github.com/CBICA/spare_score/actions/workflows/ubuntu-tests.yml/badge.svg)
+![macos python=3.12 build](https://github.com/CBICA/spare_score/actions/workflows/macos_test_cases_p3-12.yml/badge.svg)
+![macos python=3.8 build](https://github.com/CBICA/spare_score/actions/workflows/macos_test_cases_p3-12.yml/badge.svg)
+![ubuntu python=3.12 build](https://github.com/CBICA/spare_score/actions/workflows/ubuntu_test_cases_p3-12.yml/badge.svg)
+![ubuntu python=3.8 build](https://github.com/CBICA/spare_score/actions/workflows/ubuntu_test_cases_p3-8.yml/badge.svg)
+
 # Compute SPARE Scores for Your Case
 
 "SPARE" is short for "Spatial Pattern of Abnormalities for Recognition of ..." If you have brain images of a case population, such as the Alzheimer's disease (AD), the SPARE model will try to find characteristic brain patterns of AD with respect to a control population, such as cognitively normal. This would be an example of a classification-based SPARE model (currently powered by support vector machine or SVM). This model (that we named SPARE-AD) then computes SPARE-AD scores on an individual-basis that indicates how much the individual carries the learned brain patterns of AD.

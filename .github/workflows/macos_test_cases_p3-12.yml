@@ -1,4 +1,4 @@
-name: macos tests
+name: MacOS python=3.12
 
 # workflow dispatch has been added for testing purposes
 on: [push, pull_request, workflow_dispatch]
@@ -6,15 +6,12 @@ on: [push, pull_request, workflow_dispatch]
 jobs:
   build:
     runs-on: ["macos-13"]
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-    name: Python ${{ matrix.python-version }} sample
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.12.4"
       - name: Install spare scores
         run: |
           pip install -r dev-dependencies.txt
