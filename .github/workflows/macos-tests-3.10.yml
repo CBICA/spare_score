@@ -12,16 +12,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-      - name: Set-up miniconda for macos and ubuntu
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          auto-update-conda: true
-          python-version: 3.10
-          miniconda-version: "latest"
-      - name: Create conda env
-        run: conda create -n spare python=3.10
-      - name: Install pip
-        run: conda run -n spare conda install pip
       - name: Install spare scores
         run: |
           python -m pip cache purge
