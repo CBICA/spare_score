@@ -1,4 +1,4 @@
-name: macos python=3.8
+name: macos build python=3.12
 
 # workflow dispatch has been added for testing purposes
 on: [push, pull_request, workflow_dispatch]

@@ -1,4 +1,4 @@
-name: ubuntu python=3.8
+name: ubuntu build python=3.8
 
 # workflow dispatch has been added for testing purposes
 on: [push, pull_request, workflow_dispatch]
