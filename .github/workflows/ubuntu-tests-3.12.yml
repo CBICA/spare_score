@@ -15,6 +15,7 @@ jobs:
       - name: Install spare scores
         run: |
           python -m pip cache purge
+          pip install -r requirements.txt
           pip install setuptools twine wheel
           python -m pip install .
       - name: Run unit tests
