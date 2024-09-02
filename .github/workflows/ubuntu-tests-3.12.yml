@@ -18,7 +18,7 @@ jobs:
           pip install setuptools twine wheel
           python -m pip install .
       - name: Download dependencies
-        run: pip install setuptools && pip install .
+        run: pip install setuptools && pip install -r dev-dependencies.txt
       - name: Run unit tests
         run: |
           cd tests/unit && pytest --cov=../../
