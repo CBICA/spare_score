@@ -100,7 +100,7 @@ class MLPModel:
                 "mlp__alpha": [0.001, 0.01, 0.05, 0.1],
                 "mlp__learning_rate": ["constant", "adaptive"],
                 "mlp__early_stopping": [True],
-                "mlp__max_iter": [500],
+                "mlp__max_iter": [1000],
             }
 
     def set_parameters(self, **parameters: Any) -> None:
@@ -113,11 +113,11 @@ class MLPModel:
         y = df[self.to_predict].astype("float64")
 
         if self.task == "Regression":
-            mlp = MLPRegressor(early_stopping=True, max_iter=500)
+            mlp = MLPRegressor(early_stopping=True, max_iter=1000)
             scoring = "neg_mean_absolute_error"
             metrics = ["MAE", "RMSE", "R2"]
         else:
-            mlp = MLPClassifier(early_stopping=True, max_iter=500)
+            mlp = MLPClassifier(early_stopping=True, max_iter=1000)
             scoring = "balanced_accuracy"
             metrics = [
                 "AUC",

@@ -1,11 +1,11 @@
-name: spare_scores test cases on ubuntu for python 3.8
+name: macos tests python=3.8
 
 # workflow dispatch has been added for testing purposes
 on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ["ubuntu-latest"]
+    runs-on: ["macos-13"]
 
     steps:
       - uses: actions/checkout@v4
@@ -31,6 +31,12 @@ jobs:
           pip install "$WHEEL_FILE"
       - name: Download dependencies
         run: pip install setuptools && pip install .
-      - name: Run unit tests
+      - name: Generate Coverage Report
         run: |
-          cd tests/unit && python -m unittest discover -s . -p "*.py"
+          pip install pytest-cov
+          cd tests/unit && pytest --cov=../../ --cov-report=xml
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: CBICA/spare_score

@@ -49,7 +49,7 @@ class MLPDataset(Dataset):
 
     """
 
-    def __init__(self, X: list, y: list):
+    def __init__(self, X: list, y: list) -> None:
         self.X = np.array(X, dtype=np.float32)
         self.y = np.array(y, dtype=np.float32)
 
@@ -59,13 +59,15 @@ class MLPDataset(Dataset):
         """
         return len(self.y)
 
-    def __getitem__(self, idx: int) -> Tuple[np.float32, np.float32]:
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         (getter)returns the index of both X and y at index: idx(X[idx], y[idx])
         :param idx: the index
         :type idx: int
         """
-        return self.X[idx], self.y[idx]
+        return torch.tensor(self.X[idx], dtype=torch.float32), torch.tensor(
+            self.y[idx], dtype=torch.float32
+        )
 
 
 class SimpleMLP(nn.Module):
@@ -213,12 +215,12 @@ class MLPTorchModel:
 
         # Model settings
         self.classification = True if self.task == "Classification" else False
-        self.mdl: Any
-        self.scaler: Any
-        self.stats: Any
-        self.param: Any
-        self.train_dl: Any
-        self.val_dl: Any
+        self.mdl: SimpleMLP
+        self.scaler: StandardScaler
+        self.stats: dict
+        self.param: dict
+        self.train_dl: DataLoader
+        self.val_dl: DataLoader
 
     def find_best_threshold(self, y_hat: list, y: list) -> Any:
         """
@@ -230,7 +232,7 @@ class MLPTorchModel:
         :type y: list
 
         :return: the best threshold value
-        :rtype: Any
+        :rtype: List
 
         """
 

@@ -249,7 +249,7 @@ class SVMModel:
             )
             self.to_predict, self.classify = to_predict, list(df[to_predict].unique())
             self.mdl = (
-                [LinearSVC(max_iter=100000, dual="auto")]
+                [LinearSVC(max_iter=100000, dual=False)]
                 if self.kernel == "linear"
                 else [SVC(max_iter=100000, kernel=self.kernel)]
             ) * len(self.folds)
@@ -260,7 +260,11 @@ class SVMModel:
                 ["MAE", "RMSE", "R2"],
             )
             self.to_predict, self.classify = to_predict, None
-            self.mdl = [LinearSVR(max_iter=100000, dual="auto")] * len(self.folds)
+            self.mdl = [
+                LinearSVR(
+                    max_iter=100000, loss="squared_epsilon_insensitive", dual=False
+                )
+            ] * len(self.folds)
             self.bias_correct = {
                 "slope": np.zeros((len(self.folds),)),
                 "int": np.zeros((len(self.folds),)),
@@ -320,6 +324,7 @@ class SVMModel:
             scoring=scoring,
             cv=self.k,
             return_train_score=True,
+            error_score=0.0,
             verbose=0,
         )
         gs.fit(X_train, y_train)
