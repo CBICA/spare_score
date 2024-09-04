@@ -51,7 +51,7 @@ Please open an issue if you find any bugs for the newer versions of spare_score
 ## Usage
 
 ```text
-spare_scores  v1.2.3.
+spare_scores  v1.2.4
 SPARE model training & scores calculation
 required arguments:
         [ACTION]        The action to be performed, either 'train' or 'test'
