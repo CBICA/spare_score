@@ -3,7 +3,7 @@ name: pre-commit
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, fixing_issues]
 
 jobs:
   pre-commit:
@@ -12,6 +12,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-            python-version: '3.8'
+          python-version: "3.12"
       - run: pip3 install pre-commit
       - run: pre-commit run --files spare_scores/*
