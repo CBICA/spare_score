@@ -3,7 +3,7 @@ name: pre-commit
 on:
   pull_request:
   push:
-    branches: [main, fixing_issues]
+    branches: [main, fixing_issues, spiros-dev]
 
 jobs:
   pre-commit:
