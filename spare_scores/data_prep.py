@@ -71,7 +71,7 @@ def check_train(
             logging.error("At least one of the groups to classify is too small (n<10).")
             return "At least one of the groups to classify is too small (n<10)."
         elif np.min(df[to_predict].value_counts()) < 100:
-            logging.warn(
+            logging.warning(
                 "At least one of the groups to classify may be too small (n<100)."
             )
         mdl_task = "Classification"
@@ -84,7 +84,7 @@ def check_train(
             logging.error("Sample size is too small (n<10).")
             return "Sample size is too small (n<10)."
         elif len(df.index) < 100:
-            logging.warn("Sample size may be too small (n<100).")
+            logging.warning("Sample size may be too small (n<100).")
         if pos_group != "":
             logging.info(
                 'SPARE regression does not need a "pos_group". This will be ignored.'
@@ -126,7 +126,7 @@ def check_test(
     #     logging.warn('Some participants fall outside the age range of the SPARE model.')
 
     if np.sum(np.sum(pd.isna(df[meta_data["predictors"]]))) > 0:
-        logging.warn(
+        logging.warning(
             "Some participants have invalid (missing or NaN values) predictor variables."
         )
 

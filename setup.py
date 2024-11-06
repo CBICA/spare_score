@@ -22,7 +22,7 @@ setup(
         "pandas",
         "setuptools",
         "scikit-learn",
-        "torch<=2.3.1",
+        "torch<=2.5.2",
         "matplotlib",
         "optuna",
     ],
