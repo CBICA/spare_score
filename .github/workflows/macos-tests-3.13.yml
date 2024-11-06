@@ -1,26 +1,24 @@
-name: ubuntu build python=3.8
+name: macos build
 
 # workflow dispatch has been added for testing purposes
 on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ["ubuntu-latest"]
+    runs-on: ["macos-latest"]
 
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.8"
+          python-version: "3.13"
       - name: Install spare scores
         run: |
           python -m pip cache purge
           pip install -r requirements.txt
           pip install setuptools twine wheel
-          python setup.py bdist_wheel
-          cd dist
-          WHEEL_FILE=$(ls spare_scores*)
-          pip install "$WHEEL_FILE"
+          python -m pip install .
       - name: Run unit tests
         run: |
-          cd tests/unit && python -m unittest discover -s . -p "*.py"
+          pip install pytest pytest-cov
+          cd tests/unit && pytest --cov=../../
