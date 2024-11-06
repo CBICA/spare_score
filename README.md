@@ -1,7 +1,7 @@
 [![codecov](https://codecov.io/gh/CBICA/spare_score/graph/badge.svg?token=7yk7pkydHE)](https://codecov.io/gh/CBICA/spare_score)
 ![macos tests](https://github.com/CBICA/spare_score/actions/workflows/macos-tests-3.12.yml/badge.svg)
 ![ubuntu tests](https://github.com/CBICA/spare_score/actions/workflows/ubuntu-tests-3.12.yml/badge.svg)
-![PyPI Stable](https://img.shields.io/pypi/v/spare_score)
+![PyPI Stable](https://img.shields.io/pypi/v/spare_scores)
 
 # Compute SPARE Scores for Your Case
 
