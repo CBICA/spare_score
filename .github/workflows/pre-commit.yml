@@ -3,7 +3,7 @@ name: pre-commit
 on:
   pull_request:
   push:
-    branches: [main, fixing_issues, spiros-dev]
+    branches: [main, spiros-dev]
 
 jobs:
   pre-commit:
@@ -13,5 +13,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip3 install pre-commit
-      - run: pre-commit run --files spare_scores/*
+      - name: install pre commit
+        run: pip install pre-commit && pre-commit install
+      - name: pre-commit
+        uses: pre-commit/action@v3.0.1
