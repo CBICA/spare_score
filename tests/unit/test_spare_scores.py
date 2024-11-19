@@ -1,22 +1,25 @@
+import os
 import unittest
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
-import os
+
 from spare_scores.data_prep import check_test
-from spare_scores.util import load_df, load_model
 from spare_scores.mlp_torch import MLPDataset
 from spare_scores.spare import spare_test, spare_train
+from spare_scores.util import load_df, load_model
+
 
 class CheckMLPDataset(unittest.TestCase):
-    def test_len(self):
+    def test_len(self) -> None:
         # test case 1: testing length
         self.X = np.array([1, 2, 3, 4, 5, 6, 7, 8])
         self.Y = np.array([1, 2, 3, 4, 5, 6, 7, 8])
         self.Dataset = MLPDataset(self.X, self.Y)
         self.assertTrue(len(self.Dataset) == 8)
 
-    def test_idx(self):
+    def test_idx(self) -> None:
         # test case 2: testing getter
         self.X = np.array([1, 2, 3, 4, 5, 6, 7, 8])
         self.Y = np.array([1, 2, 3, 4, 5, 6, 7, 8])
@@ -24,19 +27,25 @@ class CheckMLPDataset(unittest.TestCase):
         self.assertTrue(self.Dataset[0] == (1, 1))
         self.assertTrue(self.Dataset[len(self.Dataset) - 1] == (8, 8))
 
+
 class CheckSpareScores(unittest.TestCase):
 
-    def test_spare_test_SVM(self):
+    def test_spare_test_SVM(self) -> None:
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         self.model_fixture = load_model("../fixtures/sample_model.pkl.gz")
 
         # Test case 1: Test with df
         result = spare_test(self.df_fixture, self.model_fixture)
-        status_code, status, result = (
+        res = (
             result["status_code"],
             result["status"],
             result["data"],
         )
+
+        if isinstance(result, str):
+            status_code, status, result = res
+        else:
+            print("Error while reading test results")
         self.assertTrue(status == "OK")
         self.assertTrue(isinstance(result, pd.DataFrame))
         self.assertTrue(result.shape[0] == self.df_fixture.shape[0])
@@ -46,8 +55,8 @@ class CheckSpareScores(unittest.TestCase):
         filepath = (
             Path(__file__).resolve().parent.parent / "fixtures" / "sample_data.csv"
         )
-        filepath = str(filepath)
-        result = spare_test(filepath, self.model_fixture)
+        filepath_str = str(filepath)
+        result = spare_test(filepath_str, self.model_fixture)
         status, result = result["status"], result["data"]
         self.assertTrue(status == "OK")
         self.assertTrue(isinstance(result, pd.DataFrame))
@@ -69,7 +78,7 @@ class CheckSpareScores(unittest.TestCase):
         )
         self.assertTrue(result == ["ROI1"])
 
-    def test_spare_train_MLP(self):
+    def test_spare_train_MLP(self) -> None:
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         self.model_fixture = load_model("../fixtures/sample_model.pkl.gz")
         # Test case 1: Testing spare_train with MLP model
@@ -105,7 +114,7 @@ class CheckSpareScores(unittest.TestCase):
             self.df_fixture,
             "ROI1",
             model_type="MLP",
-            data_vars = [
+            data_vars=[
                 "ROI2",
                 "ROI3",
                 "ROI4",
@@ -114,8 +123,8 @@ class CheckSpareScores(unittest.TestCase):
                 "ROI7",
                 "ROI8",
                 "ROI9",
-                "ROI10"
-            ]
+                "ROI10",
+            ],
         )
         status, result_data = result["status"], result["data"]
         metadata = result_data[1]
@@ -124,7 +133,7 @@ class CheckSpareScores(unittest.TestCase):
         self.assertTrue(metadata["kernel"] == "linear")
         # self.assertTrue(metadata["to_predict"] == "to_predict")
 
-    def test_spare_train_MLPTorch(self):
+    def test_spare_train_MLPTorch(self) -> None:
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         self.model_fixture = load_model("../fixtures/sample_model.pkl.gz")
         # Test case 1: testing training an MLPTorch model
@@ -162,7 +171,7 @@ class CheckSpareScores(unittest.TestCase):
             self.df_fixture,
             "ROI1",
             model_type="MLPTorch",
-            data_vars = [
+            data_vars=[
                 "ROI2",
                 "ROI3",
                 "ROI4",
@@ -172,7 +181,7 @@ class CheckSpareScores(unittest.TestCase):
                 "ROI8",
                 "ROI9",
                 "ROI10",
-            ]
+            ],
         )
         status, result_data = result["status"], result["data"]
         metadata = result_data[1]
@@ -181,7 +190,7 @@ class CheckSpareScores(unittest.TestCase):
         self.assertTrue(metadata["kernel"] == "linear")
         # self.assertTrue(metadata["to_predict"] == "to_predict")
 
-    def test_spare_train_SVM(self):
+    def test_spare_train_SVM(self) -> None:
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         self.model_fixture = load_model("../fixtures/sample_model.pkl.gz")
 
@@ -222,7 +231,7 @@ class CheckSpareScores(unittest.TestCase):
         result = spare_train(
             self.df_fixture,
             "ROI1",
-            data_vars = [
+            data_vars=[
                 "ROI2",
                 "ROI3",
                 "ROI4",
@@ -231,8 +240,8 @@ class CheckSpareScores(unittest.TestCase):
                 "ROI7",
                 "ROI8",
                 "ROI9",
-                "ROI10"
-            ]
+                "ROI10",
+            ],
         )
         status, result_data = result["status"], result["data"]
         metadata = result_data[1]
@@ -241,24 +250,16 @@ class CheckSpareScores(unittest.TestCase):
         self.assertTrue(metadata["kernel"] == "linear")
         # self.assertTrue(metadata["to_predict"] == "to_predict")
 
-    def test_spare_train_SVM_None(self):
+    def test_spare_train_SVM_None(self) -> None:
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         # Test case 1: Training with no data vars
-        result = spare_train(
-            self.df_fixture,
-            "Age"
-        )
+        result = spare_train(self.df_fixture, "Age")
         self.assertTrue(result is not None)
 
-
-    def test_spare_train_SVM2(self):
+    def test_spare_train_SVM2(self) -> None:
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         # Test case 1: Test overwrites
-        result = spare_train(
-            self.df_fixture,
-            "Age",
-            output="test_util.py"
-        )
+        result = spare_train(self.df_fixture, "Age", output="test_util.py")
         self.assertTrue(result["status_code"] == 2)
 
         # Test case 2: Train with non existing output file
@@ -277,12 +278,12 @@ class CheckSpareScores(unittest.TestCase):
                 "ROI9",
                 "ROI10",
             ],
-            output="results"
+            output="results",
         )
-        self.assertTrue(os.path.isfile("results.pkl.gz") == True)
+        self.assertTrue(os.path.isfile("results.pkl.gz") is True)
         os.remove("results.pkl.gz")
 
-    def test_spare_train_non_existing_model(self):
+    def test_spare_train_non_existing_model(self) -> None:
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         # Test case 1: training with non existing model type
         result = spare_train(
@@ -304,13 +305,13 @@ class CheckSpareScores(unittest.TestCase):
         )
         self.assertTrue(result["status_code"] == 2)
 
-    def test_spare_test_exceptions(self):
+    def test_spare_test_exceptions(self) -> None:
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         self.model_fixture = load_model("../fixtures/sample_model.pkl.gz")
 
         # Test case 1: Test with existing output path
-        if(not os.path.isfile("output.csv")):
-            f = open("output.csv", "x")
+        if not os.path.isfile("output.csv"):
+            _ = open("output.csv", "x")
         result = spare_test(self.df_fixture, self.model_fixture, output="output")
         self.assertTrue(result["status_code"] == 0)
         os.remove("output.csv")
@@ -319,18 +320,15 @@ class CheckSpareScores(unittest.TestCase):
         data = {
             "Var1": [x for x in range(100)],
             "Var2": [x for x in range(100)],
-            "label": [x**2 for x in range(100)]
+            "label": [x**2 for x in range(100)],
         }
         self.df_fixture = pd.DataFrame(data=data)
-        meta_data = {
-            "predictors": "Not_existing"
-        }
+        meta_data = {"predictors": "Not_existing"}
         err, cols_not_found = check_test(self.df_fixture, meta_data)
         self.assertTrue(len(err) != 0)
         self.assertTrue(cols_not_found is not None)
 
-
-    def test_spare_train_regression_error(self):
+    def test_spare_train_regression_error(self) -> None:
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         # Test case 1: testing with non-integer like as predictor
         result = spare_train(
@@ -347,65 +345,50 @@ class CheckSpareScores(unittest.TestCase):
                 "ROI8",
                 "ROI9",
                 "ROI10",
-            ]
+            ],
         )
 
         self.assertTrue(result["status_code"] == 2)
-        self.assertTrue(result["status"] == "Dataset check failed before training was initiated.")
+        self.assertTrue(
+            result["status"] == "Dataset check failed before training was initiated."
+        )
 
         # Test case 2: testing with a too-small dataset
         data = {
-            "Var1": [1,2,3,4,5],
-            "Var2": [2,4,6,8,10],
-            "label": [1.5,2.4,3.2,4.5,5.5]
+            "Var1": [1, 2, 3, 4, 5],
+            "Var2": [2, 4, 6, 8, 10],
+            "label": [1.5, 2.4, 3.2, 4.5, 5.5],
         }
         self.df_fixture = pd.DataFrame(data=data)
-        result = spare_train(
-            self.df_fixture,
-            "label",
-            data_vars=[
-                "Var1",
-                "Var2"
-            ]
-        )
+        result = spare_train(self.df_fixture, "label", data_vars=["Var1", "Var2"])
 
         self.assertTrue(result["status_code"] == 2)
-        self.assertTrue(result["status"] == "Dataset check failed before training was initiated.")
+        self.assertTrue(
+            result["status"] == "Dataset check failed before training was initiated."
+        )
 
         # Test case 3: testing with a label that has to variance
         data = {
-            "Var1": [1,2,3,4,5],
-            "Var2": [2,4,6,8,10],
-            "label": [1,1,1,1,1]
+            "Var1": [1, 2, 3, 4, 5],
+            "Var2": [2, 4, 6, 8, 10],
+            "label": [1, 1, 1, 1, 1],
         }
         self.df_fixture = pd.DataFrame(data=data)
-        result = spare_train(
-            self.df_fixture,
-            "label",
-            data_vars=[
-                "Var1",
-                "Var2"
-            ]
-        )
+        result = spare_train(self.df_fixture, "label", data_vars=["Var1", "Var2"])
         self.assertTrue(result["status_code"] == 2)
-        self.assertTrue(result["status"] == "Dataset check failed before training was initiated.")
+        self.assertTrue(
+            result["status"] == "Dataset check failed before training was initiated."
+        )
 
         # Test case 4: testing with a dataset that may be too small
         data = {
             "Var1": [x for x in range(80)],
             "Var2": [x for x in range(80)],
             "Var3": [x for x in range(80)],
-            "label": [x*2 for x in range(80)]
+            "label": [x * 2 for x in range(80)],
         }
 
         self.df_fixture = pd.DataFrame(data=data)
-        result = spare_train(
-            self.df_fixture,
-            "label",
-            data_vars=[
-                "Var1",
-                "Var2"
-            ]
-        )
+        result = spare_train(self.df_fixture, "label", data_vars=["Var1", "Var2"])
 
         self.assertTrue(result is not None)

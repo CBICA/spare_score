@@ -1,7 +1,7 @@
 import logging
 import os
 import random
-from typing import Any, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -221,7 +221,7 @@ def smart_unique(
 def age_sex_match(
     df1: pd.DataFrame,
     df2: Union[pd.DataFrame, None] = None,
-    to_match: str = "",
+    to_match: Optional[str] = "",
     p_threshold: float = 0.15,
     verbose: int = 1,
     age_out_percentage: float = 20,

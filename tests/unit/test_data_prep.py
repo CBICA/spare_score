@@ -16,15 +16,19 @@ from spare_scores.util import load_df
 
 class CheckDataPrep(unittest.TestCase):
 
-    def test_check_train(self):
+    def test_check_train(self) -> None:
         # Test case 1: Valid input dataframe and predictors
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         predictors = ["ROI1", "ROI2", "ROI3"]
         to_predict = "Sex"
         pos_group = "M"
-        filtered_df, filtered_predictors, mdl_type = check_train(
+        result = check_train(
             self.df_fixture, predictors, to_predict, pos_group=pos_group
         )
+        if isinstance(result, str):
+            print("Error while check training")
+        else:
+            filtered_df, filtered_predictors, mdl_type = result
         self.assertTrue(
             filtered_df.equals(self.df_fixture)
         )  # Check if filtered dataframe is the same as the input dataframe
@@ -42,7 +46,9 @@ class CheckDataPrep(unittest.TestCase):
         predictors = ["Var1", "Var2"]
         to_predict = "ToPredict"
         pos_group = "1"
-        res = check_train(df_missing_columns, predictors, to_predict, pos_group)
+        res = check_train(
+            df_missing_columns, predictors, to_predict, pos_group=pos_group
+        )
         self.assertTrue(res == "Variable to predict is not in the input dataframe.")
 
         # Test case 3: Predictor not in input dataframe
@@ -57,10 +63,10 @@ class CheckDataPrep(unittest.TestCase):
         predictors = ["Var1", "Var2"]  # Var2 is not in the input dataframe
         to_predict = "ToPredict"
         pos_group = "1"
-        res = check_train(df, predictors, to_predict, pos_group)
+        res = check_train(df, predictors, to_predict, pos_group=pos_group)
         self.assertTrue(res == "Not all predictors exist in the input dataframe.")
 
-    def test_check_test(self):
+    def test_check_test(self) -> None:
         # Test case 1: Valid input dataframe and meta_data
         df = pd.DataFrame(
             {
@@ -121,9 +127,9 @@ class CheckDataPrep(unittest.TestCase):
             ),
         }
         res = check_test(df_age_outside_range, meta_data)
-        self.assertTrue(res[1] == None)
+        self.assertTrue(res[1] is None)
 
-    def test_smart_unique(self):
+    def test_smart_unique(self) -> None:
         # test case 1: testing smart_unique with df2=None, to_predict=None
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         result = smart_unique(self.df_fixture, None)
@@ -140,14 +146,14 @@ class CheckDataPrep(unittest.TestCase):
             "ROI2": [0.73, 0.91, 0.64, 0.76, 0.78],
         }
         self.df_fixture = pd.DataFrame(data=df)
-        result = smart_unique(self.df_fixture, None, to_predict="ROI1")
+        result_1 = smart_unique(self.df_fixture, None, to_predict="ROI1")
         err_msg = "Variable to predict has no variance."
-        self.assertTrue(result == err_msg)
+        self.assertTrue(result_1 == err_msg)
 
         # test case 3: testing smart_unique with variance and no duplicate ID's. df2=None
         self.df_fixture = load_df("../fixtures/sample_data.csv")
-        result = smart_unique(self.df_fixture, None, "ROI1")
-        self.assertTrue(result.equals(self.df_fixture))
+        result_2: pd.DataFrame = smart_unique(self.df_fixture, None, "ROI1")
+        self.assertTrue(result_2.equals(self.df_fixture))
 
         # test case 4: testing smart_unique with variance and duplicate ID's. df2=None
         self.df_fixture = pd.DataFrame(data=df)
@@ -161,7 +167,7 @@ class CheckDataPrep(unittest.TestCase):
             "ROI2": 0.73,
         }
         self.df_fixture = self.df_fixture._append(new_row, ignore_index=True)
-        result = smart_unique(self.df_fixture, None, "ROI1")
+        result_3: pd.DataFrame = smart_unique(self.df_fixture, None, "ROI1")
         correct_df = {
             "Id": [1.0, 2.0, 3.0, 4.0, 5.0, float("nan")],
             "ScanID": [
@@ -186,7 +192,7 @@ class CheckDataPrep(unittest.TestCase):
             ],
         }
         correct_df = pd.DataFrame(data=correct_df)
-        self.assertTrue(result.equals(correct_df))
+        self.assertTrue(result_3.equals(correct_df))
 
         # test case 5: testing df2 != None and no_df2=False
         df1 = {
@@ -199,10 +205,10 @@ class CheckDataPrep(unittest.TestCase):
         self.df_fixture1 = pd.DataFrame(data=df1)
         self.df_fixture2 = pd.DataFrame(data=df2)
 
-        result = smart_unique(self.df_fixture1, self.df_fixture2, to_predict=None)
+        result = smart_unique(self.df_fixture1, self.df_fixture2, to_predict="")
         self.assertTrue(result == (self.df_fixture1, self.df_fixture2))
 
-    def test_age_sex_match(self):
+    def test_age_sex_match(self) -> None:
         # test case 1: testing df2=None and to_match=None
         self.df_fixture = load_df("../fixtures/sample_data.csv")
         result = age_sex_match(self.df_fixture, None)
@@ -265,7 +271,7 @@ class CheckDataPrep(unittest.TestCase):
         print(result)
         self.assertTrue(result.equals(correct_df))
 
-    def test_logging_basic_config(self):
+    def test_logging_basic_config(self) -> None:
         logging_level = {
             0: logging.WARNING,
             1: logging.INFO,
@@ -291,5 +297,5 @@ class CheckDataPrep(unittest.TestCase):
         self.assertTrue(os.path.exists("test_data_prep.py"))
         self.assertTrue(result == logging.getLogger())
 
-    def test_convert_cat_variables(self):
+    def test_convert_cat_variables(self) -> None:
         pass
