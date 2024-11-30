@@ -1,3 +1,6 @@
+spare scores
+============
+
 .. image:: https://codecov.io/gh/CBICA/spare_score/graph/badge.svg?token=7yk7pkydHE
    :target: https://codecov.io/gh/CBICA/spare_score
 
