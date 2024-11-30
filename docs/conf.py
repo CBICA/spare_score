@@ -9,11 +9,11 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath("../spare_scores/"))
+sys.path.insert(0, os.path.abspath("../"))
 
-project = "spare-scores"
-copyright = "2024, Gyujoon Hwang, George Aidinis"
-author = "Gyujoon Hwang, George Aidinis"
+project = "spare scores"
+copyright = "2024, Ashish Singh, Guray Erus, George Aidinis"
+author = "Ashish Singh, Guray Erus, George Aidinis"
 release = "2024"
 
 # -- General configuration ---------------------------------------------------
@@ -35,7 +35,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 github_username = "CBICA"
-github_repository = "github.com/CBICA/spare_score"
+github_repository = "github.com/CBICA/spare_scores"
 
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
