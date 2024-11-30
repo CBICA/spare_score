@@ -1,5 +1,5 @@
-spare\_scores package
-=====================
+spare\_scores source code
+=========================
 
 Submodules
 ----------
