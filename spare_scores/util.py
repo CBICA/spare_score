@@ -2,7 +2,7 @@ import gzip
 import logging
 import os
 import pickle
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -43,7 +43,7 @@ def add_file_extension(filename: str, extension: str) -> str:
     return filename
 
 
-def check_file_exists(filename: str, logger: Any) -> Any:
+def check_file_exists(filename: Optional[str], logger: Any) -> Any:
     """
     Checks if file exists
 

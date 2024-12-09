@@ -20,15 +20,15 @@ from spare_scores.util import (
 
 
 class CheckSpareScoresUtil(unittest.TestCase):
-    def test_load_model(self):
+    def test_load_model(self) -> None:
         self.model_fixture = load_model("../../tests/fixtures/sample_model.pkl.gz")
 
         # Test case 1: Load a model
         filepath = (
             Path(__file__).resolve().parent.parent / "fixtures" / "sample_model.pkl.gz"
         )
-        filepath = str(filepath)
-        result = load_model(filepath)
+        new_filepath = str(filepath)
+        result = load_model(new_filepath)
         self.assertTrue(result[1]["mdl_type"] == self.model_fixture[1]["mdl_type"])
         self.assertTrue(result[1]["kernel"] == self.model_fixture[1]["kernel"])
         self.assertTrue(result[1]["predictors"] == self.model_fixture[1]["predictors"])
@@ -38,7 +38,7 @@ class CheckSpareScoresUtil(unittest.TestCase):
             == self.model_fixture[1]["categorical_var_map"]
         )
 
-    def test_expspace(self):
+    def test_expspace(self) -> None:
         # Test case 1: span = [0, 2]
         span = [0, 2]
         expected_result = np.array([1.0, 2.71828183, 7.3890561])
@@ -56,7 +56,7 @@ class CheckSpareScoresUtil(unittest.TestCase):
         expected_result = np.array([0.13533528, 0.36787944, 1.0, 2.71828183])
         self.assertTrue(np.allclose(expspace(span), expected_result))
 
-    def test_check_file_exists(self):
+    def test_check_file_exists(self) -> None:
         # test case 1: filename=None
         logger = logging.getLogger(__name__)
         result = check_file_exists(None, logger)
@@ -71,7 +71,7 @@ class CheckSpareScoresUtil(unittest.TestCase):
         err_msg = "The output filename test_util.py, corresponds to an existing file, interrupting execution to avoid overwrite."
         self.assertTrue(result == err_msg)
 
-    def test_save_file(self):
+    def test_save_file(self) -> None:
         # test case 1: testing training  output file that don't exist
         result = pd.DataFrame(
             data={
@@ -95,7 +95,7 @@ class CheckSpareScoresUtil(unittest.TestCase):
         self.assertTrue(os.path.exists(output + ".csv"))
         os.remove(output + ".csv")
 
-    def test_is_unique_identifier(self):
+    def test_is_unique_identifier(self) -> None:
         # test case 1: testing with a unique identifier
         df = {
             "ID": [0, 1, 2, 3, 4],
@@ -117,7 +117,7 @@ class CheckSpareScoresUtil(unittest.TestCase):
         self.df_fixture = pd.DataFrame(data=df)
         self.assertFalse(is_unique_identifier(self.df_fixture, ["Var1", "Var2"]))
 
-    def test_load_examples(self):
+    def test_load_examples(self) -> None:
         # test case 1: testing loading example csv
         file_name = "example_data.csv"
         result = load_examples(file_name)
@@ -133,7 +133,7 @@ class CheckSpareScoresUtil(unittest.TestCase):
         result = load_examples(file_name)
         self.assertTrue(result is None)
 
-    def test_convert_to_number_if_possible(self):
+    def test_convert_to_number_if_possible(self) -> None:
         # test case 1: valid convertion to integer
         num = "254"
         self.assertTrue(convert_to_number_if_possible(num) == 254)
@@ -142,14 +142,14 @@ class CheckSpareScoresUtil(unittest.TestCase):
         num = "CBICA"
         self.assertTrue(convert_to_number_if_possible(num) == num)
 
-    def test_load_df(self):
+    def test_load_df(self) -> None:
         # Test case 1: Input is a string (CSV file path)
         filepath = (
             Path(__file__).resolve().parent.parent / "fixtures" / "sample_data.csv"
         )
-        filepath = str(filepath)
-        expected_df = pd.read_csv(filepath, low_memory=False)
-        self.assertTrue(load_df(filepath).equals(expected_df))
+        new_filepath = str(filepath)
+        expected_df = pd.read_csv(new_filepath, low_memory=False)
+        self.assertTrue(load_df(new_filepath).equals(expected_df))
 
         # Test case 2: Input is already a DataFrame
         input_df = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
@@ -166,7 +166,7 @@ class CheckSpareScoresUtil(unittest.TestCase):
         expected_df = input_df.copy()
         self.assertTrue(load_df(input_df).equals(expected_df))
 
-    def test_add_file_extension(self):
+    def test_add_file_extension(self) -> None:
         # Test case 1: File extension already present
         filename = "myfile.txt"
         extension = ".txt"
