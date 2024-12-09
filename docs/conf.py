@@ -12,8 +12,8 @@ import sys
 sys.path.insert(0, os.path.abspath("../"))
 
 project = "spare scores"
-copyright = "2024, Ashish Singh, Guray Erus, George Aidinis"
-author = "Ashish Singh, Guray Erus, George Aidinis"
+copyright = "2024, Gyujoon Hwang, George Aidinis"
+author = "Gyujoon Hwang, George Aidinis"
 release = "2024"
 
 # -- General configuration ---------------------------------------------------
