@@ -3,10 +3,8 @@ spare scores
 
 .. image:: https://codecov.io/gh/CBICA/spare_score/graph/badge.svg?token=7yk7pkydHE
    :target: https://codecov.io/gh/CBICA/spare_score
-
 .. image:: https://github.com/CBICA/spare_score/actions/workflows/macos-tests-3.12.yml/badge.svg
    :alt: macos tests
-
 .. image:: https://github.com/CBICA/spare_score/actions/workflows/ubuntu-tests-3.12.yml/badge.svg
    :alt: ubuntu tests
 
