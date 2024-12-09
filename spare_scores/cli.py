@@ -1,10 +1,8 @@
 import argparse
-
-import pkg_resources  # type: ignore
+from importlib.metadata import version
 
 from .spare import spare_test, spare_train
 
-from importlib.metadata import version
 VERSION = version("spare_scores")
 
 
