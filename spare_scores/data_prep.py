@@ -275,7 +275,7 @@ def age_sex_match(
         df1, df2 = df1[df1[to_match] == grps[0]], df1[df1[to_match] == grps[1]]
         no_df2 = True
     else:
-        if to_match is not None:
+        if to_match != "":
             logging.info('Two dataframes provided. "to_match" will be ignored.')
         no_df2 = False
 
