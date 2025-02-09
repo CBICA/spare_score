@@ -253,9 +253,7 @@ class MLPModel:
             self.stats["F1"].append(2 * precision * recall / (precision + recall))
         else:
             self.stats["MAE"].append(metrics.mean_absolute_error(y, y_hat))
-            self.stats["RMSE"].append(
-                metrics.mean_squared_error(y, y_hat, squared=False)
-            )
+            self.stats["RMSE"].append(np.sqrt(metrics.mean_squared_error(y, y_hat)))
             self.stats["R2"].append(metrics.r2_score(y, y_hat))
 
     def output_stats(self) -> None:
