@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/CBICA/spare_score,21,10
+/CBICA/spare_score/tree/main/spare_scores,3,3
+/CBICA/spare_score/blob/main/spare_scores/mlp_torch.py,2,1
+/CBICA/spare_score/blob/main/requirements.txt,1,1
+/CBICA/spare_score/blob/main/spare_scores/data/example_data.csv,1,1
+/CBICA/spare_score/commit/b63af5557cfc3da75601c7059935f89cd8b7d719,1,1
+/CBICA/spare_score/graphs/contributors,1,1
+/CBICA/spare_score/issues,1,1
+/CBICA/spare_score/projects,1,1
+/CBICA/spare_score/pulls,1,1
