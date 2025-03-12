@@ -2,12 +2,15 @@ spare scores
 ============
 
 .. image:: https://codecov.io/gh/CBICA/spare_score/graph/badge.svg?token=7yk7pkydHE
-   :target: https://codecov.io/gh/CBICA/spare_score
-   :alt: Codecov
+    :target: https://codecov.io/gh/CBICA/spare_score
+    :alt: Codecov
 .. image:: https://github.com/CBICA/spare_score/actions/workflows/macos-tests-3.12.yml/badge.svg
-   :alt: macos tests
+    :alt: macos tests
 .. image:: https://github.com/CBICA/spare_score/actions/workflows/ubuntu-tests-3.12.yml/badge.svg
-   :alt: ubuntu tests
+    :alt: ubuntu tests
+.. image:: https://img.shields.io/pypi/v/spare_scores
+    :target: https://pypi.org/project/spare_scores/
+    :alt: PyPI Stable
 
 
 Overview
