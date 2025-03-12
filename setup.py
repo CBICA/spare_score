@@ -7,7 +7,7 @@ long_description = (this_directory / "README.rst").read_text()
 
 setup(
     name="spare_scores",
-    version="1.2.5",
+    version="1.2.6",
     description="Compute characteristic brain signatures of your case population.",
     long_description=long_description,
     long_description_content_type="text/markdown",
