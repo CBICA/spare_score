@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/CBICA/spare_score,27,10
+/CBICA/spare_score/tree/main/spare_scores,16,4
+/CBICA/spare_score/tree/main,10,3
+/CBICA/spare_score/blob/main/spare_scores/svm.py,5,3
+/CBICA/spare_score/blob/main/spare_scores/spare.py,4,2
+/CBICA/spare_score/tree/main/spare_scores/data,4,1
+/CBICA/spare_score/blob/main/spare_scores/classes.py,3,1
+/CBICA/spare_score/blob/main/spare_scores/data_prep.py,3,1
+/CBICA/spare_score/issues,2,2
+/CBICA/spare_score/tree/main/tests,2,2
