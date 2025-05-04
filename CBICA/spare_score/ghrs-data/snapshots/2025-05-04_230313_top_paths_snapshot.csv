@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/CBICA/spare_score,15,9
+/CBICA/spare_score/tree/main/spare_scores,3,2
+/CBICA/spare_score/blob/main/README.rst,2,2
+/CBICA/spare_score/actions,1,1
+/CBICA/spare_score/actions/runs/14275608691/workflow,1,1
+/CBICA/spare_score/actions/runs/14368570625/workflow,1,1
+/CBICA/spare_score/actions/runs/14424145373/workflow,1,1
+/CBICA/spare_score/actions/runs/14481006761/workflow,1,1
+/CBICA/spare_score/actions/runs/14653282805/workflow,1,1
+/CBICA/spare_score/actions/workflows/macos-tests-3.10.yml,1,1
