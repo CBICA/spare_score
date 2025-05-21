@@ -23,7 +23,7 @@ from sklearn.metrics import (
     roc_auc_score,
     roc_curve,
 )
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._testing import ignore_warnings
 from torch.utils.data import DataLoader, Dataset
@@ -394,86 +394,178 @@ class MLPTorchModel:
         X = df[self.predictors]
         y = df[self.to_predict].tolist()
 
-        stratify = y if self.task == "Classification" else None
+        # stratify = y if self.task == "Classification" else None
 
-        X_train, X_val, y_train, y_val = train_test_split(
-            X, y, test_size=0.2, random_state=42, stratify=stratify
-        )
+        # X_train, X_val, y_train, y_val = train_test_split(
+        #     X, y, test_size=0.2, random_state=42, stratify=stratify
+        # )
 
-        X_train = X_train.reset_index(drop=True)
-        X_val = X_val.reset_index(drop=True)
+        # X_train = X_train.reset_index(drop=True)
+        # X_val = X_val.reset_index(drop=True)
 
-        self.scaler = StandardScaler().fit(X_train)
-        X_train = self.scaler.transform(X_train)
-        X_val = self.scaler.transform(X_val)
+        # self.scaler = StandardScaler().fit(X_train)
+        # X_train = self.scaler.transform(X_train)
+        # X_val = self.scaler.transform(X_val)
 
-        train_ds = MLPDataset(X_train, y_train)
-        val_ds = MLPDataset(X_val, y_val)
+        # train_ds = MLPDataset(X_train, y_train)
+        # val_ds = MLPDataset(X_val, y_val)
 
-        self.train_dl = DataLoader(train_ds, batch_size=self.batch_size, shuffle=True)
-        self.val_dl = DataLoader(val_ds, batch_size=self.batch_size, shuffle=True)
+        # self.train_dl = DataLoader(train_ds, batch_size=self.batch_size, shuffle=True)
+        # self.val_dl = DataLoader(val_ds, batch_size=self.batch_size, shuffle=True)
 
-        study = optuna.create_study(
-            direction="maximize" if self.classification else "minimize"
-        )
-        study.optimize(self.object, n_trials=100)
+        # study = optuna.create_study(
+        #     direction="maximize" if self.classification else "minimize"
+        # )
+        # study.optimize(self.object, n_trials=100)
 
-        # Get the best trial and its checkpoint
-        best_trial = study.best_trial
-        best_checkpoint = best_trial.user_attrs["checkpoint"]
+        # # Get the best trial and its checkpoint
+        # best_trial = study.best_trial
+        # best_checkpoint = best_trial.user_attrs["checkpoint"]
 
-        best_hyperparams = best_checkpoint["trial_params"]
-        best_model_state_dict = best_checkpoint["model_state_dict"]
+        # best_hyperparams = best_checkpoint["trial_params"]
+        # best_model_state_dict = best_checkpoint["model_state_dict"]
 
-        self.mdl = SimpleMLP(
-            hidden_size=best_hyperparams["hidden_size"],
-            classification=self.classification,
-            dropout=best_hyperparams["dropout"],
-            use_bn=best_hyperparams["use_bn"],
-            bn=best_hyperparams["bn"],
-        )
+        # self.mdl = SimpleMLP(
+        #     hidden_size=best_hyperparams["hidden_size"],
+        #     classification=self.classification,
+        #     dropout=best_hyperparams["dropout"],
+        #     use_bn=best_hyperparams["use_bn"],
+        #     bn=best_hyperparams["bn"],
+        # )
 
-        self.mdl.load_state_dict(best_model_state_dict)
-        self.mdl.to(device)
-        self.mdl.eval()
-        X_total = self.scaler.transform(np.array(X, dtype=np.float32))
-        X_total = torch.tensor(X_total).to(device)
+        # self.mdl.load_state_dict(best_model_state_dict)
+        # self.mdl.to(device)
+        # self.mdl.eval()
 
-        self.y_pred = self.mdl(X_total).cpu().data.numpy()
-        self.stats = self.get_all_stats(
-            self.y_pred, y, classification=self.classification
-        )
+        # X_total = self.scaler.transform(np.array(X, dtype=np.float32))
+        # X_total = torch.tensor(X_total).to(device)
 
-        self.param = best_model_state_dict
+        # self.y_pred = self.mdl(X_total).cpu().data.numpy()
+        # self.stats = self.get_all_stats(
+        #     self.y_pred, y, classification=self.classification
+        # )
 
-        training_time = time.time() - start_time
-        self.stats["training_time"] = round(training_time, 4)
+        # self.param = best_model_state_dict
 
-        result = {
-            "predicted": self.y_pred,
-            "model": self.mdl,
-            "stats": self.stats,
-            "best_params": self.param,
-            "CV_folds": None,
-            "scaler": self.scaler,
-        }
+        # training_time = time.time() - start_time
+        # self.stats["training_time"] = round(training_time, 4)
 
-        if self.task == "Regression":
-            print(">>MAE = ", self.stats["MAE"])
-            print(">>RMSE = ", self.stats["RMSE"])
-            print(">>R2 = ", self.stats["R2"])
+        # result = {
+        #     "predicted": self.y_pred,
+        #     "model": self.mdl,
+        #     "stats": self.stats,
+        #     "best_params": self.param,
+        #     "CV_folds": None,
+        #     "scaler": self.scaler,
+        # }
 
-        else:
-            print(">>AUC = ", self.stats["AUC"])
-            print(">>Accuracy = ", self.stats["Accuracy"])
-            print(">>Sensityvity = ", self.stats["Sensitivity"])
-            print(">>Specificity = ", self.stats["Specificity"])
-            print(">>Precision = ", self.stats["Precision"])
-            print(">>Recall = ", self.stats["Recall"])
-            print(">>F1 = ", self.stats["F1"])
-            print(">>Threshold = ", self.threshold)
+        # if self.task == "Regression":
+        #     print(">>MAE = ", self.stats["MAE"])
+        #     print(">>RMSE = ", self.stats["RMSE"])
+        #     print(">>R2 = ", self.stats["R2"])
 
-        return result
+        # else:
+        #     print(">>AUC = ", self.stats["AUC"])
+        #     print(">>Accuracy = ", self.stats["Accuracy"])
+        #     print(">>Sensityvity = ", self.stats["Sensitivity"])
+        #     print(">>Specificity = ", self.stats["Specificity"])
+        #     print(">>Precision = ", self.stats["Precision"])
+        #     print(">>Recall = ", self.stats["Recall"])
+        #     print(">>F1 = ", self.stats["F1"])
+        #     print(">>Threshold = ", self.threshold)
+
+        # return result
+
+
+        skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+        results={}
+
+        for fold, (train_idx, val_idx) in enumerate(skf.split(X, y)):
+
+            X_train, X_val = X.iloc[train_idx], X.iloc[val_idx]
+            y_train, y_val = y[train_idx], y[val_idx]
+
+            X_train = X_train.reset_index(drop=True)
+            X_val = X_val.reset_index(drop=True)
+
+            scaler_fold = StandardScaler().fit(X_train)
+            X_train= scaler_fold.transform(X_train)
+            X_val = scaler_fold.transform(X_val)
+
+            self.scaler = StandardScaler().fit(X_train)
+            X_train = self.scaler.transform(X_train)
+            X_val = self.scaler.transform(X_val)
+
+            train_ds = MLPDataset(X_train, y_train)
+            val_ds = MLPDataset(X_val, y_val)
+
+            self.train_dl = DataLoader(train_ds, batch_size=self.batch_size, shuffle=True)
+            self.val_dl = DataLoader(val_ds, batch_size=self.batch_size, shuffle=True)
+
+            study = optuna.create_study(
+                direction="maximize" if self.classification else "minimize"
+            )
+            study.optimize(self.object, n_trials=100)
+
+            # Get the best trial and its checkpoint
+            best_trial = study.best_trial
+            best_checkpoint = best_trial.user_attrs["checkpoint"]
+
+            best_hyperparams = best_checkpoint["trial_params"]
+            best_model_state_dict = best_checkpoint["model_state_dict"]
+
+            self.mdl = SimpleMLP(
+                hidden_size=best_hyperparams["hidden_size"],
+                classification=self.classification,
+                dropout=best_hyperparams["dropout"],
+                use_bn=best_hyperparams["use_bn"],
+                bn=best_hyperparams["bn"],
+            )
+
+            self.mdl.load_state_dict(best_model_state_dict)
+            self.mdl.to(device)
+            self.mdl.eval()
+
+            X_total = self.scaler.transform(np.array(X, dtype=np.float32))
+            X_total = torch.tensor(X_total).to(device)
+
+            self.y_pred = self.mdl(X_total).cpu().data.numpy()
+            self.stats = self.get_all_stats(
+                self.y_pred, y, classification=self.classification
+            )
+
+            self.param = best_model_state_dict
+
+            training_time = time.time() - start_time
+            self.stats["training_time"] = round(training_time, 4)
+
+            result = {
+                "predicted": self.y_pred,
+                "model": self.mdl,
+                "stats": self.stats,
+                "best_params": self.param,
+                "CV_folds": None,
+                "scaler": self.scaler,
+            }
+
+            results['Fold_%d' % fold] = result
+
+            if self.task == "Regression":
+                print(">>MAE = ", self.stats["MAE"])
+                print(">>RMSE = ", self.stats["RMSE"])
+                print(">>R2 = ", self.stats["R2"])
+
+            else:
+                print(">>AUC = ", self.stats["AUC"])
+                print(">>Accuracy = ", self.stats["Accuracy"])
+                print(">>Sensityvity = ", self.stats["Sensitivity"])
+                print(">>Specificity = ", self.stats["Specificity"])
+                print(">>Precision = ", self.stats["Precision"])
+                print(">>Recall = ", self.stats["Recall"])
+                print(">>F1 = ", self.stats["F1"])
+                print(">>Threshold = ", self.threshold)
+
+        return results
 
     def predict(self, df: pd.DataFrame) -> np.ndarray:
         X = df[self.predictors]
@@ -487,6 +579,7 @@ class MLPTorchModel:
         y_pred = self.mdl(X).cpu().data.numpy()
 
         return y_pred
+
 
     def output_stats(self) -> None:
         for key, value in self.stats.items():

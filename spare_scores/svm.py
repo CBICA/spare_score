@@ -165,9 +165,9 @@ class SVMModel:
         elif len(df.index) > 20000:
             logger.info(
                 "Due to large dataset, first performing parameter "
-                + "tuning with 2000 randomly sampled data points."
+                + "tuning with 5000 randomly sampled data points."
             )
-            sampled_df = df.sample(n=2000, random_state=2023)
+            sampled_df = df.sample(n=5000, random_state=2023)
             sampled_df = sampled_df.reset_index(drop=True)
             self.train_initialize(sampled_df, self.to_predict)
             self.run_CV(sampled_df)
