@@ -23,7 +23,7 @@ from sklearn.metrics import (
     roc_auc_score,
     roc_curve,
 )
-from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.model_selection import train_test_split, KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._testing import ignore_warnings
 from torch.utils.data import DataLoader, Dataset
@@ -477,7 +477,7 @@ class MLPTorchModel:
         # return result
 
 
-        skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+        skf = KFold(n_splits=5, shuffle=True, random_state=42)
         results={}
 
         for fold, (train_idx, val_idx) in enumerate(skf.split(X, y)):
