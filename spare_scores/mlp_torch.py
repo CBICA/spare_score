@@ -477,16 +477,16 @@ class MLPTorchModel:
         # return result
 
 
-        skf = KFold(n_splits=5, shuffle=True, random_state=42)
+        kf = KFold(n_splits=5, shuffle=True, random_state=42)
         results={}
 
-        for fold, (train_idx, val_idx) in enumerate(skf.split(X, y)):
+        for fold, (train_idx, val_idx) in enumerate(kf.split(X)):
 
             X_train, X_val = X.iloc[train_idx], X.iloc[val_idx]
             y_train, y_val = y[train_idx], y[val_idx]
 
-            X_train = X_train.reset_index(drop=True)
-            X_val = X_val.reset_index(drop=True)
+            X_train = X_train.reset_index(drop=True).to_numpy()
+            X_val = X_val.reset_index(drop=True).to_numpy()
 
             scaler_fold = StandardScaler().fit(X_train)
             X_train= scaler_fold.transform(X_train)
