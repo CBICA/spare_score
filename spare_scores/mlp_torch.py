@@ -23,7 +23,7 @@ from sklearn.metrics import (
     roc_auc_score,
     roc_curve,
 )
-from sklearn.model_selection import train_test_split, KFold
+from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._testing import ignore_warnings
 from torch.utils.data import DataLoader, Dataset
