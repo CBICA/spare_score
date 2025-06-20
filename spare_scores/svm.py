@@ -140,50 +140,6 @@ class SVMModel:
         # Time the training:
         start_time = time.time()
 
-<<<<<<< HEAD
-        # If the model is too big, optimize the parameters from a sample
-        if len(df.index) > 2000 & len(df.index) < 20000:
-            logger.info(
-                "Due to large dataset, first performing parameter "
-                + "tuning with 1000 randomly sampled data points."
-            )
-            sampled_df = df.sample(n=1000, random_state=2023)
-            sampled_df = sampled_df.reset_index(drop=True)
-            self.train_initialize(sampled_df, self.to_predict)
-            self.run_CV(sampled_df)
-            # Use the optimal parameters to train the model on the full data
-            param_grid = {
-                par: expspace(
-                    [
-                        np.min(self.params[f"{par}_optimal"]),
-                        np.max(self.params[f"{par}_optimal"]),
-                    ]
-                )
-                for par in self.param_grid
-            }
-            self.param_grid = param_grid
-        # If the model is too big, optimize the parameters from a sample
-        elif len(df.index) > 20000:
-            logger.info(
-                "Due to large dataset, first performing parameter "
-                + "tuning with 5000 randomly sampled data points."
-            )
-            sampled_df = df.sample(n=5000, random_state=2023)
-            sampled_df = sampled_df.reset_index(drop=True)
-            self.train_initialize(sampled_df, self.to_predict)
-            self.run_CV(sampled_df)
-            # Use the optimal parameters to train the model on the full data
-            param_grid = {
-                par: expspace(
-                    [
-                        np.min(self.params[f"{par}_optimal"]),
-                        np.max(self.params[f"{par}_optimal"]),
-                    ]
-                )
-                for par in self.param_grid
-            }
-            self.param_grid = param_grid
-=======
         # # If the model is too big, optimize the parameters from a sample
         # if len(df.index) > 1000:
         #     logger.info(
@@ -205,14 +161,22 @@ class SVMModel:
         #         for par in self.param_grid
         #     }
         #     self.param_grid = param_grid
->>>>>>> main
 
         # Train the model on the full data, with the optimal parameters
         logger.info("Training SVM model...")
         self.train_initialize(df, self.to_predict)
         self.run_CV(df)
         # Use the optimal parameters to train the model on the full data
-        param_grid = {
+        # param_grid = {
+        #     par: expspace(
+        #         [
+        #             np.min(self.params[f"{par}_optimal"]),
+        #             np.max(self.params[f"{par}_optimal"]),
+        #         ]
+        #     )
+        #     for par in self.param_grid
+        # }
+        self.param_grid = {
             par: expspace(
                 [
                     np.min(self.params[f"{par}_optimal"]),
@@ -221,7 +185,6 @@ class SVMModel:
             )
             for par in self.param_grid
         }
-        self.param_grid = param_grid
         training_time = time.time() - start_time
         self.stats["training_time"] = round(training_time, 4)
 
