@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/CBICA/spare_score,6,3
+/CBICA/spare_score/actions/runs/15784446762/job/44497639784,2,2
+/CBICA/spare_score/forks,2,2
+/CBICA/spare_score/actions,1,1
+/CBICA/spare_score/actions/runs/13817986272/workflow,1,1
+/CBICA/spare_score/actions/runs/15784446762/workflow,1,1
+/CBICA/spare_score/actions/workflows/pre-commit.yml,1,1
+/CBICA/spare_score/blob/8bd465c4a8cb08a3b4b5377da0f09ab95c0815cf/.github/workflows/pre-commit.yml,1,1
+/CBICA/spare_score/blob/main/spare_scores/data_prep.py,1,1
+/CBICA/spare_score/blob/main/spare_scores/spare.py,1,1
