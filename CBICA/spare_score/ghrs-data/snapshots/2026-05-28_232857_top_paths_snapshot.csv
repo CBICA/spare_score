@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/CBICA/spare_score,4,2
+/CBICA/spare_score/blob/main/spare_scores/mlp.py,2,1
+/CBICA/spare_score/blob/main/spare_scores/mlp_torch.py,2,1
+/CBICA/spare_score/actions/runs/15152545158/workflow,1,1
+/CBICA/spare_score/actions/runs/15189103666/workflow,1,1
+/CBICA/spare_score/actions/runs/15198471405,1,1
+/CBICA/spare_score/blob/208f8b601c4735a2951378195f34426e7823900d/.github/workflows/ubuntu-tests-3.12.yml,1,1
+/CBICA/spare_score/blob/890ceec3dd45e8f3df4103f76fe5895fb6df750d/.github/workflows/macos-tests-3.8.yml,1,1
+/CBICA/spare_score/blob/main/spare_scores/classes.py,1,1
+/CBICA/spare_score/commit/c54a257b7058a1b15aaf06bceb2407a731dc0e24,1,1
