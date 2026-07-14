@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/CBICA/spare_score,4,4
+/CBICA/spare_score/actions/workflows/pre-commit.yml,1,1
+/CBICA/spare_score/blob/main/spare_scores/data/example_data_demographics.csv,1,1
+/CBICA/spare_score/discussions,1,1
+/CBICA/spare_score/discussions/categories/ideas,1,1
+/CBICA/spare_score/pull/24/commits/e851be9bf873351d4c0268b9285e703256ea1192,1,1
+/CBICA/spare_score/pull/26/commits/0131e46384e741179502d91e82b691b2c8c9ef0e,1,1
+/CBICA/spare_score/pull/29/commits/0647adb9f1abc0f9d487eb5796d79864a9ab7dad,1,1
+/CBICA/spare_score/tree/a3114f913956754133fa46d57b5366e77140c0a7/.github/workflows,1,1
+/CBICA/spare_score/tree/main/tests,1,1
