@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/CBICA/spare_score,11,6
+/CBICA/spare_score/discussions/categories/show-and-tell,7,7
+/CBICA/spare_score/tree/main/spare_scores,5,2
+/CBICA/spare_score/tree/main/docs,2,1
+/CBICA/spare_score/blob/main/spare_scores/data/example_data_ROIs.csv,1,1
+/CBICA/spare_score/blob/main/spare_scores/mdl/mdl_SPARE_AD_hMUSE_single.pkl.gz,1,1
+/CBICA/spare_score/blob/main/spare_scores/mdl/mdl_SPARE_BA_hMUSE_single.pkl.gz,1,1
+/CBICA/spare_score/blob/main/spare_scores/mlp.py,1,1
+/CBICA/spare_score/blob/main/spare_scores/mlp_torch.py,1,1
+/CBICA/spare_score/blob/main/spare_scores/spare.py,1,1
