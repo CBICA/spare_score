@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/CBICA/spare_score,9,4
+/CBICA/spare_score/tree/main/spare_scores,5,2
+/CBICA/spare_score/tree/main/spare_scores/data,3,2
+/CBICA/spare_score/blob/main/docs/help.rst,2,1
+/CBICA/spare_score/pulls,2,1
+/CBICA/spare_score/blob/d899c17ea8bbf65864efb63bf72c59c2116f7a31/spare_scores/data_prep.py,1,1
+/CBICA/spare_score/blob/d899c17ea8bbf65864efb63bf72c59c2116f7a31/spare_scores/svm.py,1,1
+/CBICA/spare_score/blob/main/docs/api.rst,1,1
+/CBICA/spare_score/blob/main/spare_scores/data/example_data.csv,1,1
+/CBICA/spare_score/blob/main/spare_scores/data/example_data_ROIs.csv,1,1
